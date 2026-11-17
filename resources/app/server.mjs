@@ -127,6 +127,8 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
  const defaultEpicDir=()=>path.join(process.env.SystemDrive?process.env.SystemDrive+'\\':os.homedir(),'Games','Epic Games');
  const epicInstallDir=()=>config.epicInstallDir||defaultEpicDir();
  const openLink=url=>{if(process.platform==='win32'){const c=spawn(explorer(),[url],{detached:true,stdio:'ignore',windowsHide:true});c.on('error',()=>{});c.unref();}else if(process.platform==='linux'){const c=spawn('xdg-open',[url],{detached:true,stdio:'ignore'});c.on('error',()=>{});c.unref();}};
+ // Jogos de loja que abrem por URL (heroic://, com.epicgames.launcher://...): explorer.exe no Windows, xdg-open no Linux.
+ const urlLauncher=()=>process.platform==='win32'?explorer():'xdg-open';
  function placeholderGame(it){const key=itemStoreKey(it),title=String(it.title||'').slice(0,200);
   return {id:digest('store-'+key).slice(0,20),path:path.join(dataDir,'not-installed',digest(key).slice(0,16)+'.exe'),title,fileTitle:title,internalTitle:title,identitySource:'Loja',bytes:0,mtime:0,sizeBasis:null,profile:'store',profileLocked:true,platformName:PROFILES.store.platform,platformKey:'pc',platformSource:'store',discId:'',serial:'',revision:null,region:[],languages:[],discNumber:null,needsReview:false,art:{},bindings:{},metadata:{},addedAt:new Date().toISOString(),notInstalled:true,...(it.titleEn&&it.titleEn!==title?{storeTitleEn:String(it.titleEn).slice(0,200)}:{}),
    store:{name:it.store,label:it.storeName,id:it.id||'',...(it.store==='epic'?{namespace:it.namespace,appName:it.appName,catalogItemId:it.catalogItemId}:{pfn:it.pfn,productId:it.productId||'',titleId:it.titleId||''})},storeImages:it.images||{}};}
@@ -135,7 +137,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
   delete g.notInstalled;installWatch.delete(g.id);g.path=s.path;g.gameRoot=s.root||null;g.installedAt=new Date().toISOString();
   try{const st=fs.statSync(s.path);g.bytes=st.size;g.mtime=st.mtimeMs;}catch{}
   g.store={...g.store,name:s.store,label:s.storeName,id:s.id||g.store?.id||'',...(s.namespace?{namespace:s.namespace,appName:s.appName||g.store?.appName||''}:{}),url:s.url||'',needsLauncher:!!s.needsLauncher,launcherExe:s.launcherExe||null};
-  if(s.needsLauncher&&s.url){g.profile='store';g.launch={exe:s.launcherExe||explorer(),args:s.url};}else{g.profile='pc';delete g.launch;}
+  if(s.needsLauncher&&s.url){g.profile='store';g.launch={exe:s.launcherExe||urlLauncher(),args:s.url};}else{g.profile='pc';delete g.launch;}
   nglNote('Jogo instalado: '+g.title+' ('+s.storeName+')');
  }
  const notInstalledGames=()=>db.games.filter(g=>g.notInstalled&&!g.demo);
@@ -738,7 +740,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
    if(!g){const r=await addFiles([exe]);if(r.addedIds[0])g=getGame(r.addedIds[0]);else{const d=r.duplicates?.[0];g=d?getGame(d.id):null;if(!g){errors.push(...r.errors);continue;}}}
    const isNew=!g.shortcutSource&&(!g.bindings?.[config.account]||g.hidden);
    g.hidden=false;g.shortcutSource=it.file;g.title=it.name.slice(0,200)||g.title;g.titleSource='manual';
-   if(storeItem){g.store={name:storeItem.store,label:storeItem.storeName,id:storeItem.id,...(storeItem.namespace?{namespace:storeItem.namespace,appName:storeItem.appName||''}:{})};if(storeItem.needsLauncher&&storeItem.url){g.profile='store';g.launch={exe:storeItem.launcherExe||explorer(),args:storeItem.url};g.needsReview=false;}}
+   if(storeItem){g.store={name:storeItem.store,label:storeItem.storeName,id:storeItem.id,...(storeItem.namespace?{namespace:storeItem.namespace,appName:storeItem.appName||''}:{})};if(storeItem.needsLauncher&&storeItem.url){g.profile='store';g.launch={exe:storeItem.launcherExe||urlLauncher(),args:storeItem.url};g.needsReview=false;}}
    else{g.profile='pc';g.needsReview=false;if(args)g.launch={...(g.launch||{}),args};}
    if(it.workingDir&&!g.gameRoot)g.gameRoot=it.workingDir;
    if(isNew)added.push(g.id);
@@ -1138,7 +1140,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
       if(typeof item.title==='string'&&item.title.trim())g.title=item.title.trim().slice(0,200);g.profile=item.profile;g.needsReview=g.profile==='custom';g.platformName=String(item.platformName||PROFILES[item.profile].platform).slice(0,150);
       const chosenPlatform=platformByName(g.platformName);if(chosenPlatform)g.platformKey=chosenPlatform.key;
       // Resultado da identificação local (dump verificado, hash RA, AppID Steam).
-      const storeItem=session.items.find(i=>i.path.toLowerCase()===g.path.toLowerCase())?.store;if(storeItem){g.store={name:storeItem.name,label:storeItem.label,id:storeItem.id,...(storeItem.namespace?{namespace:storeItem.namespace,appName:storeItem.appName||''}:{})};if(storeItem.needsLauncher&&storeItem.url){g.profile='store';g.launch={exe:storeItem.launcherExe||explorer(),args:storeItem.url};g.needsReview=false;}else if(storeItem.args)g.launch={args:storeItem.args};}
+      const storeItem=session.items.find(i=>i.path.toLowerCase()===g.path.toLowerCase())?.store;if(storeItem){g.store={name:storeItem.name,label:storeItem.label,id:storeItem.id,...(storeItem.namespace?{namespace:storeItem.namespace,appName:storeItem.appName||''}:{})};if(storeItem.needsLauncher&&storeItem.url){g.profile='store';g.launch={exe:storeItem.launcherExe||urlLauncher(),args:storeItem.url};g.needsReview=false;}else if(storeItem.args)g.launch={args:storeItem.args};}
       const resolved=session.resolved?.get(g.path.toLowerCase()),detectedKey=session.items.find(i=>i.path.toLowerCase()===g.path.toLowerCase())?.platformKey||null;if(resolved&&(!chosenPlatform||!detectedKey||chosenPlatform.key===detectedKey)){if(resolved.raId){g.raId=resolved.raId;g.raSource='hash';}if(resolved.canonicalName){g.canonicalName=resolved.canonicalName;if(resolved.dat?.title&&g.title===resolved.dat.title)g.titleSource='dat';}if(resolved.dat)g.dat=resolved.dat;if(resolved.steamAppId&&g.profile==='pc'){g.metadataSteamAppId=resolved.steamAppId;}if(resolved.identificationReasons?.length)g.identification={reasons:resolved.identificationReasons,at:new Date().toISOString()};}
       const warnings=[];if(item.choice){const choice=externalChoices.get(item.choice);g.title=choice.name;g.metadata={};if(!resolved?.raId){delete g.raId;delete g.raSource;}if(body.deferred){pendingFinish.set(g.id,{choice});if(choice.previewArt&&!g.art?.cover&&isFile(path.join(dataDir,'art',path.basename(choice.previewArt))))g.art={...(g.art||{}),cover:path.basename(choice.previewArt)};}else try{warnings.push(...await providers.enrich(g,{igdb:choice.igdb,sgdb:choice.sgdb,free:choice.free}));}catch(e){warnings.push(e.message);}}
       if(item.gameRoot&&body.deferred&&['pc','ps3','vita3k','shadps4'].includes(g.profile)){g.gameRoot=item.gameRoot;pendingFinish.set(g.id,{...(pendingFinish.get(g.id)||{}),root:item.gameRoot});}
