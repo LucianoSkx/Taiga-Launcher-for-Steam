@@ -6,7 +6,8 @@ import path from 'node:path';
 import {Legendary} from '../lib/legendary.mjs';
 import {parseDesktopEntry, listShortcuts} from '../lib/shortcut-folder.mjs';
 import {iconSourceFor, themeIcon} from '../lib/exe-icon-source.mjs';
-import {resolveDownload} from '../lib/emulator-download.mjs';
+import {resolveDownload, extractArchive} from '../lib/emulator-download.mjs';
+import {execFileSync} from 'node:child_process';
 import {launchFor} from '../lib/games.mjs';
 import {LaunchEngine, processSnapshot} from '../lib/launch-engine.mjs';
 import {EventEmitter} from 'node:events';
@@ -20,6 +21,14 @@ test('Linux: snapshot de processos tem born em epoch ms e name para adotar jogo 
  assert.ok(rows.every(r => typeof r.name === 'string'));
  const steam = rows.find(r => /steam/i.test(r.name));
  assert.ok(steam, 'Steam em execução deve aparecer com name');
+});
+
+test('Linux: extractArchive cria o destino e lê tar.gz (BizHawk)', async () => {
+ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'extract-'));
+ const stage = path.join(dir, 'stage'); fs.mkdirSync(stage); fs.writeFileSync(path.join(stage, 'Mesen'), 'bin');
+ const tgz = path.join(dir, 'mesen.tar.gz'); execFileSync('tar', ['-czf', tgz, '-C', stage, 'Mesen']);
+ const out = path.join(dir, 'out'); await extractArchive(tgz, out);
+ assert.deepEqual(fs.readdirSync(out), ['Mesen']);
 });
 
 test('Linux: LaunchEngine adota o processo do jogo aberto pela Steam (xdg-open sai, jogo continua)', async () => {

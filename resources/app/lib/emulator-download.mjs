@@ -49,6 +49,7 @@ export async function resolveDownload(profile, {fetchImpl = (...a) => fetch(...a
 
 // Baixa, extrai em <destino>\<Nome> e devolve a pasta. A extração usa o tar do próprio Windows (ou Expand-Archive).
 export async function extractArchive(zip, target) {
+ fs.mkdirSync(target, {recursive: true});
  if (/\.tar_?\.(xz|gz|bz2)$|\.tgz$/i.test(zip)) { await run('tar', ['-xf', zip, '-C', target], {timeout: 600000}); return; }
  if (/\.7z$/i.test(zip)) {
   for (const exe of ['7z', '7za']) try { await run(exe, ['x', '-y', '-o' + target, zip], {timeout: 600000}); return; } catch {}
