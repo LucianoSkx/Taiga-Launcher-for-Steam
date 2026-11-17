@@ -72,7 +72,7 @@ test('1.8.0: collection, light issue dot, 2-line titles, sort, recently played, 
   const preload = fs.readFileSync(new URL('../desktop/preload.cjs', import.meta.url), 'utf8'), main = fs.readFileSync(new URL('../desktop/main.cjs', import.meta.url), 'utf8');
   assert.match(preload, /webUtils\.getPathForFile/);
   assert.match(main, /preload:path\.join\(__dirname,'preload\.cjs'\)/);
-  assert.match(main, /extensions:\['exe','lnk'\]/);
+  assert.match(main, /extensions:process\.platform==='win32'\?\['exe','lnk'\]:\['sh'\]/);
 });
 
 test('1.8.0: Accounts as cards with official logos; toggles not all white; texts in 5 languages', async () => {

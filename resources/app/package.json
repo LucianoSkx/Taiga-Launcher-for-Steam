@@ -19,7 +19,7 @@
   "devDependencies": {
     "electron": "44.7.1"
   },
-  "taigaUpdates": "GabrielTaiga/taiga-launcher",
+  "taigaUpdates": "LucianoSkx/Taiga-Launcher-for-Steam",
   "taigaDiscord": "",
   "taigaServer": "https://taiga-launcher.taigadominio.workers.dev",
   "author": "Taiga (GabrielTaiga)",
