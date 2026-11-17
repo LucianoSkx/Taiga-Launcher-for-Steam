@@ -22,7 +22,8 @@ jobs:
         working-directory: resources/app
         run: |
           npm ci
-          npm rebuild electron
+          # O postinstall do electron é ignorado em alguns runners; baixa o binário explicitamente.
+          node node_modules/electron/install.js
           test -x node_modules/electron/dist/electron || { echo "Binário do Electron não baixado" >&2; exit 1; }
           du -sh node_modules
 
