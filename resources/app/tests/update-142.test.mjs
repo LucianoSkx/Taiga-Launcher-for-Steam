@@ -73,9 +73,9 @@ test('The PC sweep finds a PSP ISO anywhere and ignores an ISO that is not a gam
 
 test('Emulator download picks the official Windows zip of the latest release',async()=>{
  const fetchImpl=async url=>/duckstation/.test(url)?json({tag_name:'v0.1-9999',assets:[{name:'duckstation-windows-arm64-release.zip',browser_download_url:'https://github.com/x/arm.zip'},{name:'duckstation-windows-x64-release.zip',browser_download_url:'https://github.com/stenzek/duckstation/releases/download/latest/duckstation-windows-x64-release.zip',size:10}]}):json({tag_name:'v1.19.3',assets:[]});
- const d=await resolveDownload('ps1',{fetchImpl});assert.match(d.url,/duckstation-windows-x64-release\.zip$/);
- const p=await resolveDownload('psp',{fetchImpl});assert.equal(p.url,'https://www.ppsspp.org/files/1_19_3/ppsspp_win.zip');
- await assert.rejects(resolveDownload('ps3',{fetchImpl}),/não tem pacote para Windows/);await assert.rejects(resolveDownload('dolphin',{fetchImpl}),/download automático/);
+ const d=await resolveDownload('ps1',{fetchImpl,platform:'win32'});assert.match(d.url,/duckstation-windows-x64-release\.zip$/);
+ const p=await resolveDownload('psp',{fetchImpl,platform:'win32'});assert.equal(p.url,'https://www.ppsspp.org/files/1_19_3/ppsspp_win.zip');
+ await assert.rejects(resolveDownload('ps3',{fetchImpl,platform:'win32'}),/não tem pacote para Windows/);await assert.rejects(resolveDownload('dolphin',{fetchImpl,platform:'win32'}),/download automático/);
 });
 
 test('Live add script creates the shortcut, sets every field, artwork and the SteamTaiga collection',async()=>{

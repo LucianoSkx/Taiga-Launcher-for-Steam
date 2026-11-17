@@ -6,6 +6,24 @@ import path from 'node:path';
 import {Legendary} from '../lib/legendary.mjs';
 import {parseDesktopEntry, listShortcuts} from '../lib/shortcut-folder.mjs';
 import {iconSourceFor, themeIcon} from '../lib/exe-icon-source.mjs';
+import {resolveDownload} from '../lib/emulator-download.mjs';
+
+test('Download de emulador no Linux: AppImage/tar oficial, nunca pacote Windows', async () => {
+ const json = o => ({ok: true, json: async () => o});
+ const fetchImpl = async url => {
+  const name = /rpcs3-binaries-linux/.test(url) ? [
+   {name: 'rpcs3-v0.0.43_linux64.AppImage', browser_download_url: 'https://github.com/rpcs3/linux_rpcs3.AppImage', size: 10},
+   {name: 'rpcs3-v0.0.43_win64.7z', browser_download_url: 'https://github.com/rpcs3/win.7z'}] : [
+   {name: 'DuckStation-x64.AppImage', browser_download_url: 'https://github.com/duckstation/DuckStation-x64.AppImage', size: 10},
+   {name: 'duckstation-windows-x64-release.zip', browser_download_url: 'https://github.com/duckstation/windows.zip'}];
+  return json({tag_name: 'v1', assets: name});
+ };
+ const ps1 = await resolveDownload('ps1', {fetchImpl, platform: 'linux'});
+ assert.match(ps1.url, /DuckStation-x64\.AppImage$/);
+ const ps3 = await resolveDownload('ps3', {fetchImpl, platform: 'linux'});
+ assert.match(ps3.url, /rpcs3-binaries-linux|linux_rpcs3\.AppImage/);
+ await assert.rejects(resolveDownload('ares', {fetchImpl, platform: 'linux'}), /não está disponível para Linux/);
+});
 
 test('Ícones no Linux: tema pelo nome do executável; sem ícone, {exe:\'\'} faz os consumidores pularem o fileIcon', () => {
  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'icons-'));
