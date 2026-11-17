@@ -150,6 +150,39 @@ PPSSPP, PCSX2, DuckStation, ePSXe, RPCS3, Vita3K, shadPS4, Dolphin, Cemu, Ryujin
 
 > O Windows pode mostrar "O Windows protegeu o computador" porque o programa ainda não tem assinatura digital. Clique em **Mais informações › Executar assim mesmo**.
 
+### Linux (neste fork)
+
+Este fork adiciona suporte a Linux. A interface é a mesma do Windows; o que muda é como ele é iniciado.
+
+**Requisitos:** Linux 64 bits, Node.js 22+, Steam instalada e Chrome/CEF (a Steam fornece). Jogos Windows `.exe` precisam de Wine ou binfmt para rodar.
+
+**Instalar no sistema** (atalho no menu, independente do checkout):
+
+```bash
+git clone https://github.com/LucianoSkx/Taiga-Launcher-for-Steam
+cd Taiga-Launcher-for-Steam/resources/app && npm install && cd ../..
+tools/install-linux.sh
+```
+
+Depois abra **Taiga Launcher** no menu ou rode `taiga-launcher`. Para atualizar, rode `tools/install-linux.sh` de novo.
+
+**Pasta portátil** (app + dados juntos, sem instalar nada — pode mover para outro PC ou pendrive):
+
+```bash
+tools/build-portable-linux.sh
+# gera dist/Taiga-Launcher-Portable/iniciar-taiga.sh
+```
+
+**Rodar direto do repo**, sem instalar:
+
+```bash
+cd resources/app && npm install && npm start
+```
+
+Na primeira abertura, o Taiga detecta a Steam em `~/.local/share/Steam` (ou flatpak) e configura o marcador `.cef-enable-remote-debugging`. Os dados ficam em `~/.local/share/Taiga Launcher/` (XDG).
+
+> A atualização automática foi desligada no Linux: as Releases do projeto original são para Windows. Atualize puxando `git pull` no fork e rodando `tools/install-linux.sh`.
+
 ---
 
 ## ❓ Perguntas frequentes
