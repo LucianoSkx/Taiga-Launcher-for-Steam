@@ -5,6 +5,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {auxiliaryExecutable} from './games.mjs';
 
+const isFile = f => { try { return fs.statSync(f).isFile(); } catch { return false; } };
+
 // Leitura direta do formato Shell Link (.lnk, MS-SHLLINK), sem PowerShell.
 export function parseLnk(buf) {
  if (!Buffer.isBuffer(buf) || buf.length < 76 || buf.readUInt32LE(0) !== 0x4c) throw Error('Atalho inválido.');
@@ -33,9 +35,30 @@ export function parseLnk(buf) {
 }
 export function parseUrlFile(text) { const m = String(text || '').match(/^\s*URL\s*=\s*(.+?)\s*$/mi); return m ? m[1] : ''; }
 
+// .desktop (Linux): seção [Desktop Entry] com Name, Exec e Path; os códigos de campo (%f, %u...) saem do Exec.
+// Com `exists`, o alvo é o primeiro argumento que existe como arquivo (Exec pode embrulhar o jogo: wine, env...).
+export function parseDesktopEntry(text, exists) {
+ let entry = false, name = '', exec = '', dir = '';
+ for (const line of String(text || '').split(/\r?\n/)) {
+  if (/^\s*\[/.test(line)) { entry = line.trim() === '[Desktop Entry]'; continue; }
+  if (!entry) continue;
+  const m = line.match(/^([^=#\s][^=]*)=(.*)$/); if (!m) continue;
+  const key = m[1].trim(), value = m[2].trim();
+  if (key === 'Name' && !name) name = value;
+  else if (key === 'Exec') exec = value;
+  else if (key === 'Path') dir = value;
+ }
+ if (!exec) return null;
+ const argv = exec.replace(/%%/g, '\0').replace(/%\w/g, '').split('\0').join('%').match(/"[^"]*"|[^\s]+/g) || [];
+ const unq = a => a.replace(/^"|"$/g, '');
+ let target = unq(argv[0] || ''), rest = argv.slice(1);
+ if (exists) { const i = argv.findIndex(a => path.isAbsolute(unq(a)) && exists(unq(a))); if (i > 0) { target = unq(argv[i]); rest = argv.slice(i + 1); } }
+ return {name, target, args: rest.map(unq).join(' '), workingDir: dir};
+}
+
 // Atalhos sempre trazem caminhos do Windows; path.win32 mantém o resultado certo em qualquer sistema.
 const dirOf = p => /^[a-z]:[\\/]|^\\\\/i.test(p) ? path.win32.dirname(p) : path.dirname(p);
-const SHORTCUT = /\.(lnk|url|exe)$/i;
+const SHORTCUT = /\.(lnk|url|exe|desktop)$/i;
 // Lista os atalhos da pasta (só o primeiro nível e uma subpasta, para organizar por loja se quiser).
 export function listShortcuts(folder) {
  const out = [], errors = [];
@@ -54,6 +77,7 @@ export function listShortcuts(folder) {
    const name = exes.length === 1 ? path.basename(dir).trim() : d.name.replace(SHORTCUT, '').trim();
    try {
     if (ext === '.exe') out.push({file, name, kind: 'exe', target: file, args: '', workingDir: path.dirname(file)});
+    else if (ext === '.desktop') { const entry = parseDesktopEntry(fs.readFileSync(file, 'utf8'), isFile); if (!entry?.target) throw Error('Atalho inválido.'); out.push({file, name: entry.name || name, kind: 'desktop', target: entry.target, args: entry.args, workingDir: entry.workingDir || dirOf(entry.target)}); }
     else if (ext === '.lnk') { const l = parseLnk(fs.readFileSync(file)); const target = l.target || (l.relativePath ? path.resolve(dir, l.relativePath) : ''); if (!/\.exe$/i.test(target)) throw Error('O atalho não aponta para um .exe.'); out.push({file, name, kind: 'lnk', target, args: l.arguments || '', workingDir: l.workingDir || dirOf(target)}); }
     else { const url = parseUrlFile(fs.readFileSync(file, 'utf8')); if (!url) throw Error('Atalho de internet sem endereço.'); if (/^steam:\/\//i.test(url)) continue; out.push({file, name, kind: 'url', url}); }
    } catch (e) { errors.push({file, message: e.message}); }

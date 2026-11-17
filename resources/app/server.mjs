@@ -74,7 +74,7 @@ import {epicPlaytime,gogPlaytime,playnitePlaytime,applyImported} from './lib/pla
 import {openSecrets,sealSecrets} from './lib/secret-box.mjs';
 import {PortLogWatcher,portOf,portLogFiles} from './lib/port-trophies.mjs';
 import {validXbox,xstsFromMsa} from './lib/xbox-auth.mjs';
-import {listShortcuts,epicFromUrl} from './lib/shortcut-folder.mjs';
+import {listShortcuts,epicFromUrl,parseDesktopEntry} from './lib/shortcut-folder.mjs';
 import {StoreAchievements,parseEpicAccount,gogProductId} from './lib/store-achievements.mjs';
 import {downloadable,downloadEmulator} from './lib/emulator-download.mjs';
 import {discoverGameFolders,sweepRoots,emulatorSearchRoots,emulatorGameFolders,collapseFolders,windowsDrives,linuxRoots} from './lib/discover.mjs';
@@ -234,7 +234,17 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
  async function createGameShortcuts(g,{desktop=false,startMenu=false}={}){
   const id=Number(g.bindings?.[config.account])>>>0;if(!id||(!desktop&&!startMenu))return;
   const url='steam://rungameid/'+((BigInt(id)<<32n)|0x02000000n).toString(),icon=isFile(g.path)?g.path:'';
-  const body='[InternetShortcut]\r\nIDList=\r\nURL='+url+'\r\n'+(icon?'IconIndex=0\r\nIconFile='+icon+'\r\n':''),name=String(g.title).replace(/[<>:"/\\|?*\x00-\x1f]/g,'').trim().slice(0,120)||'Jogo';
+  const name=String(g.title).replace(/[<>:"/\\|?*\x00-\x1f]/g,'').trim().slice(0,120)||'Jogo';
+  if(process.platform!=='win32'){
+   // Linux: atalho .desktop no Desktop e em applications, com o comando da Steam (nativo ou flatpak) recebendo a URL steam://.
+   const dataShare=process.env.XDG_DATA_HOME||path.join(os.homedir(),'.local/share');
+   const run=String(process.env.PATH||'').split(':').some(d=>isFile(path.join(d,'steam')))?'steam':(['/var/lib/flatpak/exports/bin',path.join(dataShare,'flatpak/exports/bin')].some(d=>isFile(path.join(d,'com.valvesoftware.Steam')))?'flatpak run com.valvesoftware.Steam':'steam');
+   const body='[Desktop Entry]\nType=Application\nName='+name+'\nExec='+run+' '+url+'\nIcon=steam\nTerminal=false\n';
+   if(desktop){const dir=path.join(os.homedir(),'Desktop');if(fs.existsSync(dir))try{fs.writeFileSync(path.join(dir,name+'.desktop'),body);}catch{}}
+   if(startMenu){const dir=path.join(dataShare,'applications');try{fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,name+'.desktop'),body);}catch{}}
+   return;
+  }
+  const body='[InternetShortcut]\r\nIDList=\r\nURL='+url+'\r\n'+(icon?'IconIndex=0\r\nIconFile='+icon+'\r\n':'');
   if(desktop){desktopDir??=await shellFolder('Desktop');if(desktopDir)try{fs.writeFileSync(path.join(desktopDir,name+'.url'),body);}catch{}}
   if(startMenu){const dir=await shellFolder('Programs');if(dir)try{fs.writeFileSync(path.join(dir,name+'.url'),body);}catch{}}}
  async function startInstall(g,{via='',dir='',shortcuts=null}={}){
@@ -258,7 +268,8 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
  // Arquivos escolhidos à mão: atalhos (.lnk/.url) viram o jogo de destino. Atalho do Xbox (shell:AppsFolder, sem
  // arquivo de destino) é ligado ao jogo do Xbox pela família do pacote ou pelo nome do atalho.
  async function resolvePicked(paths){let stores=null;const getStores=async()=>stores??=(await scanStores().catch(()=>({items:[]}))).items||[];const norm=t=>String(t||'').toLowerCase().replace(/[^a-z0-9]+/g,'');const out=[];
-  for(const file of paths){if(!/\.(lnk|url)$/i.test(file)){out.push(file);continue;}
+  for(const file of paths){if(!/\.(lnk|url|desktop)$/i.test(file)){out.push(file);continue;}
+   if(/\.desktop$/i.test(file)){let d=null;try{d=parseDesktopEntry(fs.readFileSync(file,'utf8'),isFile);}catch{}if(d&&isFile(d.target)){out.push(d.target);continue;}out.push(file);continue;}
    let target='';if(/\.lnk$/i.test(file)){try{target=readShortcut?String(readShortcut(file)||''):'';}catch{}if(!target)try{target=lnkTarget(file);}catch{}}
    if(target&&isFile(target)&&!/\.(lnk|url)$/i.test(target)){out.push(target);continue;}
    let raw='';try{const b=fs.readFileSync(file);raw=(b.toString('utf16le')+'\n'+b.toString('latin1')).toLowerCase();}catch{}
@@ -1017,7 +1028,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
      const action=String(body.action||'');
      if(action==='create'||action==='set'){let folder=action==='create'?defaultShortcutFolder():String(body.path||'').trim();if(!folder)throw Error('Escolha uma pasta.');fs.mkdirSync(folder,{recursive:true});config.shortcutFolder=folder;saveConfig();watchShortcutFolder();}
      if(action==='disable'){config.shortcutFolder='';saveConfig();watchShortcutFolder();return send({folder:''});}
-     if(action==='open'||action==='create'){if(process.platform==='win32'&&config.shortcutFolder)try{spawn(explorer(),[config.shortcutFolder],{detached:true,stdio:'ignore'}).unref();}catch{}}
+     if(action==='open'||action==='create'){if(process.platform==='win32'&&config.shortcutFolder)try{spawn(explorer(),[config.shortcutFolder],{detached:true,stdio:'ignore'}).unref();}catch{}else if(process.platform==='linux'&&config.shortcutFolder)try{spawn('xdg-open',[config.shortcutFolder],{detached:true,stdio:'ignore'}).unref();}catch{}}
      const result=await syncShortcutFolder();return send({folder:config.shortcutFolder||'',...result});}
     if(route==='/api/epic-login'){if(!epicLogin)throw Error('O login da Epic só está disponível no aplicativo do Taiga Launcher.');const code=await epicLogin();if(!code)return send({cancelled:true});config.epicAuth=await exchangeCode(code);saveConfig();for(const g of db.games.filter(x=>!x.hidden&&!x.demo&&['pc','custom','store'].includes(x.profile)&&achievementManager.isEpicGame(x)))achievementManager.get(g,{live:true}).catch(()=>{});if(config.preferences.showUninstalled)syncStoreLibrary().catch(()=>{});return send({message:'Conta Epic conectada'+(config.epicAuth.displayName?': '+config.epicAuth.displayName:'')+'.',name:config.epicAuth.displayName||''});}
     if(route==='/api/xbox-login'){if(!xboxLogin)throw Error('O login da Microsoft só está disponível no aplicativo do Taiga Launcher.');const msa=await xboxLogin();if(!msa)return send({cancelled:true});const xsts=await xstsFromMsa(msa);config.xboxAuth={msa,xsts,gamertag:xsts.gamertag,xuid:xsts.xuid};saveConfig();for(const g of db.games.filter(x=>!x.hidden&&x.store?.name==='xbox'))achievementManager.get(g,{live:true}).catch(()=>{});if(config.preferences.showUninstalled)syncStoreLibrary().catch(()=>{});return send({message:'Conta Xbox conectada'+(xsts.gamertag?': '+xsts.gamertag:'')+'.'});}
@@ -1057,7 +1068,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
       if(body.sweep!==false)try{const sw=await inventory('sweep',sweepRoots({skip:discovered.paths,...(body.sweep==='home'?{drives:[]}:{})}));sweepFiles=sw.files||[];}catch{}
       config.discoveredAt=new Date().toISOString();saveConfig();
      }
-     let pickedStores=null;if(!discovering&&Array.isArray(body.paths)&&body.paths.some(p=>/\.(lnk|url|exe)$/i.test(p))){const r=await resolvePicked(body.paths);body.paths=r.paths;pickedStores=r.stores;}
+     let pickedStores=null;if(!discovering&&Array.isArray(body.paths)&&body.paths.some(p=>/\.(lnk|url|exe|desktop)$/i.test(p))){const r=await resolvePicked(body.paths);body.paths=r.paths;pickedStores=r.stores;}
      if(discovering&&!body.paths.length&&!sweepFiles.length&&body.stores===false)return send({items:[],existing:[],skipped:0,errors:[],scanId:null,folders:[],sources:[]});
      const scanned=body.paths?.length||!discovering?await inventory('scan',body.paths||config.roots):{files:[],errors:[]},scanResult={files:[...new Set([...scanned.files,...sweepFiles])],errors:scanned.errors},errors=discovering?scanResult.errors.filter(e=>!/muito grande|ENOENT|EPERM|EACCES/i.test(e.message||e)):[...scanResult.errors];
      const sweptOnly=new Set(sweepFiles.filter(f=>!scanned.files.includes(f)).map(f=>f.toLowerCase()));
@@ -1066,7 +1077,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
      // Achados soltos pela varredura só entram com prova no conteúdo (cabeçalho) ou dentro de pasta de plataforma.
      if(sweptOnly.size)inspected.items=inspected.items.filter(i=>!sweptOnly.has(String(i.path).toLowerCase())||['header','folder'].includes(i.platformSource));
      // Busca automática: só jogos de emulador (o arquivo prova o jogo). Jogos de PC vêm das lojas ou da Pasta de atalhos.
-     if(discovering)inspected.items=inspected.items.filter(i=>i.profile!=='pc'&&!/\.(exe|bat|cmd|lnk)$/i.test(i.path));
+     if(discovering)inspected.items=inspected.items.filter(i=>i.profile!=='pc'&&!/\.(exe|bat|cmd|lnk|desktop)$/i.test(i.path));
      // Busca de um emulador só (aba Emuladores): só os jogos que ele abre.
      if(body.profile&&REGISTRY_PROFILES[body.profile]){const pf=REGISTRY_PROFILES[body.profile],plats=pf.platforms||[pf.platform];inspected.items=inspected.items.filter(i=>i.profile===body.profile||plats.includes(i.platformName));}
      if(pickedStores?.length)inspected.items=inspected.items.map(i=>{const lp=String(i.path).toLowerCase(),st=pickedStores.find(x=>x.path.toLowerCase()===lp)||pickedStores.find(x=>x.store==='xbox'&&x.root&&lp.startsWith(String(x.root).toLowerCase().replace(/[\\/]+$/,'')+path.sep));return st?storeInfo(i,st):i;});

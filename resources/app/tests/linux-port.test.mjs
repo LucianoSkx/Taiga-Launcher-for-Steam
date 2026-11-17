@@ -4,6 +4,27 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {Legendary} from '../lib/legendary.mjs';
+import {parseDesktopEntry, listShortcuts} from '../lib/shortcut-folder.mjs';
+
+test('.desktop: Exec com códigos de campo e aspas vira alvo + argumentos; listShortcuts aceita .desktop', () => {
+ const d = parseDesktopEntry('[Desktop Entry]\nName=Celeste\nExec=wine "/home/eu/Jogos/Celeste/Celeste.exe" %U\nPath=/home/eu/Jogos/Celeste\nType=Application\n', p => p.endsWith('.exe'));
+ assert.equal(d.target, '/home/eu/Jogos/Celeste/Celeste.exe');
+ assert.equal(d.args, '');
+ assert.equal(d.workingDir, '/home/eu/Jogos/Celeste');
+ assert.equal(d.name, 'Celeste');
+ assert.equal(parseDesktopEntry('[Desktop Entry]\nExec=wine /jogos/game.exe\n').target, 'wine');
+ const flat = parseDesktopEntry('[Desktop Entry]\nExec=flatpak run org.example.Game --fullscreen\n');
+ assert.equal(flat.target, 'flatpak');
+ assert.equal(flat.args, 'run org.example.Game --fullscreen');
+ assert.equal(parseDesktopEntry('[Outro]\nExec=x\n'), null);
+ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'desk-'));
+ fs.writeFileSync(path.join(dir, 'game.exe'), '');
+ fs.writeFileSync(path.join(dir, 'Celeste.desktop'), '[Desktop Entry]\nName=Celeste\nExec=wine ' + path.join(dir, 'game.exe') + '\n');
+ const items = listShortcuts(dir).items;
+ assert.equal(items[0].kind, 'desktop');
+ assert.equal(items[0].target, path.join(dir, 'game.exe'));
+ assert.equal(items[0].name, 'Celeste');
+});
 
 test('Legendary no Linux: binário do sistema no PATH é usado; sem ele, o erro orienta a instalação', async () => {
  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lg-linux-'));
