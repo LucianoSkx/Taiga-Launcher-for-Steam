@@ -3,7 +3,7 @@ name: Release Linux (portátil)
 on:
   push:
     tags:
-      - 'v*-linux'
+      - 'v*-linux*'
 
 permissions:
   contents: write
