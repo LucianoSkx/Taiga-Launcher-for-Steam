@@ -7,6 +7,15 @@ import {Legendary} from '../lib/legendary.mjs';
 import {parseDesktopEntry, listShortcuts} from '../lib/shortcut-folder.mjs';
 import {iconSourceFor, themeIcon} from '../lib/exe-icon-source.mjs';
 import {resolveDownload} from '../lib/emulator-download.mjs';
+import {launchFor} from '../lib/games.mjs';
+
+test('Linux: jogo Windows é lançado pelo atalho da Steam (Proton), nunca .exe direto', () => {
+ const g = {profile: 'pc', path: '/mnt/games/Hades/Hades.exe', bindings: {1: 123456}, appId: 123456};
+ assert.deepEqual(launchFor(g, {account: '1'}, 'demo', 'linux'), {exe: 'xdg-open', args: '"steam://rungameid/123456"'});
+ assert.deepEqual(launchFor(g, {account: '1'}, 'demo', 'win32'), {exe: '/mnt/games/Hades/Hades.exe', args: ''});
+ const fresh = {profile: 'pc', path: '/mnt/games/Novo/game.exe', bindings: {}, appId: 0};
+ assert.deepEqual(launchFor(fresh, {account: '1'}, 'demo', 'linux'), {exe: 'xdg-open', args: '"steam://open/main"'});
+});
 
 test('Download de emulador no Linux: AppImage/tar oficial, nunca pacote Windows', async () => {
  const json = o => ({ok: true, json: async () => o});

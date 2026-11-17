@@ -931,7 +931,13 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
     if(route==='/api/store-install-cancel'){const g=getGame(body.id);return send(await cancelInstall(g));}
     if(route==='/api/store-install-state'){const g=getGame(body.id);return send(installState(g));}
     if(route==='/api/play'){
-     const g=getGame(body.id);if(!launcherExecutable||g.native||g.demo)throw Error('Abra o aplicativo desktop para iniciar um jogo local.');if(g.notInstalled)return send(await startInstall(g));if(!isFile(g.path))throw Error('Arquivo do jogo não encontrado.');launchFor(g,config,demoExecutable);
+     const g=getGame(body.id);if(!launcherExecutable||g.native||g.demo)throw Error('Abra o aplicativo desktop para iniciar um jogo local.');if(g.notInstalled)return send(await startInstall(g));
+     // Linux: jogos Windows rodam pela Steam (Proton). Se ainda não têm appId, sincroniza antes de abrir.
+     if(process.platform!=='win32'&&/\.exe$/i.test(g.path)&&!Number(g.appId||g.bindings?.[config.account]||0)){
+      const result=await sync([g.id],{restart:config.preferences?.closeSteam!==false,openSteam:true,installIntegration:false});
+      if(result.error||result.failedIds?.length)throw Error(result.error||'Não foi possível adicionar o jogo à Steam.');
+     }
+     if(!isFile(g.path))throw Error('Arquivo do jogo não encontrado.');launchFor(g,config,demoExecutable);
      const child=spawn(launcherExecutable,['--taiga-launch',g.uuid],{detached:true,stdio:'ignore',windowsHide:true});await new Promise((resolve,reject)=>{child.once('spawn',resolve);child.once('error',reject);});child.unref();return send({message:'Iniciando jogo.'});
     }
     if(route==='/api/job-retry'){queue.retry(body.id);return send({message:'Tarefa agendada novamente.'});}

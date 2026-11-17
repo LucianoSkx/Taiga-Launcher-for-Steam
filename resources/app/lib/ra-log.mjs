@@ -33,6 +33,13 @@ export function raLogCandidates(config = {}, env = process.env) {
  add(exe('psp') || (config.emulator ? path.dirname(config.emulator) : ''), 'memstick', 'PSP', 'SYSTEM', 'log.txt'); add(exe('psp') || (config.emulator ? path.dirname(config.emulator) : ''), 'log.txt'); add(docs, 'PPSSPP', 'PSP', 'SYSTEM', 'log.txt');
  add(env.APPDATA, 'Dolphin Emulator', 'Logs', 'dolphin.log'); add(docs, 'Dolphin Emulator', 'Logs', 'dolphin.log'); add(exe('dolphin'), 'User', 'Logs', 'dolphin.log');
  add(exe('ps1'), 'RACache', 'RALog.txt'); add(docs, 'DuckStation', 'RACache', 'RALog.txt');
+ // Linux: os emuladores guardam log/config em ~/.config (APPDATA normalizado) ou ao lado do executável.
+ const cfg = env.APPDATA || '', local = env.LOCALAPPDATA || '';
+ add(cfg, 'retroarch', 'retroarch.log'); add(cfg, 'retroarch', 'logs', 'retroarch.log');
+ add(cfg, 'pcsx2', 'logs', 'emulog.txt'); add(local, 'pcsx2', 'logs', 'emulog.txt');
+ add(cfg, 'ppsspp', 'PSP', 'SYSTEM', 'log.txt'); add(cfg, 'ppsspp', 'log.txt');
+ add(cfg, 'dolphin-emu', 'Logs', 'dolphin.log'); add(local, 'dolphin-emu', 'Logs', 'dolphin.log');
+ add(cfg, 'duckstation', 'RACache', 'RALog.txt'); add(exe('ps1'), 'RACache', 'RALog.txt');
  return [...new Set(out)];
 }
 

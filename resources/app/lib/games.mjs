@@ -199,12 +199,21 @@ export function measureGameFolder(input){
  const root=fs.realpathSync(input);if(!fs.statSync(root).isDirectory()||root===path.parse(root).root||/^(windows|users|program files(?: \(x86\))?|games|jogos|downloads|desktop|common|steamapps)$/i.test(path.basename(root)))throw Error('Escolha a pasta de um único jogo, não a biblioteca ou o disco inteiro.');
  let bytes=0,files=0,entries=0;const stack=[root];while(stack.length){const dir=stack.pop();for(const entry of fs.readdirSync(dir,{withFileTypes:true})){if(++entries>200000)throw Error('Pasta muito grande para medir. Escolha somente a pasta deste jogo.');const file=path.join(dir,entry.name);if(entry.isSymbolicLink())continue;if(entry.isDirectory())stack.push(file);else if(entry.isFile()){bytes+=fs.statSync(file).size;files++;}}}return {root,bytes,files,at:new Date().toISOString()};
 }
-export function launchFor(g,config,demoExecutable){
+export function launchFor(g,config,demoExecutable,platform=process.platform){
  if(g.demo)return {exe:demoExecutable,args:'--taiga-demo '+g.id};
  // Jogo de loja ainda não instalado: o atalho abre o Taiga Launcher, que instala.
  if(g.notInstalled)return {exe:demoExecutable||process.execPath,args:'--taiga-launch '+(g.uuid||g.id)};
  const profile=g.profile||'psp';if(!PROFILES[profile])throw Error('Perfil de execução inválido.');
- if(profile==='pc'){if(!/\.exe$/i.test(g.path))throw Error('Um jogo Windows precisa de um arquivo .exe.');return {exe:g.path,args:g.launch?.args||''};}
+ if(profile==='pc'){
+  if(!/\.exe$/i.test(g.path)&&platform==='win32')throw Error('Um jogo Windows precisa de um arquivo .exe.');
+   // Linux: o Taiga não executa .exe — o atalho da Steam (com Proton) é o lançador. Sem appId, /api/play avisa.
+  if(platform!=='win32'&&/\.exe$/i.test(g.path)){
+   const appId=Number(g.appId||g.bindings?.[config.account]||0)>>>0;
+    if(!appId)return {exe:'xdg-open',args:'"steam://open/main"'};
+   return {exe:'xdg-open',args:'"steam://rungameid/'+appId+'"'};
+  }
+  return {exe:g.path,args:g.launch?.args||''};
+ }
  // Jogos de lojas que exigem o próprio iniciador (Epic gerenciado, Ubisoft, Amazon): abre o link da loja.
  if(profile==='store'){const exe=g.launch?.exe;if(!exe||!fs.existsSync(exe))throw Error('Iniciador da loja não encontrado para '+g.title);const args=String(g.launch?.args||'');if(/[\r\n\0"]/.test(args))throw Error('Link da loja inválido.');
   // Riot Client: argumentos de produto (não é um link). Xbox: shell:AppsFolder\<família>!<app>.
