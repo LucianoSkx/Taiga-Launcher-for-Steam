@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Taiga Launcher
+Comment=Seus jogos de emulador, PC e outras lojas dentro da Steam
+Exec=taiga-launcher
+Icon=taiga-launcher
+Terminal=false
+Categories=Game;
