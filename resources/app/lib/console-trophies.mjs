@@ -58,6 +58,10 @@ export function vita3kRoots(config = {}, env = process.env) {
  }
  const appdata = env.APPDATA;
  if (appdata) { add(path.join(appdata, 'Vita3K', 'Vita3K')); const cfg = path.join(appdata, 'Vita3K', 'Vita3K', 'config.yml'); if (present(cfg)) { const m = fs.readFileSync(cfg, 'utf8').match(/^pref-path:\s*['"]?([^'"\r\n]+)/m); if (m) add(m[1].trim()); } }
+ for (const base of [path.join(env.LOCALAPPDATA || path.join(env.HOME || '', '.local/share'), 'Vita3K', 'Vita3K'), path.join(appdata || path.join(env.HOME || '', '.config'), 'Vita3K')]) {
+  if (!base || !present(base)) continue; add(base);
+  const cfg = path.join(base, 'config.yml'); if (present(cfg)) { const m = fs.readFileSync(cfg, 'utf8').match(/^pref-path:\s*['"]?([^'"\r\n]+)/m); if (m) add(m[1].trim()); }
+ }
  return [...new Set(roots.map(r => path.resolve(r)))];
 }
 // Conjunto de troféus do jogo instalado: sce_sys/trophy/<NPWR>/TROPHY.TRP.
@@ -89,6 +93,7 @@ export function shadps4Roots(config = {}, env = process.env) {
  const exe = config.launchers?.shadps4?.exe;
  if (exe) add(path.join(path.dirname(exe), 'user'));
  if (env.APPDATA) add(path.join(env.APPDATA, 'shadPS4'));
+ for (const base of [path.join(env.APPDATA || path.join(env.HOME || '', '.config'), 'shadps4'), path.join(env.LOCALAPPDATA || path.join(env.HOME || '', '.local/share'), 'shadps4')]) if (base && present(base)) add(base);
  return [...new Set(roots.map(r => path.resolve(r)))].filter(dir);
 }
 // npbind.dat do jogo contém o identificador NPWR do conjunto de troféus.

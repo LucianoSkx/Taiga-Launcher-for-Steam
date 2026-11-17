@@ -8,6 +8,37 @@ import {parseDesktopEntry, listShortcuts} from '../lib/shortcut-folder.mjs';
 import {iconSourceFor, themeIcon} from '../lib/exe-icon-source.mjs';
 import {resolveDownload} from '../lib/emulator-download.mjs';
 import {launchFor} from '../lib/games.mjs';
+import {LaunchEngine, processSnapshot} from '../lib/launch-engine.mjs';
+import {EventEmitter} from 'node:events';
+import crypto from 'node:crypto';
+
+test('Linux: snapshot de processos tem born em epoch ms e name para adotar jogo via Proton', async () => {
+ const rows = await processSnapshot();
+ assert.ok(rows.length > 5);
+ const now = Date.now();
+ assert.ok(rows.every(r => r.born > now - 1000 * 60 * 60 * 24 * 365 && r.born <= now + 60000));
+ assert.ok(rows.every(r => typeof r.name === 'string'));
+ const steam = rows.find(r => /steam/i.test(r.name));
+ assert.ok(steam, 'Steam em execução deve aparecer com name');
+});
+
+test('Linux: LaunchEngine adota o processo do jogo aberto pela Steam (xdg-open sai, jogo continua)', async () => {
+ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lg-proton-'));
+ const exe = path.join(dir, 'Jogo.exe'); fs.writeFileSync(exe, 'fake');
+ const uuid = crypto.randomUUID(), now = Date.now(), gamePid = 999000001;
+ let tick = 0; const fake = new EventEmitter(); fake.pid = 999000002;
+ const engine = new LaunchEngine({dir, interval: 2, grace: 4,
+  spawnProcess: () => { queueMicrotask(() => fake.emit('spawn')); return fake; },
+  snapshot: async () => {
+   tick++;
+   if (tick <= 4) return [{pid: gamePid, ppid: 0, born: now - 1000, exe: '/usr/lib/wine/wine64', name: 'jogo.exe'}];
+   return [];
+  }});
+ const r = await engine.run({id: 'x', uuid, path: exe, title: 'Jogo', profile: 'pc', bindings: {1: 123}},
+  {account: '1'}, {command: {exe: 'xdg-open', args: '"steam://rungameid/123"'}});
+ assert.ok(tick > 4, 'deve acompanhar o processo do jogo após o xdg-open sair');
+ assert.equal(r.status, 'ended');
+});
 
 test('Linux: jogo Windows é lançado pelo atalho da Steam (Proton), nunca .exe direto', () => {
  const g = {profile: 'pc', path: '/mnt/games/Hades/Hades.exe', bindings: {1: 123456}, appId: 123456};

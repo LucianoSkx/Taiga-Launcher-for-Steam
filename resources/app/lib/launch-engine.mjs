@@ -25,10 +25,29 @@ export async function shellStart(exe,args,cwd){
 const within=(file,dir)=>{try{const a=path.resolve(String(file)).toLowerCase(),b=path.resolve(String(dir)).toLowerCase();return a===b||a.startsWith(b.endsWith(path.sep)?b:b+path.sep)||a.startsWith(b+'\\')||a.startsWith(b+'/');}catch{return false;}};
 // Pastas do jogo para reconhecer o processo dele quando quem abriu foi outro programa (loja, iniciador, Explorer).
 function gameDirs(game){if(!['pc','store','custom'].includes(game.profile||'psp'))return [];const out=[];for(const d of [game.gameRoot,game.path&&path.dirname(game.path)]){if(!d)continue;const r=path.resolve(String(d));if(r.split(/[\\/]/).filter(Boolean).length<2)continue;if(/[\\/](windows|program files( \(x86\))?|programdata)$/i.test(r))continue;if(!out.some(x=>x.toLowerCase()===r.toLowerCase()))out.push(r);}return out;}
+// Referência de boot única: starttime de /proc é estável, mas Date.now()+uptime lidos a cada chamada variam ~1ms,
+// o que faria `born` mudar entre snapshots e encerrar sessões cedo.
+const BOOT_MS = process.platform === 'linux' ? Date.now() - Math.round(Number(String(fs.readFileSync('/proc/uptime','utf8')).split(/\s+/)[0])*1000) : 0;
 export const processAlive=pid=>{if(!Number.isInteger(pid)||pid<=0)return false;try{process.kill(pid,0);return true;}catch(e){return e.code==='EPERM';}};
 export async function processSnapshot(){
  if(process.platform==='win32'){const code="[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new(); @(Get-CimInstance Win32_Process | Select-Object @{n='pid';e={$_.ProcessId}},@{n='ppid';e={$_.ParentProcessId}},@{n='born';e={([DateTimeOffset]$_.CreationDate).ToUnixTimeMilliseconds()}},@{n='exe';e={$_.ExecutablePath}},@{n='name';e={$_.Name}}) | ConvertTo-Json -Compress";const {stdout}=await exec('powershell.exe',['-NoProfile','-NonInteractive','-EncodedCommand',Buffer.from(code,'utf16le').toString('base64')],{windowsHide:true,timeout:10000,maxBuffer:4*1024*1024});const rows=JSON.parse(stdout.trim()||'[]');return Array.isArray(rows)?rows:[rows];}
- if(process.platform==='linux'){const rows=[],namespace=fs.readlinkSync('/proc/self/ns/pid');for(const name of fs.readdirSync('/proc'))if(/^\d+$/.test(name))try{if(fs.readlinkSync('/proc/'+name+'/ns/pid')!==namespace)continue;const stat=fs.readFileSync('/proc/'+name+'/stat','utf8'),fields=stat.slice(stat.lastIndexOf(')')+2).split(' ');if(fields[0]==='Z')continue;const status=fs.readFileSync('/proc/'+name+'/status','utf8'),ids=status.match(/^NSpid:\s*(.+)$/m)?.[1].trim().split(/\s+/);let exe='';try{exe=fs.readlinkSync('/proc/'+name+'/exe');}catch{}rows.push({pid:Number(ids?.at(-1)||name),host:Number(name),parentHost:Number(fields[1]),born:Number(fields[19]),exe});}catch{}const hostToPid=new Map(rows.map(r=>[r.host,r.pid]));return rows.map(r=>({...r,ppid:hostToPid.get(r.parentHost)||0}));}
+ if(process.platform==='linux'){
+  // /proc/<pid>/stat: campo 19 é starttime em ticks desde o boot (USER_HZ=100), não epoch ms — converte para
+  // Date.now() para que a janela de adoção (spawnAt-3000) funcione. `name` é necessário para achar o jogo aberto
+  // pela Steam via Proton (o exe visível é o wine, o nome do processo é o .exe do jogo).
+  const rows=[],namespace=fs.readlinkSync('/proc/self/ns/pid');
+  for(const pid of fs.readdirSync('/proc'))if(/^\d+$/.test(pid))try{
+   if(fs.readlinkSync('/proc/'+pid+'/ns/pid')!==namespace)continue;
+   const stat=fs.readFileSync('/proc/'+pid+'/stat','utf8'),name=stat.slice(stat.indexOf('(')+1,stat.lastIndexOf(')')),fields=stat.slice(stat.lastIndexOf(')')+2).split(' ');
+   if(fields[0]==='Z')continue;
+   const status=fs.readFileSync('/proc/'+pid+'/status','utf8'),ids=status.match(/^NSpid:\s*(.+)$/m)?.[1].trim().split(/\s+/);
+   let exe='';try{exe=fs.readlinkSync('/proc/'+pid+'/exe');}catch{}
+   const born=BOOT_MS+Math.round(Number(fields[19])/100*1000);
+   rows.push({pid:Number(ids?.at(-1)||pid),host:Number(pid),parentHost:Number(fields[1]),born,exe,name});
+  }catch{}
+  const hostToPid=new Map(rows.map(r=>[r.host,r.pid]));
+  return rows.map(r=>({pid:r.pid,ppid:hostToPid.get(r.parentHost)||0,born:r.born,exe:r.exe,name:r.name}));
+ }
  throw Error('Monitoramento de processos indisponível nesta plataforma.');
 }
 export class SessionStore{
@@ -72,15 +91,15 @@ export class LaunchEngine{
     child=null;viaShell=true;if(pid){tracked.set(pid,{born:null,endedAt:null});record.rootPid=pid;}
    }
    spawned=true;record.status='running';if(child){record.rootPid=child.pid;tracked.set(child.pid,{born:null,endedAt:null});child.once('exit',code=>{exitCode=code;record.rootExitedAt=Date.now();const root=tracked.get(child.pid);if(root)root.endedAt=record.rootExitedAt;});}
-   if(viaShell)record.via='shell';this.store.write(record);let emptyAt=null,failures=0,adopted=0;
+   if(viaShell)record.via='shell';this.store.write(record);let emptyAt=null,failures=0,adopted=0,adoptedAt=0;
    // Lojas e iniciadores que abrem o jogo e fecham (Epic, Riot, "Play ..."), ou abertura pelo Windows: espera o
    // processo do jogo aparecer na pasta dele e passa a acompanhá-lo (tempo de jogo e Steam "jogando" corretos).
-   const watchUntil=()=>{if((game.profile==='store'||viaShell||viaSteam)&&dirs.length+(viaShell?1:0))return spawnAt+90000;if(game.profile==='custom'&&dirs.length&&path.resolve(launch.exe).toLowerCase()!==path.resolve(String(game.path||'')).toLowerCase()&&record.rootExitedAt&&record.rootExitedAt-spawnAt<15000)return record.rootExitedAt+45000;return 0;};
+   const watchUntil=()=>{if(adoptedAt)return adoptedAt+5000;if((viaShell||viaSteam||!command&&game.profile==='store')&&dirs.length+(viaShell?1:0))return spawnAt+90000;if(game.profile==='custom'&&dirs.length&&path.resolve(launch.exe).toLowerCase()!==path.resolve(String(game.path||'')).toLowerCase()&&record.rootExitedAt&&record.rootExitedAt-spawnAt<15000)return record.rootExitedAt+45000;return 0;};
    for(;;){let rows;try{rows=await this.snapshot();failures=0;}catch{failures++;record.warning='PROCESS_SNAPSHOT_FAILED';rows=[...tracked].filter(([pid])=>processAlive(pid)).map(([pid,p])=>({pid,ppid:0,born:p.born}));}
-    const present=new Map(rows.map(r=>[r.pid,r]));for(const [pid,known]of tracked){const row=present.get(pid);if(row&&!(child&&pid===child.pid&&record.rootExitedAt&&process.platform==='win32'&&row.born>record.rootExitedAt)&&(known.born===null||row.born===known.born)){known.born=row.born;known.endedAt=null;}else known.endedAt??=Date.now();}
-    let found=true;while(found){found=false;for(const row of rows){if(tracked.has(row.pid)||!tracked.has(row.ppid))continue;const parent=tracked.get(row.ppid);if(parent.endedAt!==null&&process.platform==='win32'&&row.born>parent.endedAt)continue;tracked.set(row.pid,{born:row.born,endedAt:null});found=true;}}
+    const present=new Map(rows.map(r=>[r.pid,r]));for(const [pid,known]of tracked){const row=present.get(pid);if(row&&!(child&&pid===child.pid&&record.rootExitedAt&&row.born>record.rootExitedAt)&&(known.born===null||row.born===known.born)){known.born=row.born;known.endedAt=null;}else known.endedAt??=Date.now();}
+    let found=true;while(found){found=false;for(const row of rows){if(tracked.has(row.pid)||!tracked.has(row.ppid))continue;const parent=tracked.get(row.ppid);if(parent.endedAt!==null&&row.born>parent.endedAt)continue;tracked.set(row.pid,{born:row.born,endedAt:null});found=true;}}
     let alive=[...tracked].filter(([pid,known])=>{const row=present.get(pid);return row&&known.endedAt===null&&(known.born===null||known.born===row.born);});
-    if(!alive.length&&Date.now()<watchUntil()){for(const row of rows){if(tracked.has(row.pid)||!(row.born>=spawnAt-3000))continue;const exe=String(row.exe||''),name=String(row.name||'').toLowerCase();if((exe&&dirs.some(d=>within(exe,d)))||((viaShell||viaSteam)&&(exe?path.basename(exe).toLowerCase()===base:name===base))){tracked.set(row.pid,{born:row.born,endedAt:null});adopted++;launchLog(this.store.dir,'Processo do jogo encontrado: '+(exe||name)+' (pid '+row.pid+').');}}alive=[...tracked].filter(([pid,known])=>{const row=present.get(pid);return row&&known.endedAt===null&&(known.born===null||known.born===row.born);});}record.seconds=Math.max(0,(performance.now()-started)/1000);record.heartbeatAt=new Date().toISOString();record.processCount=alive.length;record.exitCode=exitCode;this.store.write(record);
+    if(!alive.length&&Date.now()<watchUntil()){for(const row of rows){if(tracked.has(row.pid)||!(row.born>=spawnAt-3000))continue;const exe=String(row.exe||''),name=String(row.name||'').toLowerCase(),gameBase=path.basename(String(game.path||'')).toLowerCase();if((exe&&dirs.some(d=>within(exe,d))&&(name===gameBase||path.basename(exe).toLowerCase()===gameBase))||(viaSteam&&name===gameBase)||(viaShell&&(exe?path.basename(exe).toLowerCase()===base:name===base))){tracked.set(row.pid,{born:row.born,endedAt:null});adopted++;adoptedAt=Date.now();launchLog(this.store.dir,'Processo do jogo encontrado: '+(exe||name)+' (pid '+row.pid+').');}}alive=[...tracked].filter(([pid,known])=>{const row=present.get(pid);return row&&known.endedAt===null&&(known.born===null||known.born===row.born);});}record.seconds=Math.max(0,(performance.now()-started)/1000);record.heartbeatAt=new Date().toISOString();record.processCount=alive.length;record.exitCode=exitCode;this.store.write(record);
     if(captureFd!==null){try{if(fs.fstatSync(captureFd).size>64*1024*1024)fs.ftruncateSync(captureFd,0);}catch{}}
     if(!alive.length&&Date.now()<watchUntil()){emptyAt=null;await pause(this.interval);continue;}
     if(!alive.length){emptyAt??=performance.now();if(performance.now()-emptyAt>=this.grace&&(failures===0||failures>=3)){if(failures>=3)record.warning='MONITORING_INCOMPLETE';break;}}else emptyAt=null;
