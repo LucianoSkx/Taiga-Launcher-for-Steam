@@ -46,6 +46,9 @@ import {SessionStore,UUID,defaultDataDir,portCaptureFile} from './lib/launch-eng
 import {JobQueue} from './lib/job-queue.mjs';
 import {LibraryWatcher} from './lib/library-watcher.mjs';
 import {gameStatus} from './lib/game-status.mjs';
+// Linux: o código usa as variáveis do Windows (USERPROFILE, APPDATA, LOCALAPPDATA) como "pasta do usuário",
+// "config" e "dados". Normaliza uma vez na entrada; testes não herdam isso (precisam ser herméticos).
+if(process.platform!=='win32'&&!process.env.NODE_TEST_CONTEXT){const h=os.homedir();process.env.USERPROFILE??=h;process.env.APPDATA??=path.join(h,'.config');process.env.LOCALAPPDATA??=path.join(h,'.local/share');}
 import {SteamLinkService,steamAppId} from './lib/steam-link.mjs';
 import {AchievementProviderManager} from './lib/achievement-manager.mjs';
 import {platformByKey,platformByName,platformList} from './lib/platforms.mjs';
@@ -74,7 +77,7 @@ import {validXbox,xstsFromMsa} from './lib/xbox-auth.mjs';
 import {listShortcuts,epicFromUrl} from './lib/shortcut-folder.mjs';
 import {StoreAchievements,parseEpicAccount,gogProductId} from './lib/store-achievements.mjs';
 import {downloadable,downloadEmulator} from './lib/emulator-download.mjs';
-import {discoverGameFolders,sweepRoots,emulatorSearchRoots,emulatorGameFolders,collapseFolders,windowsDrives} from './lib/discover.mjs';
+import {discoverGameFolders,sweepRoots,emulatorSearchRoots,emulatorGameFolders,collapseFolders,windowsDrives,linuxRoots} from './lib/discover.mjs';
 import {lnkTarget} from './lib/lnk.mjs';
 export const VERSION='3.1.4';
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
@@ -123,7 +126,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
  const xboxAuthNow=()=>validXbox(config.xboxAuth,{save:next=>{config.xboxAuth=next;saveConfig();}}).catch(()=>null);
  const defaultEpicDir=()=>path.join(process.env.SystemDrive?process.env.SystemDrive+'\\':os.homedir(),'Games','Epic Games');
  const epicInstallDir=()=>config.epicInstallDir||defaultEpicDir();
- const openLink=url=>{if(process.platform!=='win32')return;const c=spawn(explorer(),[url],{detached:true,stdio:'ignore',windowsHide:true});c.on('error',()=>{});c.unref();};
+ const openLink=url=>{if(process.platform==='win32'){const c=spawn(explorer(),[url],{detached:true,stdio:'ignore',windowsHide:true});c.on('error',()=>{});c.unref();}else if(process.platform==='linux'){const c=spawn('xdg-open',[url],{detached:true,stdio:'ignore'});c.on('error',()=>{});c.unref();}};
  function placeholderGame(it){const key=itemStoreKey(it),title=String(it.title||'').slice(0,200);
   return {id:digest('store-'+key).slice(0,20),path:path.join(dataDir,'not-installed',digest(key).slice(0,16)+'.exe'),title,fileTitle:title,internalTitle:title,identitySource:'Loja',bytes:0,mtime:0,sizeBasis:null,profile:'store',profileLocked:true,platformName:PROFILES.store.platform,platformKey:'pc',platformSource:'store',discId:'',serial:'',revision:null,region:[],languages:[],discNumber:null,needsReview:false,art:{},bindings:{},metadata:{},addedAt:new Date().toISOString(),notInstalled:true,...(it.titleEn&&it.titleEn!==title?{storeTitleEn:String(it.titleEn).slice(0,200)}:{}),
    store:{name:it.store,label:it.storeName,id:it.id||'',...(it.store==='epic'?{namespace:it.namespace,appName:it.appName,catalogItemId:it.catalogItemId}:{pfn:it.pfn,productId:it.productId||'',titleId:it.titleId||''})},storeImages:it.images||{}};}
@@ -923,10 +926,10 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
      const plans=db.games.filter(g=>!g.demo&&!g.hidden).map(g=>({id:g.id,title:g.title,...gameStatus(g,config)})).filter(g=>g.problems.length);return send({games:plans,discovery:discoveryResult,scanStatus});
     }
     // Jogos instalados no PC (programas do Windows e pastas de jogos), só com prova; a pessoa confirma.
-    if(route==='/api/installed-scan'){const drives=process.platform==='win32'?windowsDrives():(body.drives||[]);const known=db.games.filter(g=>!g.demo).map(g=>g.path),knownSet=new Set(known.map(p=>p.toLowerCase()));
+    if(route==='/api/installed-scan'){const drives=process.platform==='win32'?windowsDrives():process.platform==='linux'?(body.drives||[]).length?body.drives:linuxRoots():(body.drives||[]);const known=db.games.filter(g=>!g.demo).map(g=>g.path),knownSet=new Set(known.map(p=>p.toLowerCase()));
      // Lojas primeiro (Epic, GOG, Xbox, EA, Ubisoft…), depois os programas instalados e as pastas de jogos.
      let storeItems=[];try{const st=body.stores===false?{items:[]}:await scanStores();storeItems=st.items.filter(i=>!knownSet.has(i.path.toLowerCase())).map(i=>({title:i.title,path:i.path,root:i.root||path.dirname(i.path),evidence:[],store:i.store,storeName:i.storeName,source:'store',confidence:'high'}));}catch{}
-     const loose=await findInstalledGames({regQuery:process.platform==='win32'?regQuery:(installedRegQuery||null),drives,home:process.env.USERPROFILE||'',known:[...known,...storeItems.map(i=>i.path)]});
+     const loose=await findInstalledGames({regQuery:process.platform==='win32'?regQuery:(installedRegQuery||null),drives,home:process.env.USERPROFILE||os.homedir(),known:[...known,...storeItems.map(i=>i.path)]});
      const roots=new Set(storeItems.map(i=>String(i.root).toLowerCase())),items=[...storeItems,...loose.filter(i=>!roots.has(String(i.root).toLowerCase()))].slice(0,300);
      let adopted=[];try{adopted=await adoptPorts(items);}catch{}if(adopted.length){const done=new Set(adopted.map(a=>getGame(a.id).path.toLowerCase()));for(let i=items.length-1;i>=0;i--)if(done.has(String(items[i].path).toLowerCase()))items.splice(i,1);}const already=db.games.filter(g=>!g.demo&&!g.hidden).length;iconAllow.clear();iconRoots.clear();for(const i of items){iconAllow.add(i.path.toLowerCase());if(i.root)iconRoots.set(i.path.toLowerCase(),String(i.root));}return send({items,inCollection:already,adopted});}
     // Nome certo de um .exe: produto gravado no arquivo, pastas, siglas; busca na Steam e devolve o melhor.
@@ -1029,7 +1032,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
     if(route==='/api/emulator-downloads')return send({items:downloadable().map(d=>({...d,platform:PROFILES[d.profile]?.platform||'',configured:d.profile==='psp'?isFile(config.emulator)||isFile(config.launchers?.psp?.exe):isFile(config.launchers?.[d.profile]?.exe)}))});
     if(route==='/api/emulator-download'){const profile=String(body.profile||'');const home=process.env.USERPROFILE||os.homedir(),legacy=path.join(home,'TaigaSteam','Emuladores'),dest=fs.existsSync(legacy)?legacy:path.join(home,'Taiga Launcher','Emuladores');const r=await downloadEmulator(profile,{dest,tmpDir:path.join(dataDir,'downloads')});
      if(r.manual){if(process.platform==='win32'){try{spawn('explorer.exe',['/select,',r.manual],{stdio:'ignore',detached:true}).unref();}catch{}}return send({message:'{0} {1} baixado. Extraia o arquivo {2} nessa pasta e use Procurar emuladores.'.replace('{0}',r.name).replace('{1}',r.version).replace('{2}',path.basename(r.manual)),folder:r.folder,manual:true,settings:configView()});}const found=await inventory('emulators',[r.folder]);discoveryResult=found;const applied=applyDiscovery(config,found,{force:true});saveConfig();clearRetroArchCache();const moved=await reassignProfiles();return send({moved:moved.changed,readyGames:moved.ready,message:r.name+' '+r.version+' instalado em '+r.folder+' e configurado.',folder:r.folder,applied,settings:configView()});}
-    if(route==='/api/diagnostics'){const report=await diagnostics(),file=path.join(dataDir,'diagnostico-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json');save(file,report);if(process.platform==='win32')try{spawn(explorer(),['/select,',file],{detached:true,stdio:'ignore'}).unref();}catch{}return send({file,report});}
+    if(route==='/api/diagnostics'){const report=await diagnostics(),file=path.join(dataDir,'diagnostico-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json');save(file,report);if(process.platform==='win32')try{spawn(explorer(),['/select,',file],{detached:true,stdio:'ignore'}).unref();}catch{}else if(process.platform==='linux')try{spawn('xdg-open',[path.dirname(file)],{detached:true,stdio:'ignore'}).unref();}catch{}return send({file,report});}
     if(route==='/api/steam-integration/reload'){
      // Recarrega a interface da Steam (sem fechar a Steam): a página do jogo volta do zero com a versão atual.
      let restarted=false;try{restarted=!!(await injector.evaluateShared("(()=>{try{localStorage.setItem('taigaNglRestart',String(Date.now()));if(window.SteamClient&&SteamClient.Browser&&typeof SteamClient.Browser.RestartJSContext==='function'){setTimeout(()=>SteamClient.Browser.RestartJSContext(),50);return true;}}catch(e){}return false;})()"));}catch{}

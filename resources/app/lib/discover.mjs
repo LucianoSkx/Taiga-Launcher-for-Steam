@@ -137,6 +137,12 @@ export function windowsDrives(io = defaults) {
  return out;
 }
 
+// Linux: a pasta do usuário e os pontos de montagem removível (equivalente às unidades do Windows).
+export function linuxRoots(io = defaults) {
+ const home = process.env.HOME || process.env.USERPROFILE || '', user = process.env.USER || '';
+ return [home, user && path.join('/media', user), user && path.join('/run/media', user)].filter(p => p && io.exists(p));
+}
+
 // Remove duplicadas e pastas dentro de outras já incluídas.
 export function collapseFolders(list, {caseInsensitive = true} = {}) {
  const norm = p => { const r = path.resolve(p).replace(/[\\/]+$/, ''); return caseInsensitive ? r.toLowerCase() : r; };
