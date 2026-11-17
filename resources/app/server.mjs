@@ -583,7 +583,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
  }
  function validatePaths(requireEmulator=true){
   if(requireEmulator&&(!isFile(config.emulator)||!/^PPSSPPWindows(?:64)?\.exe$/i.test(path.basename(config.emulator))))throw Error('Selecione PPSSPPWindows64.exe ou PPSSPPWindows.exe nas configurações.');
-  if(!isFile(path.join(config.steamDir,'steam.exe')))throw Error('Selecione a pasta da Steam.');
+  if(!isFile(path.join(config.steamDir,'steam.exe'))&&!isFile(path.join(config.steamDir,'steam.sh')))throw Error('Selecione a pasta da Steam.');
   if(!win.accounts(config.steamDir).some(a=>a.id===config.account))throw Error('Selecione uma conta Steam válida.');
  }
  function scriptBytes(){const shared=fs.readFileSync(path.join(ROOT,'web/achievement-view.cjs'),'utf8')+'\n;globalThis.TaigaAchievementView.css='+JSON.stringify(fs.readFileSync(path.join(ROOT,'web/achievement-view.css'),'utf8'))+';\n';const catalog=db.games.filter(g=>g.bindings?.[config.account]).map(publicGame);const snapshot=JSON.stringify(catalog).replaceAll('<','\\u003c').replaceAll('>','\\u003e');return fs.readFileSync(path.join(ROOT,'locales/catalog.cjs'),'utf8')+'\n'+fs.readFileSync(path.join(ROOT,'locales/runtime.cjs'),'utf8')+'\n'+shared+fs.readFileSync(path.join(ROOT,'steam/libraryroot.custom.js'),'utf8').replace('__TAIGA_LANGUAGE__',config.language||sysLang).replace('__TAIGA_READ_TOKEN__',config.readToken).replace('/*__TAIGA_CATALOG__*/[]',snapshot);}
