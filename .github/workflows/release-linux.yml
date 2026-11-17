@@ -1,0 +1,42 @@
+name: Release Linux (portátil)
+
+on:
+  push:
+    tags:
+      - 'v*-linux'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Instalar Electron (node_modules)
+        working-directory: resources/app
+        run: npm ci
+
+      - name: Gerar pasta portátil
+        run: tools/build-portable-linux.sh "$RUNNER_TEMP/Taiga-Launcher-Portable"
+
+      - name: Compactar
+        run: tar -czf taiga-launcher-linux-portable.tar.gz -C "$RUNNER_TEMP" Taiga-Launcher-Portable
+
+      - name: Publicar na Release da tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" taiga-launcher-linux-portable.tar.gz --clobber
+          else
+            gh release create "$TAG" taiga-launcher-linux-portable.tar.gz \
+              --title "Taiga Launcher $TAG" \
+              --notes "Pasta portátil Linux: extraia e rode \`./iniciar-taiga.sh\`. Jogos Windows rodam via Steam + Proton."
+          fi
