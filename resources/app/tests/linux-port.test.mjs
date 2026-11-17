@@ -5,6 +5,18 @@ import os from 'node:os';
 import path from 'node:path';
 import {Legendary} from '../lib/legendary.mjs';
 import {parseDesktopEntry, listShortcuts} from '../lib/shortcut-folder.mjs';
+import {iconSourceFor, themeIcon} from '../lib/exe-icon-source.mjs';
+
+test('Ícones no Linux: tema pelo nome do executável; sem ícone, {exe:\'\'} faz os consumidores pularem o fileIcon', () => {
+ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'icons-'));
+ const theme = path.join(dir, 'hicolor', '48x48', 'apps');
+ fs.mkdirSync(theme, {recursive: true});
+ fs.writeFileSync(path.join(theme, 'dolphin-emu.png'), 'png');
+ assert.equal(themeIcon('/usr/bin/dolphin-emu', path.join(dir, 'hicolor')), path.join(theme, 'dolphin-emu.png'));
+ assert.equal(themeIcon('/opt/emulador-inexistente-1.0.AppImage', dir), '');
+ const none = iconSourceFor(path.join(dir, 'jogo-qualquer'), dir);
+ assert.deepEqual(none, {exe: ''});
+});
 
 test('.desktop: Exec com códigos de campo e aspas vira alvo + argumentos; listShortcuts aceita .desktop', () => {
  const d = parseDesktopEntry('[Desktop Entry]\nName=Celeste\nExec=wine "/home/eu/Jogos/Celeste/Celeste.exe" %U\nPath=/home/eu/Jogos/Celeste\nType=Application\n', p => p.endsWith('.exe'));
