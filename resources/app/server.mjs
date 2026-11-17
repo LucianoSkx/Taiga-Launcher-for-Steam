@@ -240,7 +240,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
  async function startInstall(g,{via='',dir='',shortcuts=null}={}){
   if(!g?.notInstalled)return installState(g);
   const store=g.store?.name;
-  if(store==='xbox'){openLink(xboxStoreLink(g.store));installWatch.set(g.id,{since:Date.now()});watchExternalInstalls();return installState(g);}
+  if(store==='xbox'){if(process.platform!=='win32')throw Error('Esta operação requer Windows.');openLink(xboxStoreLink(g.store));installWatch.set(g.id,{since:Date.now()});watchExternalInstalls();return installState(g);}
   if(store!=='epic')throw Error('Instalação não disponível para esta loja.');
   if((config.preferences.epicInstaller==='launcher'&&via!=='legendary')||via==='launcher'){openLink(epicInstallLink(g.store));installWatch.set(g.id,{since:Date.now()});watchExternalInstalls();return installState(g);}
   const auth=await epicAuthNow();if(!auth)throw Error('Entre com a sua conta Epic em Contas para instalar jogos da Epic.');

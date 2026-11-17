@@ -20,6 +20,15 @@ const EXCHANGE = 'https://account-public-service-prod03.ol.epicgames.com/account
 // Pasta de configuração padrão do Legendary no Windows (~/.config/legendary).
 export const legendaryConfigDir = (env = process.env) => env.LEGENDARY_CONFIG_PATH || path.join(env.USERPROFILE || os.homedir(), '.config', 'legendary');
 
+// Primeiro "legendary" executável no PATH do Linux (ou '').
+const linuxLegendary = (env = process.env) => {
+ for (const dir of String(env.PATH || '').split(':')) {
+  const p = path.join(dir, 'legendary');
+  try { fs.accessSync(p, fs.constants.X_OK); return p; } catch {}
+ }
+ return '';
+};
+
 // Linha de saída do Legendary → progresso.
 export function parseProgress(line, state = {}) {
  const s = String(line || '');
@@ -65,13 +74,17 @@ export class Legendary {
   Object.assign(this, {dataDir, fetchImpl, platform, env, log});
   this.jobs = new Map(); // appName → estado da instalação
  }
- get exe() { return path.join(this.dataDir, 'tools', 'legendary', 'legendary.exe'); }
- installed() { try { return fs.statSync(this.exe).size > 1000000; } catch { return false; } }
+ get exe() {
+  if (this.platform === 'win32') return path.join(this.dataDir, 'tools', 'legendary', 'legendary.exe');
+  // Linux: Legendary do sistema (pacote ou export do flatpak), procurado no PATH; nada é baixado.
+  return this._exe ??= linuxLegendary(this.env);
+ }
+ installed() { if (this.platform !== 'win32') return !!this.exe; try { return fs.statSync(this.exe).size > 1000000; } catch { return false; } }
 
  // Baixa o Legendary (uma vez) e confere o SHA-256 publicado pelo GitHub para esse arquivo.
  async ensure(onState = () => {}) {
   if (this.installed()) return this.exe;
-  if (this.platform !== 'win32') throw Error('A instalação pela Epic só funciona no Windows.');
+  if (this.platform !== 'win32') throw Error('O Legendary não foi encontrado no sistema. Instale-o para instalar jogos da Epic (ex.: sudo pacman -S legendary, apt install legendary ou flatpak install --user com.github.derrod.legendary).');
   onState({phase: 'tool'});
   let digest = '';
   try { const rel = await (await this.fetchImpl(RELEASE_API, {headers: {Accept: 'application/vnd.github+json', 'User-Agent': 'TaigaLauncher'}, signal: AbortSignal.timeout(20000)})).json(); digest = String((rel?.assets || []).find(a => a?.name === ASSET)?.digest || '').replace(/^sha256:/i, '').toLowerCase(); } catch {}
