@@ -40,34 +40,34 @@ export function emulatorGameFolders({launchers = {}, emulator = '', env = proces
  const exeDir = key => launchers[key]?.exe ? path.dirname(launchers[key].exe) : '';
  const j = (...p) => p.every(Boolean) ? path.join(...p) : '';
  // RetroArch: listas de reprodução (.lpl) guardam o caminho de cada jogo já escaneado.
- for (const base of [exeDir('retroarch'), j(env.APPDATA, 'RetroArch'), 'C:\\RetroArch-Win64', 'C:\\RetroArch']) {
+ for (const base of [exeDir('retroarch'), j(env.APPDATA, 'RetroArch'), j(env.APPDATA, 'retroarch'), j(env.HOME, '.var/app/org.libretro.RetroArch/config/retroarch'), 'C:\\RetroArch-Win64', 'C:\\RetroArch']) {
   const dir = j(base, 'playlists'); if (!dir || !io.exists(dir)) continue;
   for (const f of io.list(dir)) if (!f.dir && /\.lpl$/i.test(f.name)) { try { for (const it of JSON.parse(io.read(path.join(dir, f.name)) || '{}').items || []) add(fileDir(it.path), 'RetroArch'); } catch {} }
  }
  // PCSX2 e DuckStation: [GameList] Paths / RecursivePaths.
- for (const [file, source] of [[j(docs, 'PCSX2', 'inis', 'PCSX2.ini'), 'PCSX2'], [j(exeDir('ps2'), 'inis', 'PCSX2.ini'), 'PCSX2'], [j(docs, 'DuckStation', 'settings.ini'), 'DuckStation'], [j(exeDir('ps1'), 'settings.ini'), 'DuckStation'], [j(env.LOCALAPPDATA, 'DuckStation', 'settings.ini'), 'DuckStation']]) {
+ for (const [file, source] of [[j(docs, 'PCSX2', 'inis', 'PCSX2.ini'), 'PCSX2'], [j(exeDir('ps2'), 'inis', 'PCSX2.ini'), 'PCSX2'], [j(env.APPDATA, 'PCSX2', 'inis', 'PCSX2.ini'), 'PCSX2'], [j(env.HOME, '.var/app/net.pcsx2.PCSX2/config/PCSX2/inis/PCSX2.ini'), 'PCSX2'], [j(docs, 'DuckStation', 'settings.ini'), 'DuckStation'], [j(exeDir('ps1'), 'settings.ini'), 'DuckStation'], [j(env.LOCALAPPDATA, 'DuckStation', 'settings.ini'), 'DuckStation'], [j(env.APPDATA, 'DuckStation', 'settings.ini'), 'DuckStation'], [j(env.HOME, '.var/app/org.duckstation.DuckStation/config/DuckStation/settings.ini'), 'DuckStation']]) {
   if (!file) continue; const ini = iniSections(io.read(file));
   for (const [k, v] of ini.gamelist || []) if (/^(recursive)?paths$/i.test(k)) add(v, source);
  }
  // PPSSPP: pasta atual do navegador de jogos, recentes e pastas fixadas.
  const pspDir = exeDir('psp') || (emulator ? path.dirname(emulator) : '');
- for (const file of [j(pspDir, 'memstick', 'PSP', 'SYSTEM', 'ppsspp.ini'), j(docs, 'PPSSPP', 'PSP', 'SYSTEM', 'ppsspp.ini')]) {
+ for (const file of [j(pspDir, 'memstick', 'PSP', 'SYSTEM', 'ppsspp.ini'), j(docs, 'PPSSPP', 'PSP', 'SYSTEM', 'ppsspp.ini'), j(env.APPDATA, 'ppsspp', 'ppsspp.ini'), j(env.HOME, '.var/app/org.ppsspp.PPSSPP/config/ppsspp/ppsspp.ini')]) {
   if (!file) continue; const ini = iniSections(io.read(file));
   for (const [k, v] of ini.general || []) if (/^currentdirectory$/i.test(k)) add(v, 'PPSSPP');
   for (const [k, v] of ini.recent || []) if (/^filename\d+$/i.test(k)) add(fileDir(v), 'PPSSPP');
   for (const [k, v] of ini.pinnedpaths || []) if (/^path\d+$/i.test(k)) add(v, 'PPSSPP');
  }
  // Dolphin: ISOPath0..N.
- for (const file of [j(env.APPDATA, 'Dolphin Emulator', 'Config', 'Dolphin.ini'), j(docs, 'Dolphin Emulator', 'Config', 'Dolphin.ini'), j(exeDir('dolphin'), 'User', 'Config', 'Dolphin.ini')]) {
+ for (const file of [j(env.APPDATA, 'Dolphin Emulator', 'Config', 'Dolphin.ini'), j(docs, 'Dolphin Emulator', 'Config', 'Dolphin.ini'), j(exeDir('dolphin'), 'User', 'Config', 'Dolphin.ini'), j(env.APPDATA, 'dolphin-emu', 'Dolphin.ini'), j(env.HOME, '.var/app/org.DolphinEmu.dolphin-emu/config/dolphin-emu/Dolphin.ini')]) {
   if (!file) continue; for (const [k, v] of iniSections(io.read(file)).general || []) if (/^isopath\d+$/i.test(k)) add(v, 'Dolphin');
  }
  // RPCS3: games.yml lista cada jogo instalado (SERIAL: caminho).
- for (const file of [j(exeDir('ps3'), 'config', 'games.yml'), j(exeDir('ps3'), 'games.yml')]) {
+ for (const file of [j(exeDir('ps3'), 'config', 'games.yml'), j(exeDir('ps3'), 'games.yml'), j(env.APPDATA, 'rpcs3', 'games.yml'), j(env.HOME, '.var/app/net.rpcs3.RPCS3/config/rpcs3/games.yml')]) {
   if (!file) continue; for (const m of io.read(file).matchAll(/^\s*[A-Z]{4}\d{5}\s*:\s*(.+?)\s*$/gm)) add(m[1].replace(/^["']|["']$/g, ''), 'RPCS3');
  }
  // yuzu e derivados (suyu, sudachi, citron, eden): qt-config.ini, [UI] Paths\gamedirs\N\path.
  for (const [name, label] of [['yuzu', 'yuzu'], ['suyu', 'suyu'], ['sudachi', 'Sudachi'], ['citron', 'Citron'], ['eden', 'Eden']]) {
-  for (const file of [j(env.APPDATA, name, 'config', 'qt-config.ini'), j(exeDir('switch'), 'user', 'config', 'qt-config.ini')]) {
+  for (const file of [j(env.APPDATA, name, 'config', 'qt-config.ini'), j(env.LOCALAPPDATA, name, 'config', 'qt-config.ini'), j(exeDir('switch'), 'user', 'config', 'qt-config.ini')]) {
    if (!file) continue; const text = io.read(file) || ''; if (!text) continue;
    for (const m of text.matchAll(/^Paths\\gamedirs\\\d+\\path\s*=\s*(.+)$/gim)) { const v = m[1].trim(); if (v && !/^(SDMC|UserNAND|SysNAND)$/i.test(v)) add(v, label); }
   }
@@ -82,11 +82,11 @@ export function emulatorGameFolders({launchers = {}, emulator = '', env = proces
   for (const m of xml.matchAll(/<Entry>([^<]+)<\/Entry>/gi)) add(m[1], 'Cemu');
  }
  // Azahar / Citra / Lime3DS: Paths\gamedirs\N\path.
- for (const app of ['Azahar', 'Lime3DS', 'Citra']) for (const file of [j(env.APPDATA, app, 'config', 'qt-config.ini'), j(exeDir('azahar'), 'user', 'config', 'qt-config.ini')]) {
+ for (const app of ['Azahar', 'Lime3DS', 'Citra']) for (const file of [j(env.APPDATA, app, 'config', 'qt-config.ini'), j(env.APPDATA, app.toLowerCase() + '-emu', 'config', 'qt-config.ini'), j(exeDir('azahar'), 'user', 'config', 'qt-config.ini')]) {
   if (!file) continue; for (const rows of Object.values(iniSections(io.read(file)))) for (const [k, v] of rows) if (/gamedirs\\\d+\\path$/i.test(k) && !/^(SDMC|UserNANDs|SysNANDs|INSTALLED)$/i.test(v)) add(v, 'Azahar');
  }
  // shadPS4: installDirs no config.toml.
- for (const file of [j(exeDir('shadps4'), 'user', 'config.toml'), j(env.APPDATA, 'shadPS4', 'config.toml')]) {
+ for (const file of [j(exeDir('shadps4'), 'user', 'config.toml'), j(env.APPDATA, 'shadPS4', 'config.toml'), j(env.APPDATA, 'shadps4', 'config.toml')]) {
   if (!file) continue; const block = io.read(file).match(/installDirs\s*=\s*\[([\s\S]*?)\]/)?.[1] || '';
   for (const m of block.matchAll(/["']([^"']+)["']/g)) add(m[1], 'shadPS4');
  }
@@ -114,8 +114,8 @@ export function frontendFolders({env = process.env, drives = [], io = defaults} 
 // Pastas de ROMs com nomes comuns em cada unidade e na pasta do usuário.
 export function commonFolders({env = process.env, drives = [], io = defaults} = {}) {
  const out = [], home = env.USERPROFILE || '';
- for (const d of drives) for (const rel of ROM_FOLDERS) { const p = path.join(d, ...rel.split('\\')); if (io.exists(p)) out.push({path: p, source: 'roms'}); }
- if (home) for (const rel of HOME_FOLDERS) { const p = path.join(home, ...rel.split('\\')); if (io.exists(p)) out.push({path: p, source: 'roms'}); }
+ for (const d of drives) for (const rel of ROM_FOLDERS) { const p = path.join(d, ...rel.split(/[\\/]/)); if (io.exists(p)) out.push({path: p, source: 'roms'}); }
+ if (home) for (const rel of HOME_FOLDERS) { const p = path.join(home, ...rel.split(/[\\/]/)); if (io.exists(p)) out.push({path: p, source: 'roms'}); }
  return out;
 }
 
@@ -176,7 +176,7 @@ export function sweepRoots({env = process.env, platform = process.platform, io =
  io = {...defaults, ...io};
  const home = env.USERPROFILE || env.HOME || '', out = [];
  const add = p => { if (p && io.exists(p)) out.push(p); };
- for (const rel of ['Desktop', 'Downloads', 'Documents', 'Documentos', 'Games', 'Jogos', 'OneDrive\\Desktop', 'OneDrive\\Documents', 'OneDrive\\Documentos', 'OneDrive\\Área de Trabalho']) if (home) add(path.join(home, ...rel.split('\\')));
+ for (const rel of ['Desktop', 'Downloads', 'Documents', 'Documentos', 'Games', 'Jogos', 'OneDrive\\Desktop', 'OneDrive\\Documents', 'OneDrive\\Documentos', 'OneDrive\\Área de Trabalho']) if (home) add(path.join(home, ...rel.split(/[\\/]/)));
  for (const d of drives || (platform === 'win32' ? windowsDrives(io) : [])) add(d);
  const norm = p => path.resolve(p).replace(/[\\/]+$/, '').toLowerCase();
  const skipped = new Set(skip.map(norm));
