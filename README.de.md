@@ -144,17 +144,9 @@ Die Oberfläche ist identisch mit der Windows-Version; nur der Start unterscheid
 
 **Voraussetzungen:** 64-Bit-Linux, installiertes Steam und Chrome/CEF (von Steam bereitgestellt). Windows-`.exe`-Spiele werden über ihren Steam-Verknüpfungsstart geöffnet — verwende Proton (Taiga führt `.exe`-Dateien unter Linux nicht direkt aus).
 
-**Im System installieren** (Menüverknüpfung, unabhängig vom Repository):
-
-```bash
-git clone https://github.com/LucianoSkx/Taiga-Launcher-for-Steam
-cd Taiga-Launcher-for-Steam/resources/app && npm install && cd ../..
-tools/install-linux.sh
-```
-
-Danach **Taiga Launcher** im Menü öffnen oder `taiga-launcher` ausführen. Zum Aktualisieren `tools/install-linux.sh` erneut ausführen.
-
 **Portabler Ordner** (App + Daten zusammen, keine Installation — kann auf einen anderen PC oder USB-Stick verschoben werden):
+
+Lade das Archiv von der Releases-Seite herunter oder erstelle es aus dem Repository:
 
 ```bash
 tools/build-portable-linux.sh
@@ -167,9 +159,9 @@ tools/build-portable-linux.sh
 cd resources/app && npm install && npm start
 ```
 
-Beim ersten Start erkennt Taiga Steam unter `~/.local/share/Steam` (oder flatpak) und setzt die Markierung `.cef-enable-remote-debugging`. Die installierte Version und die Checkout-Version speichern Daten in `~/.local/share/Taiga Launcher/` (XDG), die portable Version innerhalb ihres eigenen Ordners. Für Windows-Spiele Proton für Nicht-Steam-Spiele aktivieren.
+Beim ersten Start erkennt Taiga Steam unter `~/.local/share/Steam` (oder flatpak) und setzt die Markierung `.cef-enable-remote-debugging`. Die Checkout-Version speichert Daten in `~/.local/share/Taiga Launcher/` (XDG), die portable Version innerhalb ihres eigenen Ordners. Für Windows-Spiele Proton für Nicht-Steam-Spiele aktivieren.
 
-> Automatische Updates sind unter Linux deaktiviert: die Original-Releases sind nur für Windows. Aktualisiere durch den Download einer neueren Linux-Release oder, bei Installationen aus dem Quellcode, mit `git pull` und `tools/install-linux.sh`.
+> Automatische Updates sind unter Linux deaktiviert: die Original-Releases sind nur für Windows. Aktualisiere durch den Download einer neueren Linux-Release.
 
 <details>
 <summary>Windows-Version (Originalprojekt)</summary>

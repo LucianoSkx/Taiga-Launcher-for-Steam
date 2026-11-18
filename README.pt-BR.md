@@ -144,17 +144,9 @@ A interface é a mesma do Windows; o que muda é como ele é iniciado.
 
 **Requisitos:** Linux 64 bits, Steam instalada e Chrome/CEF (a Steam fornece). Jogos Windows `.exe` são abertos pelo atalho da Steam — use o Proton (o Taiga não executa `.exe` direto no Linux).
 
-**Instalar no sistema** (atalho no menu, independente do checkout):
-
-```bash
-git clone https://github.com/LucianoSkx/Taiga-Launcher-for-Steam
-cd Taiga-Launcher-for-Steam/resources/app && npm install && cd ../..
-tools/install-linux.sh
-```
-
-Depois abra **Taiga Launcher** no menu ou rode `taiga-launcher`. Para atualizar, rode `tools/install-linux.sh` de novo.
-
 **Pasta portátil** (app + dados juntos, sem instalar nada — pode mover para outro PC ou pendrive):
+
+Baixe o tarball na página de Releases ou gere a partir do checkout:
 
 ```bash
 tools/build-portable-linux.sh
@@ -167,9 +159,9 @@ tools/build-portable-linux.sh
 cd resources/app && npm install && npm start
 ```
 
-Na primeira abertura, o Taiga detecta a Steam em `~/.local/share/Steam` (ou flatpak) e configura o marcador `.cef-enable-remote-debugging`. As versões instalada e do checkout guardam dados em `~/.local/share/Taiga Launcher/` (XDG); a portátil guarda tudo dentro da própria pasta. Para jogos Windows, ative o Proton para jogos não-Steam na Steam.
+Na primeira abertura, o Taiga detecta a Steam em `~/.local/share/Steam` (ou flatpak) e configura o marcador `.cef-enable-remote-debugging`. A versão do checkout guarda dados em `~/.local/share/Taiga Launcher/` (XDG); a portátil guarda tudo dentro da própria pasta. Para jogos Windows, ative o Proton para jogos não-Steam na Steam.
 
-> A atualização automática foi desligada no Linux: as Releases originais são para Windows. Atualize baixando uma release Linux nova ou, em instalações do código, com `git pull` e `tools/install-linux.sh`.
+> A atualização automática foi desligada no Linux: as Releases originais são para Windows. Atualize baixando uma release Linux nova.
 
 <details>
 <summary>Versão Windows (projeto original)</summary>

@@ -144,17 +144,9 @@ The interface is the same as on Windows; only how it is started changes.
 
 **Requirements:** 64-bit Linux, Steam installed, and Chrome/CEF (provided by Steam). Windows `.exe` games are opened through their Steam shortcut — use Proton (Taiga does not run `.exe` files directly on Linux).
 
-**Install on the system** (menu shortcut, independent of the checkout):
-
-```bash
-git clone https://github.com/LucianoSkx/Taiga-Launcher-for-Steam
-cd Taiga-Launcher-for-Steam/resources/app && npm install && cd ../..
-tools/install-linux.sh
-```
-
-Then open **Taiga Launcher** from the menu or run `taiga-launcher`. To update, run `tools/install-linux.sh` again.
-
 **Portable folder** (app + data together, nothing installed — can be moved to another PC or a USB drive):
+
+Download the tarball from the Releases page, or build it from the checkout:
 
 ```bash
 tools/build-portable-linux.sh
@@ -167,9 +159,9 @@ tools/build-portable-linux.sh
 cd resources/app && npm install && npm start
 ```
 
-On first launch Taiga detects Steam in `~/.local/share/Steam` (or flatpak) and sets up the `.cef-enable-remote-debugging` marker. The installed and checkout builds keep data in `~/.local/share/Taiga Launcher/` (XDG); the portable build keeps it inside its own folder. For Windows games, enable Proton for non-Steam games in Steam.
+On first launch Taiga detects Steam in `~/.local/share/Steam` (or flatpak) and sets up the `.cef-enable-remote-debugging` marker. The checkout build keeps data in `~/.local/share/Taiga Launcher/` (XDG); the portable build keeps it inside its own folder. For Windows games, enable Proton for non-Steam games in Steam.
 
-> Automatic updates are disabled on Linux: upstream releases are Windows-only. Download a newer Linux release to update, or run `git pull` and `tools/install-linux.sh` for source installs.
+> Automatic updates are disabled on Linux: upstream releases are Windows-only. Download a newer Linux release to update.
 
 <details>
 <summary>Windows build (original project)</summary>

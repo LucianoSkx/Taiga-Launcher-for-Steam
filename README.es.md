@@ -144,17 +144,9 @@ La interfaz es la misma que en Windows; solo cambia cómo se inicia.
 
 **Requisitos:** Linux de 64 bits, Steam instalado y Chrome/CEF (lo proporciona Steam). Los juegos `.exe` de Windows se abren mediante su acceso directo en Steam — usa Proton (Taiga no ejecuta archivos `.exe` directamente en Linux).
 
-**Instalar en el sistema** (acceso en el menú, independiente del repositorio):
-
-```bash
-git clone https://github.com/LucianoSkx/Taiga-Launcher-for-Steam
-cd Taiga-Launcher-for-Steam/resources/app && npm install && cd ../..
-tools/install-linux.sh
-```
-
-Después abre **Taiga Launcher** en el menú o ejecuta `taiga-launcher`. Para actualizar, ejecuta `tools/install-linux.sh` de nuevo.
-
 **Carpeta portátil** (app + datos juntos, sin instalar nada — se puede mover a otro PC o a una memoria USB):
+
+Descarga el tarball desde Releases o genéralo desde el repositorio:
 
 ```bash
 tools/build-portable-linux.sh
@@ -167,9 +159,9 @@ tools/build-portable-linux.sh
 cd resources/app && npm install && npm start
 ```
 
-En el primer inicio, Taiga detecta Steam en `~/.local/share/Steam` (o flatpak) y configura el marcador `.cef-enable-remote-debugging`. Las versiones instalada y del repositorio guardan los datos en `~/.local/share/Taiga Launcher/` (XDG); la portátil los guarda dentro de su propia carpeta. Para juegos de Windows, activa Proton para juegos que no son de Steam.
+En el primer inicio, Taiga detecta Steam en `~/.local/share/Steam` (o flatpak) y configura el marcador `.cef-enable-remote-debugging`. La versión del repositorio guarda los datos en `~/.local/share/Taiga Launcher/` (XDG); la portátil los guarda dentro de su propia carpeta. Para juegos de Windows, activa Proton para juegos que no son de Steam.
 
-> Las actualizaciones automáticas están desactivadas en Linux: las versiones originales son solo para Windows. Actualiza descargando una release Linux nueva o, en instalaciones desde el código, con `git pull` y `tools/install-linux.sh`.
+> Las actualizaciones automáticas están desactivadas en Linux: las versiones originales son solo para Windows. Actualiza descargando una release Linux nueva.
 
 <details>
 <summary>Versión de Windows (proyecto original)</summary>

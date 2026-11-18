@@ -144,17 +144,9 @@ L'interface est identique à celle de Windows ; seul le lancement change.
 
 **Configuration requise :** Linux 64 bits, Steam installé et Chrome/CEF (fourni par Steam). Les jeux Windows `.exe` s'ouvrent via leur raccourci Steam — utilisez Proton (Taiga n'exécute pas les fichiers `.exe` directement sous Linux).
 
-**Installer sur le système** (raccourci dans le menu, indépendant du dépôt) :
-
-```bash
-git clone https://github.com/LucianoSkx/Taiga-Launcher-for-Steam
-cd Taiga-Launcher-for-Steam/resources/app && npm install && cd ../..
-tools/install-linux.sh
-```
-
-Ouvrez ensuite **Taiga Launcher** dans le menu ou lancez `taiga-launcher`. Pour mettre à jour, relancez `tools/install-linux.sh`.
-
 **Dossier portable** (application + données ensemble, rien à installer — peut être déplacé sur un autre PC ou une clé USB) :
+
+Téléchargez l'archive depuis la page Releases ou construisez-la depuis le dépôt :
 
 ```bash
 tools/build-portable-linux.sh
@@ -167,9 +159,9 @@ tools/build-portable-linux.sh
 cd resources/app && npm install && npm start
 ```
 
-Au premier lancement, Taiga détecte Steam dans `~/.local/share/Steam` (ou flatpak) et configure le marqueur `.cef-enable-remote-debugging`. Les versions installée et du dépôt gardent les données dans `~/.local/share/Taiga Launcher/` (XDG) ; la version portable les garde dans son propre dossier. Pour les jeux Windows, activez Proton pour les jeux non-Steam.
+Au premier lancement, Taiga détecte Steam dans `~/.local/share/Steam` (ou flatpak) et configure le marqueur `.cef-enable-remote-debugging`. La version du dépôt garde les données dans `~/.local/share/Taiga Launcher/` (XDG) ; la version portable les garde dans son propre dossier. Pour les jeux Windows, activez Proton pour les jeux non-Steam.
 
-> Les mises à jour automatiques sont désactivées sous Linux : les versions d'origine sont réservées à Windows. Mettez à jour en téléchargeant une nouvelle release Linux ou, pour une installation depuis les sources, avec `git pull` et `tools/install-linux.sh`.
+> Les mises à jour automatiques sont désactivées sous Linux : les versions d'origine sont réservées à Windows. Mettez à jour en téléchargeant une nouvelle release Linux.
 
 <details>
 <summary>Version Windows (projet d'origine)</summary>
