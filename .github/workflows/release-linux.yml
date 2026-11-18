@@ -45,10 +45,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
+          TITLE="Taiga Launcher $TAG - Linux"
+          NOTES="Portable Linux build: extract the archive and run \`./iniciar-taiga.sh\`. Windows games run through Steam + Proton."
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" taiga-launcher-linux-portable.tar.gz --clobber
           else
-            gh release create "$TAG" taiga-launcher-linux-portable.tar.gz \
-              --title "Taiga Launcher $TAG" \
-              --notes "Pasta portátil Linux: extraia e rode \`./iniciar-taiga.sh\`. Jogos Windows rodam via Steam + Proton."
+            gh release create "$TAG" taiga-launcher-linux-portable.tar.gz --title "$TITLE" --notes "$NOTES"
           fi
+          gh release edit "$TAG" --title "$TITLE" --notes "$NOTES"
