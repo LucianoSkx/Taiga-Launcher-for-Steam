@@ -3,12 +3,24 @@ const {app,BrowserWindow,Menu,dialog,session,shell,nativeTheme,nativeImage,Tray,
 const secretBox={available:()=>{try{return safeStorage.isEncryptionAvailable();}catch{return false;}},encrypt:s=>safeStorage.encryptString(s).toString('base64'),decrypt:b=>safeStorage.decryptString(Buffer.from(b,'base64'))};
 const path=require('node:path');
 const fs=require('node:fs');
+const os=require('node:os');
 const {conversionScript}=require('./image-conversion.cjs');
 const desktopLocale=require('../locales/runtime.cjs').create('pt-BR'),T=(key,params)=>desktopLocale.t(key,params);
 const BASE='http://127.0.0.1:48767';
 let mainWindow,service,tray,quitting=false;
 // Abrir junto com o Windows (minimizado na bandeja). Regravado a cada abertura: vale mesmo se a pasta do programa mudar.
-function applyStartup(on){if(process.platform!=='win32'||process.defaultApp)return;try{app.setLoginItemSettings({openAtLogin:!!on,path:process.execPath,args:['--hidden']});}catch{}}
+function applyStartup(on){
+ if(process.platform==='linux'){
+  const dir=path.join(os.homedir(),'.config','autostart'),file=path.join(dir,'taiga-launcher.desktop');
+  try{
+   if(!on){try{fs.unlinkSync(file);}catch{}return;}
+   fs.mkdirSync(dir,{recursive:true});
+   const entry='[Desktop Entry]\nType=Application\nName=Taiga Launcher\nComment=Taiga Launcher (Linux)\nExec="'+process.execPath+'" "'+app.getAppPath()+'" --hidden\nPath='+app.getAppPath()+'\nIcon='+path.join(app.getAppPath(),'desktop','icon.png')+'\nTerminal=false\nCategories=Game;\nX-GNOME-Autostart-enabled=true\n';
+   fs.writeFileSync(file,entry);
+  }catch{}
+  return;
+ }
+ if(process.platform!=='win32'||process.defaultApp)return;try{app.setLoginItemSettings({openAtLogin:!!on,path:process.execPath,args:['--hidden']});}catch{}}
 const demoArg=args=>{const i=args.indexOf('--taiga-demo');return i>=0&&/^(?:demo|external)-[a-z0-9-]+$/.test(args[i+1]||'')?args[i+1]:null;};
 let pendingDemo=demoArg(process.argv);
 function showDemo(){if(!pendingDemo||!mainWindow||mainWindow.webContents.isLoading()||!mainWindow.webContents.getURL().startsWith(BASE))return;const id=pendingDemo;pendingDemo=null;mainWindow.webContents.executeJavaScript('window.taigaUI?.openDemo('+JSON.stringify(id)+')').catch(()=>{});}

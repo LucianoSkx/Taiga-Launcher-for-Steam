@@ -1469,5 +1469,6 @@
   "epic.tokenHint": "Abre la página de Epic con el enlace de abajo y copia el authorizationCode (32 caracteres) que aparece.",
   "epic.tokenButton": "Pegar código",
   "epic.tokenHowto": "Abrir página de Epic",
-  "epic.tokenPlaceholder": "Pega el código o la línea completa de la página"
+  "epic.tokenPlaceholder": "Pega el código o la línea completa de la página",
+  "boot.linuxLabel": "Iniciar al entrar"
 }

@@ -165,7 +165,9 @@ test('Linux: readiness da Steam aceita steam.sh (destrava Adicionar à Steam)', 
  t.after(() => new Promise(r => server.close(r)));
  const res = await fetch(`http://127.0.0.1:${port}/api/state`, {headers: {Authorization: 'Bearer ' + token}});
  const settings = (await res.json()).settings;
+ assert.equal(settings.platform, 'linux');
  assert.equal(settings.readiness.steam, true);
+ assert.equal(settings.readiness.integration, true, 'marcador CEF indica integração no Linux');
 });
 
 test('Linux: jogo aberto pela Steam gera sessão e tempo de jogo sem passar pelo Play', async t => {
