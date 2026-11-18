@@ -5,6 +5,7 @@
 //  3. o código vira um token OAuth (cliente do launcher, token_type eg1), renovado com o refresh_token.
 // O token só é usado para ler as conquistas do próprio usuário no GraphQL do launcher. Nada é gravado na Epic.
 export const EPIC_LOGIN_URL = 'https://www.epicgames.com/id/login?redirectUrl=' + encodeURIComponent('https://www.epicgames.com/id/api/redirect?clientId=34a02cf8f4414e29b15921876da36f9a&responseType=code');
+export const EPIC_TOKEN_URL = EPIC_LOGIN_URL;
 export const EPIC_REDIRECT = /^https:\/\/www\.epicgames\.com\/id\/api\/redirect\b/;
 const TOKEN_URL = 'https://account-public-service-prod03.ol.epicgames.com/account/api/oauth/token';
 const BASIC = 'MzRhMDJjZjhmNDQxNGUyOWIxNTkyMTg3NmRhMzZmOWE6ZGFhZmJjY2M3Mzc3NDUwMzlkZmZlNTNkOTRmYzc2Y2Y=';

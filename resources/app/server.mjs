@@ -14,7 +14,7 @@ import {Providers} from './lib/providers.mjs';
 import {DEMOS} from './lib/demos.mjs';
 import {needsMetadata,ensureDemoSize,titleKey} from './lib/metadata.mjs';
 import {SteamInjector,DEFAULT_DEBUG_PORT} from './lib/steam-inject.mjs';
-import {exchangeCode,validSession,authorizationCode} from './lib/epic-auth.mjs';
+import {exchangeCode,validSession,authorizationCode,EPIC_TOKEN_URL} from './lib/epic-auth.mjs';
 import {createCommunity} from './lib/community.mjs';
 import {translateText,detectLanguage} from './lib/translation.mjs';
 import {createPublicProfile,profileServerUrl} from './lib/public-profile.mjs';
@@ -1170,6 +1170,12 @@ if(route==='/api/epic-login'){if(!epicLogin)throw Error('O login da Epic só est
      for(const id of ids){const job=null;const g=db.games.find(x=>x.id===id);if(g?.gameRoot&&['pc','ps3','vita3k','shadps4'].includes(g.profile)&&!g.installedBytes)inventory('size',[g.gameRoot]).then(r=>{const sz=r.items[0];if(sz){g.installedBytes=sz.bytes;g.gameRoot=sz.root;g.sizeBasis='Arquivos da pasta do jogo, medidos em '+sz.at;g.sizeMeasuredAt=sz.at;persist();}}).catch(()=>{});}
      return send({steam,merged});}
     if(route==='/api/game-size'){const g=getGame(body.id);if(g.native||g.demo)throw Error('Selecione um jogo com arquivo local.');const result=await inventory('size',[body.path||g.gameRoot]);if(!result.items[0])throw Error(result.errors[0]?.message||'Não foi possível medir a pasta.');const size=result.items[0];g.installedBytes=size.bytes;g.gameRoot=size.root;g.sizeBasis='Arquivos da pasta do jogo, medidos em '+size.at;g.sizeMeasuredAt=size.at;persist();return send({message:'Tamanho da pasta atualizado.',size});}
+    if(route==='/api/open-browser'){
+     const url=EPIC_TOKEN_URL;
+     if(process.platform==='win32'){const c=spawn(explorer(),[url],{detached:true,stdio:'ignore'});c.on('error',()=>{});c.unref();}
+     else{const c=spawn('xdg-open',[url],{detached:true,stdio:'ignore'});c.on('error',()=>{});c.unref();}
+     return send({ok:true});
+    }
     if(route==='/api/launch'){
      const g=getGame(body.id);if(!PROFILES[body.profile])throw Error('Perfil inválido.');
      const next={...g,profile:body.profile,platformName:String(body.platformName||PROFILES[body.profile].platform).slice(0,150),launch:{exe:String(body.exe||'').trim(),args:String(body.args??PROFILES[body.profile].args).slice(0,2000),core:String(body.core||'').trim()}};
