@@ -25,6 +25,11 @@ export async function shellStart(exe,args,cwd){
 const within=(file,dir)=>{try{const a=path.resolve(String(file)).toLowerCase(),b=path.resolve(String(dir)).toLowerCase();return a===b||a.startsWith(b.endsWith(path.sep)?b:b+path.sep)||a.startsWith(b+'\\')||a.startsWith(b+'/');}catch{return false;}};
 // Pastas do jogo para reconhecer o processo dele quando quem abriu foi outro programa (loja, iniciador, Explorer).
 function gameDirs(game){if(!['pc','store','custom'].includes(game.profile||'psp'))return [];const out=[];for(const d of [game.gameRoot,game.path&&path.dirname(game.path)]){if(!d)continue;const r=path.resolve(String(d));if(r.split(/[\\/]/).filter(Boolean).length<2)continue;if(/[\\/](windows|program files( \(x86\))?|programdata)$/i.test(r))continue;if(!out.some(x=>x.toLowerCase()===r.toLowerCase()))out.push(r);}return out;}
+// comm do /proc tem no máximo 15 bytes; o Proton deixa o .exe inteiro na cmdline.
+export function processNameFromCmdline(raw, comm) {
+ try { const arg = String(raw).split('\0').find(a => /\.exe$/i.test(a)); if (arg) return path.basename(arg); } catch {}
+ return comm;
+}
 // Referência de boot única: starttime de /proc é estável, mas Date.now()+uptime lidos a cada chamada variam ~1ms,
 // o que faria `born` mudar entre snapshots e encerrar sessões cedo.
 const BOOT_MS = (()=>{if(process.platform!=='linux')return 0;try{return Date.now()-Math.round(Number(String(fs.readFileSync('/proc/uptime','utf8')).split(/\s+/)[0])*1000);}catch{return 0;}})();
@@ -42,7 +47,7 @@ export async function processSnapshot(){
    if(fields[0]==='Z')continue;
    let exe='';try{exe=fs.readlinkSync('/proc/'+pid+'/exe');}catch{}
    // comm tem no maximo 15 bytes; o Proton mantem o .exe inteiro na cmdline.
-   let name=comm;try{const arg=fs.readFileSync('/proc/'+pid+'/cmdline','utf8').split('\0').find(a=>/\.exe$/i.test(a));if(arg)name=path.basename(arg);}catch{}
+   let name=comm;try{name=processNameFromCmdline(fs.readFileSync('/proc/'+pid+'/cmdline','utf8'),comm);}catch{}
    const born=BOOT_MS+Math.round(Number(fields[19])/100*1000);
    rows.push({pid:Number(pid),ppid:Number(fields[1]),born,exe,name});
   }catch{}

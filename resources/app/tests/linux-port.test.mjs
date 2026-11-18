@@ -12,7 +12,7 @@ import {execFileSync,spawn} from 'node:child_process';
 import {launchFor,steamGameId} from '../lib/games.mjs';
 import {createApp} from '../server.mjs';
 import {Providers} from '../lib/providers.mjs';
-import {LaunchEngine, processSnapshot} from '../lib/launch-engine.mjs';
+import {LaunchEngine, processSnapshot, processNameFromCmdline} from '../lib/launch-engine.mjs';
 import {EventEmitter} from 'node:events';
 import crypto from 'node:crypto';
 
@@ -228,20 +228,10 @@ test('Busca de artes responde mesmo se o provedor externo não responde', async 
 });
 
 
-test('Linux: snapshot usa o nome completo do .exe mesmo com comm truncado', async t => {
- const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lg-name-'));
- t.after(() => fs.rmSync(dir, {recursive: true, force: true}));
- const exe = path.join(dir, 'NomeBemLongoParaOSistema.exe');
- fs.copyFileSync('/bin/sleep', exe); fs.chmodSync(exe, 0o755);
- const child = spawn(exe, ['5'], {stdio: 'ignore'});
- t.after(() => { if (!child.killed) child.kill(); });
- await new Promise(r => child.once('spawn', r));
- let row;
- for (let i = 0; i < 25 && !row; i++) {
-  row = (await processSnapshot()).find(r => r.pid === child.pid);
-  if (!row) await new Promise(r => setTimeout(r, 100));
- }
- assert.equal(row?.name, 'NomeBemLongoParaOSistema.exe');
+test('Linux: nome do .exe vem da cmdline quando comm está truncado', () => {
+ const comm = 'NomeBemLongoPar';
+ assert.equal(processNameFromCmdline('/usr/bin/wine\0/mnt/games/NomeBemLongoParaOSistema.exe\0', comm), 'NomeBemLongoParaOSistema.exe');
+ assert.equal(processNameFromCmdline('/usr/bin/steam\0', comm), comm);
 });
 
 test('Linux: .desktop com wrapper no PATH vira caminho absoluto', () => {
