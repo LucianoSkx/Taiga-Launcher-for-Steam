@@ -1466,7 +1466,8 @@
   "news2.light.d": "O programa ocupa menos espaço, guarda as imagens de forma mais compacta, apaga sozinho o que não usa mais e libera memória quando fica só na bandeja. A leitura dos jogos e a busca de capas também ficaram mais rápidas.",
   "supd.abroad": "Mora fora do Brasil?",
   "epic.tokenTitle": "Login por token",
-  "epic.tokenHint": "Cole o código da Epic (igual ao Heroic) para entrar sem abrir a janela de login.",
+  "epic.tokenHint": "Abra a página da Epic pelo link abaixo e copie o authorizationCode (32 caracteres) exibido nela.",
   "epic.tokenButton": "Colar código",
-  "epic.tokenHowto": "Como obter o código"
+  "epic.tokenHowto": "Abrir página da Epic",
+  "epic.tokenPlaceholder": "Cole aqui o authorizationCode (32 caracteres)"
 }

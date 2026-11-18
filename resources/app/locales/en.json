@@ -1466,7 +1466,8 @@
   "news2.light.d": "The program takes up less space, stores images more compactly, cleans up what it no longer uses and frees memory while it sits in the tray. Reading your games and finding covers is faster too.",
   "supd.abroad": "Outside Brazil?",
   "epic.tokenTitle": "Token login",
-  "epic.tokenHint": "Paste the Epic code (like Heroic) to sign in without opening the login window.",
+  "epic.tokenHint": "Open the Epic page via the link below and copy the authorizationCode (32 characters) shown there.",
   "epic.tokenButton": "Paste code",
-  "epic.tokenHowto": "How to get the code"
+  "epic.tokenHowto": "Open Epic page",
+  "epic.tokenPlaceholder": "Paste the authorizationCode here (32 characters)"
 }

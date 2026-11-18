@@ -1466,7 +1466,8 @@
   "news2.light.d": "Le programme prend moins de place, stocke les images de façon plus compacte, supprime tout seul ce qu’il n’utilise plus et libère de la mémoire quand il reste dans la zone de notification. La lecture des jeux et la recherche de jaquettes sont aussi plus rapides.",
   "supd.abroad": "Vous habitez hors du Brésil ?",
   "epic.tokenTitle": "Connexion par jeton",
-  "epic.tokenHint": "Collez le code Epic (comme Heroic) pour vous connecter sans ouvrir la fenêtre.",
+  "epic.tokenHint": "Ouvrez la page Epic via le lien ci-dessous et copiez le authorizationCode (32 caractères) affiché.",
   "epic.tokenButton": "Coller le code",
-  "epic.tokenHowto": "Comment obtenir le code"
+  "epic.tokenHowto": "Ouvrir la page Epic",
+  "epic.tokenPlaceholder": "Collez le authorizationCode ici (32 caractères)"
 }

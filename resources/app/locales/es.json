@@ -1466,7 +1466,8 @@
   "news2.light.d": "El programa ocupa menos espacio, guarda las imágenes de forma más compacta, borra solo lo que ya no usa y libera memoria cuando queda en la bandeja. La lectura de los juegos y la búsqueda de portadas también son más rápidas.",
   "supd.abroad": "¿Vives fuera de Brasil?",
   "epic.tokenTitle": "Inicio por token",
-  "epic.tokenHint": "Pega el código de Epic (como Heroic) para entrar sin abrir la ventana.",
+  "epic.tokenHint": "Abre la página de Epic con el enlace de abajo y copia el authorizationCode (32 caracteres) que aparece.",
   "epic.tokenButton": "Pegar código",
-  "epic.tokenHowto": "Cómo obtener el código"
+  "epic.tokenHowto": "Abrir página de Epic",
+  "epic.tokenPlaceholder": "Pega aquí el authorizationCode (32 caracteres)"
 }

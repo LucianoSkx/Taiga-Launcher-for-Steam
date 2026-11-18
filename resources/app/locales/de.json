@@ -1466,7 +1466,8 @@
   "news2.light.d": "Das Programm braucht weniger Platz, speichert Bilder kompakter, räumt selbst auf, was es nicht mehr nutzt, und gibt Arbeitsspeicher frei, solange es nur im Infobereich läuft. Auch das Einlesen der Spiele und die Cover-Suche sind schneller.",
   "supd.abroad": "Außerhalb Brasiliens?",
   "epic.tokenTitle": "Token-Anmeldung",
-  "epic.tokenHint": "Füge den Epic-Code (wie bei Heroic) ein, um dich ohne Login-Fenster anzumelden.",
+  "epic.tokenHint": "Öffne die Epic-Seite über den Link unten und kopiere den dort angezeigten authorizationCode (32 Zeichen).",
   "epic.tokenButton": "Code einfügen",
-  "epic.tokenHowto": "Code erhalten"
+  "epic.tokenHowto": "Epic-Seite öffnen",
+  "epic.tokenPlaceholder": "authorizationCode hier einfügen (32 Zeichen)"
 }
