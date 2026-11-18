@@ -15,6 +15,8 @@ export const IGDB_FIELDS='name,summary,storyline,first_release_date,involved_com
 const TEXT_HOSTS=['raw.githubusercontent.com','thumbnails.libretro.com','steamcommunity.com','store.steampowered.com','www.exophase.com','api.exophase.com'];
 const cacheJSON=(file,fallback)=>{try{return json(file,fallback);}catch{return fallback;}};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+// Busca de artes é interativa: nenhuma fonte externa pode prender o diálogo por minutos.
+const within=async(promise,ms,fallback)=>{let timer;try{return await Promise.race([Promise.resolve(promise).catch(()=>fallback),new Promise(r=>{timer=setTimeout(()=>r(fallback),ms);})]);}finally{clearTimeout(timer);}};
 export class Providers{
  constructor(config,dir,{convertImage=null,compressImage=null,heroFromCover=null,offline=!!process.env.TAIGA_OFFLINE,defaultServer=''}={}){this.defaultServer=defaultServer;this.convertImage=convertImage;this.compressImage=compressImage;this.heroFromCover=heroFromCover;this.config=config;this.dir=dir;this.token=null;this.lanes=new Map();this.pending=new Map();this.cache=new Map();this.images=new Map();this.offline=offline;this.dat=new DatIndex({dir,fetchText:url=>this.requestText(url),offline});this.retro=new RetroAchievements({dir,config,offline});}
  async cached(key,ttl,fn){const hit=this.cache.get(key);if(hit&&hit.until>Date.now())return structuredClone(hit.value);if(this.pending.has(key))return structuredClone(await this.pending.get(key));const pending=(async()=>{const value=await fn();if(ttl){if(this.cache.size>=300)this.cache.delete(this.cache.keys().next().value);this.cache.set(key,{value:structuredClone(value),until:Date.now()+ttl});}return value;})();this.pending.set(key,pending);try{return structuredClone(await pending);}finally{this.pending.delete(key);}}
@@ -124,23 +126,24 @@ export class Providers{
  async steamArtwork(appId,kind){
   if(!appId||this.offline)return [];const base='https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/'+Number(appId)+'/';
   const urls={cover:['library_600x900_2x.jpg','library_600x900.jpg'],hero:['library_hero.jpg'],logo:['logo.png'],wide:['header.jpg','capsule_616x353.jpg']}[kind]||[];
-  const ok=await Promise.all(urls.map(async n=>{try{const r=await fetch(base+n,{method:'HEAD',signal:AbortSignal.timeout(6000)});return r.ok?base+n:null;}catch{return null;}}));
+  const ok=await Promise.all(urls.map(async n=>{try{const r=await fetch(base+n,{method:'HEAD',signal:AbortSignal.timeout(2500)});return r.ok?base+n:null;}catch{return null;}}));
   return ok.filter(Boolean).map((url,i)=>({id:'steam-'+kind+'-'+i,url,preview:url,author:'Steam',source:'Steam',width:0,height:0}));
  }
  async artwork(game,kind,page=0,{steamAppId=null}={}){
   const endpoints={cover:'grids',wide:'grids',hero:'heroes',logo:'logos',icon:'icons'};if(!endpoints[kind])throw Error('Tipo de arte inválido.');
   const out=[],first=!(Number(page)>0);
   // 1) Steam (jogos com AppID), 2) SteamGridDB, 3) capa do libretro (jogos de emulador).
-  if(first&&steamAppId)out.push(...await this.steamArtwork(steamAppId,kind));
-  if(!game.sgdbId)await this.resolveSgdbId(game,{steamAppId});
+  const budget=Number(process.env.TAIGA_ART_SOURCE_TIMEOUT)||2500;
+  if(first&&steamAppId)out.push(...await within(this.steamArtwork(steamAppId,kind),budget,[]));
+  if(!game.sgdbId){const id=await within(this.resolveSgdbId(game,{steamAppId}),budget,null);if(id)game.sgdbId=id;}
   if(game.sgdbId){
    const dims=kind==='cover'?'&dimensions=600x900':kind==='wide'?'&dimensions=460x215,920x430':'';
    const mimes=kind==='logo'?'image/png,image/webp':kind==='icon'?'image/png':'image/png,image/jpeg';
-   const data=await this.sg(`${endpoints[kind]}/game/${game.sgdbId}?types=static&mimes=${mimes}${dims}&page=${Math.max(0,Math.min(20,Number(page)||0))}`);
+   const data=await within(this.sg(`${endpoints[kind]}/game/${game.sgdbId}?types=static&mimes=${mimes}${dims}&page=${Math.max(0,Math.min(20,Number(page)||0))}`),budget,[]);
    out.push(...data.filter(a=>!a.nsfw&&!a.humor&&a.url).map(a=>({id:a.id,url:a.url,preview:a.thumb||a.url,author:a.author?.name||'SteamGridDB',width:a.width||0,height:a.height||0})));
   }
   // Sem chave nenhuma: capa, telas e logo do libretro-thumbnails (jogos de emulador).
-  if(first){const platform=platformByKey(game.platformKey)||platformByName(game.platformName);if(platform?.libretro&&!this.offline)try{const name=game.libretroName||await this.libretroName(platform,game);if(name){const dirs={cover:['Named_Boxarts'],wide:['Named_Titles','Named_Snaps'],hero:['Named_Titles','Named_Snaps'],logo:['Named_Logos']}[kind]||[];for(const d of dirs){const names=d==='Named_Boxarts'?null:await this.libretroListing(platform.libretro,d);if(names&&!names.includes(name))continue;const url=libretroThumbnailURL(platform.libretro,d,name);out.push({id:'libretro-'+d,url,preview:url,author:'libretro-thumbnails',source:'libretro',width:0,height:0});}}}catch{}}
+  if(first){const platform=platformByKey(game.platformKey)||platformByName(game.platformName);if(platform?.libretro&&!this.offline)out.push(...await within((async()=>{const found=[];const name=game.libretroName||await this.libretroName(platform,game);if(!name)return found;const dirs={cover:['Named_Boxarts'],wide:['Named_Titles','Named_Snaps'],hero:['Named_Titles','Named_Snaps'],logo:['Named_Logos']}[kind]||[];for(const d of dirs){const names=d==='Named_Boxarts'?null:await this.libretroListing(platform.libretro,d);if(names&&!names.includes(name))continue;const url=libretroThumbnailURL(platform.libretro,d,name);found.push({id:'libretro-'+d,url,preview:url,author:'libretro-thumbnails',source:'libretro',width:0,height:0});}return found;})(),budget,[]));}
   if(!out.length&&!game.sgdbId)throw Error(this.sgAvailable()?'Não encontramos este jogo no SteamGridDB. Use Trocar jogo para escolher o título certo.':'Nenhuma arte encontrada para este jogo. Escolha uma imagem do computador ou adicione uma chave do SteamGridDB em Configurações para ver mais opções.');
   return out;
  }
