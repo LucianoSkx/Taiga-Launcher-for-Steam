@@ -239,3 +239,19 @@ test('Linux: .desktop com wrapper no PATH vira caminho absoluto', () => {
  assert.equal(d.target, process.execPath);
  assert.equal(d.args, 'app.js');
 });
+
+test('Status da integração exige token efêmero, não o token de leitura', async t => {
+ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lg-status-token-'));
+ t.after(() => fs.rmSync(dir, {recursive: true, force: true}));
+ const dataDir = path.join(dir, 'data'); fs.mkdirSync(dataDir);
+ fs.writeFileSync(path.join(dataDir, 'config.json'), JSON.stringify({adminToken: 'admin', readToken: 'reader'}));
+ const port = 48773;
+ const app = createApp({dataDir, port});
+ await new Promise(r => app.server.listen(port, '127.0.0.1', r));
+ t.after(() => new Promise(r => app.server.close(r)));
+ const send = token => fetch(`http://127.0.0.1:${port}/api/integration-status`, {
+  method: 'POST', headers: {Authorization: 'Bearer reader', 'Content-Type': 'application/json'},
+  body: JSON.stringify({version: '1.4.4', page: 'library', matched: true, panel: true, token})});
+ assert.equal((await send('reader')).status, 403, 'token de leitura não pode falsificar status');
+ assert.equal((await send(app.statusToken)).status, 200);
+});

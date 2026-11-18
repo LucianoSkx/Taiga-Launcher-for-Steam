@@ -2336,5 +2336,12 @@
   "La verificación del atalho falló antes de escribir. No se cambió nada.",
   "La vérification du raccourci a échoué avant l'écriture. Rien n'a été modifié.",
   "Die Überprüfung der Verknüpfung schlug fehl. Nichts wurde geändert."
+ ],
+ [
+  "Token de status inválido.",
+  "Invalid status token.",
+  "Token de estado no válido.",
+  "Jeton de statut invalide.",
+  "Ungültiges Status-Token."
  ]
 ]
