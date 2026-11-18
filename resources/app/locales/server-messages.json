@@ -2329,5 +2329,12 @@
   "La búsqueda de imágenes tardó demasiado. Inténtalo de nuevo o elige una imagen del equipo.",
   "La recherche d'illustrations a mis trop de temps. Réessayez ou choisissez une image sur l'ordinateur.",
   "Die Bildersuche hat zu lange gedauert. Versuche es erneut oder wähle ein Bild vom Rechner."
+ ],
+ [
+  "A verificação do atalho a gravar falhou. Nada foi alterado.",
+  "The shortcut check failed before writing. Nothing was changed.",
+  "La verificación del atalho falló antes de escribir. No se cambió nada.",
+  "La vérification du raccourci a échoué avant l'écriture. Rien n'a été modifié.",
+  "Die Überprüfung der Verknüpfung schlug fehl. Nichts wurde geändert."
  ]
 ]

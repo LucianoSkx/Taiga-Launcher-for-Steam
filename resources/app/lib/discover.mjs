@@ -51,7 +51,7 @@ export function emulatorGameFolders({launchers = {}, emulator = '', env = proces
  }
  // PPSSPP: pasta atual do navegador de jogos, recentes e pastas fixadas.
  const pspDir = exeDir('psp') || (emulator ? path.dirname(emulator) : '');
- for (const file of [j(pspDir, 'memstick', 'PSP', 'SYSTEM', 'ppsspp.ini'), j(docs, 'PPSSPP', 'PSP', 'SYSTEM', 'ppsspp.ini'), j(env.APPDATA, 'ppsspp', 'ppsspp.ini'), j(env.HOME, '.var/app/org.ppsspp.PPSSPP/config/ppsspp/ppsspp.ini')]) {
+ for (const file of [j(pspDir, 'memstick', 'PSP', 'SYSTEM', 'ppsspp.ini'), j(docs, 'PPSSPP', 'PSP', 'SYSTEM', 'ppsspp.ini'), j(env.APPDATA, 'ppsspp', 'PSP', 'SYSTEM', 'ppsspp.ini'), j(env.HOME, '.var/app/org.ppsspp.PPSSPP/config/ppsspp/PSP/SYSTEM/ppsspp.ini')]) {
   if (!file) continue; const ini = iniSections(io.read(file));
   for (const [k, v] of ini.general || []) if (/^currentdirectory$/i.test(k)) add(v, 'PPSSPP');
   for (const [k, v] of ini.recent || []) if (/^filename\d+$/i.test(k)) add(fileDir(v), 'PPSSPP');

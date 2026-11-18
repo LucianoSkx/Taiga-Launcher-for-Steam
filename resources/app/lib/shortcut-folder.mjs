@@ -6,6 +6,7 @@ import path from 'node:path';
 import {auxiliaryExecutable} from './games.mjs';
 
 const isFile = f => { try { return fs.statSync(f).isFile(); } catch { return false; } };
+const onPath = name => { for (const dir of String(process.env.PATH || '').split(':')) { const p = path.join(dir, name); try { fs.accessSync(p, fs.constants.X_OK); return p; } catch {} } return ''; };
 
 // Leitura direta do formato Shell Link (.lnk, MS-SHLLINK), sem PowerShell.
 export function parseLnk(buf) {
@@ -52,6 +53,7 @@ export function parseDesktopEntry(text, exists) {
  const argv = exec.replace(/%%/g, '\0').replace(/%\w/g, '').split('\0').join('%').match(/"[^"]*"|[^\s]+/g) || [];
  const unq = a => a.replace(/^"|"$/g, '');
  let target = unq(argv[0] || ''), rest = argv.slice(1);
+ if (target && !/[\\/]/.test(target)) target = onPath(target) || target;
  if (exists) { const i = argv.findIndex(a => path.isAbsolute(unq(a)) && exists(unq(a))); if (i > 0) { target = unq(argv[i]); rest = argv.slice(i + 1); } }
  return {name, target, args: rest.map(unq).join(' '), workingDir: dir};
 }

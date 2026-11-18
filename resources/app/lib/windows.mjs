@@ -18,7 +18,7 @@ export async function steamLocation(selected){let target=selected;if(!LINUX&&pat
 // mesma consulta. fresh: consulta agora (usado ao fechar/abrir a Steam).
 let runCache={at:0,value:false},runPending=null;
 export async function processRunning(image){if(TEST||(!LINUX&&process.platform!=='win32'))return false;try{if(LINUX){
-   const checks=image===STEAM_EXE()?[['-x','steam'],['-f','com.valvesoftware.Steam'],['-f','steam.sh']]:[['-x',String(image).replace(/\.exe$/i,'')],['-f',image]];
+   const checks=image===STEAM_EXE()?[['-x','steam'],['-f','com.valvesoftware.Steam']]:[['-x',String(image).replace(/\.exe$/i,'')],['-f',image]];
    for(const flags of checks)try{await run('pgrep',flags);return true;}catch{}
    return false;
   }const {stdout}=await run('tasklist.exe',['/FI','IMAGENAME eq '+image,'/FO','CSV','/NH'],{windowsHide:true,timeout:10000});return String(stdout).toLowerCase().includes('"'+image.toLowerCase()+'"');}catch{return (await ps("if(Get-Process "+image.replace(/\.exe$/i,'')+" -ErrorAction SilentlyContinue){'yes'}else{'no'}").catch(()=>'no'))==='yes';}}

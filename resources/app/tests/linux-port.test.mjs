@@ -99,9 +99,9 @@ test('.desktop: Exec com códigos de campo e aspas vira alvo + argumentos; listS
  assert.equal(d.args, '');
  assert.equal(d.workingDir, '/home/eu/Jogos/Celeste');
  assert.equal(d.name, 'Celeste');
- assert.equal(parseDesktopEntry('[Desktop Entry]\nExec=wine /jogos/game.exe\n').target, 'wine');
+ assert.equal(path.basename(parseDesktopEntry('[Desktop Entry]\nExec=wine /jogos/game.exe\n').target), 'wine');
  const flat = parseDesktopEntry('[Desktop Entry]\nExec=flatpak run org.example.Game --fullscreen\n');
- assert.equal(flat.target, 'flatpak');
+ assert.equal(path.basename(flat.target), 'flatpak');
  assert.equal(flat.args, 'run org.example.Game --fullscreen');
  assert.equal(parseDesktopEntry('[Outro]\nExec=x\n'), null);
  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'desk-'));
@@ -183,7 +183,8 @@ test('Linux: jogo aberto pela Steam gera sessão e tempo de jogo sem passar pelo
  fs.writeFileSync(path.join(dataDir, 'games.json'), JSON.stringify({version: 1, games: [{id: 'g1', uuid, title: 'Jogo Steam', path: exe, profile: 'pc', appId: 123, bindings: {acc: 123}}]}));
  const port = 48771;
  let gameRunning = true;
- const snapshotProcess = async () => gameRunning ? [{pid: 4242, ppid: 0, born: Date.now() - 1000, exe, name: 'jogo.exe'}] : [];
+ const born = Date.now() - 10000;
+ const snapshotProcess = async () => gameRunning ? [{pid: 4242, ppid: 0, born, exe, name: 'jogo.exe'}] : [];
  const {server} = createApp({dataDir, port, snapshotProcess});
  await new Promise(r => server.listen(port, '127.0.0.1', r));
  t.after(() => new Promise(r => server.close(r)));
@@ -195,6 +196,7 @@ test('Linux: jogo aberto pela Steam gera sessão e tempo de jogo sem passar pelo
  const running = findSession();
  assert.ok(running, 'sessão do jogo aberto pela Steam deveria existir');
  assert.equal(running.status, 'running');
+ assert.ok(Math.abs(Date.parse(running.startedAt) - born) < 2000, 'sessão começa quando o processo nasceu');
  assert.ok(running.seconds > 0);
  gameRunning = false;
  await new Promise(r => setTimeout(r, 3600));
@@ -223,4 +225,23 @@ test('Busca de artes responde mesmo se o provedor externo não responde', async 
  const data = await res.json();
  assert.ok(Date.now() - start < 3000, 'a rota não pode ficar pendurada');
  assert.match(data.error || '', /demorou muito/);
+});
+
+
+test('Linux: snapshot usa o nome completo do .exe mesmo com comm truncado', async t => {
+ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lg-name-'));
+ t.after(() => fs.rmSync(dir, {recursive: true, force: true}));
+ const exe = path.join(dir, 'NomeBemLongoParaOSistema.exe');
+ fs.copyFileSync('/bin/sleep', exe); fs.chmodSync(exe, 0o755);
+ const child = spawn(exe, ['5'], {stdio: 'ignore'});
+ t.after(() => { if (!child.killed) child.kill(); });
+ await new Promise(r => setTimeout(r, 100));
+ const row = (await processSnapshot()).find(r => r.pid === child.pid);
+ assert.equal(row?.name, 'NomeBemLongoParaOSistema.exe');
+});
+
+test('Linux: .desktop com wrapper no PATH vira caminho absoluto', () => {
+ const d = parseDesktopEntry('[Desktop Entry]\nExec=node app.js\nName=Jogo\n');
+ assert.equal(d.target, process.execPath);
+ assert.equal(d.args, 'app.js');
 });

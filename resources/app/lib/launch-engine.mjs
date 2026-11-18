@@ -38,15 +38,15 @@ export async function processSnapshot(){
   const rows=[],namespace=fs.readlinkSync('/proc/self/ns/pid');
   for(const pid of fs.readdirSync('/proc'))if(/^\d+$/.test(pid))try{
    if(fs.readlinkSync('/proc/'+pid+'/ns/pid')!==namespace)continue;
-   const stat=fs.readFileSync('/proc/'+pid+'/stat','utf8'),name=stat.slice(stat.indexOf('(')+1,stat.lastIndexOf(')')),fields=stat.slice(stat.lastIndexOf(')')+2).split(' ');
+   const stat=fs.readFileSync('/proc/'+pid+'/stat','utf8'),comm=stat.slice(stat.indexOf('(')+1,stat.lastIndexOf(')')),fields=stat.slice(stat.lastIndexOf(')')+2).split(' ');
    if(fields[0]==='Z')continue;
-   const status=fs.readFileSync('/proc/'+pid+'/status','utf8'),ids=status.match(/^NSpid:\s*(.+)$/m)?.[1].trim().split(/\s+/);
    let exe='';try{exe=fs.readlinkSync('/proc/'+pid+'/exe');}catch{}
+   // comm tem no maximo 15 bytes; o Proton mantem o .exe inteiro na cmdline.
+   let name=comm;try{const arg=fs.readFileSync('/proc/'+pid+'/cmdline','utf8').split('\0').find(a=>/\.exe$/i.test(a));if(arg)name=path.basename(arg);}catch{}
    const born=BOOT_MS+Math.round(Number(fields[19])/100*1000);
-   rows.push({pid:Number(ids?.at(-1)||pid),host:Number(pid),parentHost:Number(fields[1]),born,exe,name});
+   rows.push({pid:Number(pid),ppid:Number(fields[1]),born,exe,name});
   }catch{}
-  const hostToPid=new Map(rows.map(r=>[r.host,r.pid]));
-  return rows.map(r=>({pid:r.pid,ppid:hostToPid.get(r.parentHost)||0,born:r.born,exe:r.exe,name:r.name}));
+  return rows;
  }
  throw Error('Monitoramento de processos indisponível nesta plataforma.');
 }
