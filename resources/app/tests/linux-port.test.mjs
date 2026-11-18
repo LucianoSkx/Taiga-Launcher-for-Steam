@@ -235,8 +235,12 @@ test('Linux: snapshot usa o nome completo do .exe mesmo com comm truncado', asyn
  fs.copyFileSync('/bin/sleep', exe); fs.chmodSync(exe, 0o755);
  const child = spawn(exe, ['5'], {stdio: 'ignore'});
  t.after(() => { if (!child.killed) child.kill(); });
- await new Promise(r => setTimeout(r, 100));
- const row = (await processSnapshot()).find(r => r.pid === child.pid);
+ await new Promise(r => child.once('spawn', r));
+ let row;
+ for (let i = 0; i < 25 && !row; i++) {
+  row = (await processSnapshot()).find(r => r.pid === child.pid);
+  if (!row) await new Promise(r => setTimeout(r, 100));
+ }
  assert.equal(row?.name, 'NomeBemLongoParaOSistema.exe');
 });
 
