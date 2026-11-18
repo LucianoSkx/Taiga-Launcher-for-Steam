@@ -82,7 +82,7 @@ import {lnkTarget} from './lib/lnk.mjs';
 export const VERSION='3.1.4';
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
 export function pickSystemLanguage(list){const first=(Array.isArray(list)?list:[list]).map(x=>String(x||'').trim().toLowerCase()).find(Boolean);if(!first)return 'pt-BR';const base=first.split(/[-_]/)[0];return base==='pt'?'pt-BR':['es','fr','de','en'].includes(base)?base:'en';}
-export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,launcherExecutable=null,onLanguageChange=null,onStartupChange=null,systemLanguages=null,brandFetch=null,xboxLogin=null,readShortcut=null,fileIcon=null,installedRegQuery=null,onAchievementUnlocked=null,onOpenManager=null,startInjector=false,injectorOptions={},onSteamNeedsIntegration=null,epicLogin=null,pageFetch=null,secretBox=null,psnLogin=null,onApplyUpdate=null,imageThumb=null,imageCompress=null,heroFromCover=null,iconResize=null,imageValidate=null,imageConvert=null,demoExecutable=process.execPath,providersFactory=(cfg,dir)=>new Providers(cfg,dir,{convertImage:imageConvert,compressImage:imageCompress,heroFromCover,defaultServer:(()=>{try{return String(JSON.parse(fs.readFileSync(path.join(ROOT,'package.json'),'utf8')).taigaServer||'');}catch{return '';}})()})}={}){
+export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,launcherExecutable=null,onLanguageChange=null,onStartupChange=null,systemLanguages=null,brandFetch=null,xboxLogin=null,readShortcut=null,fileIcon=null,installedRegQuery=null,onAchievementUnlocked=null,onOpenManager=null,startInjector=false,injectorOptions={},onSteamNeedsIntegration=null,epicLogin=null,pageFetch=null,secretBox=null,psnLogin=null,onApplyUpdate=null,imageThumb=null,imageCompress=null,heroFromCover=null,iconResize=null,imageValidate=null,imageConvert=null,demoExecutable=process.execPath,providersFactory=(cfg,dir)=>new Providers(cfg,dir,{convertImage:imageConvert,compressImage:imageCompress,heroFromCover,defaultServer:(()=>{try{return String(JSON.parse(fs.readFileSync(path.join(ROOT,'package.json'),'utf8')).taigaServer||'');}catch{return '';}})()}),snapshotProcess=processSnapshot}={}){
  fs.mkdirSync(dataDir,{recursive:true});
  const configFile=path.join(dataDir,'config.json'),dbFile=path.join(dataDir,'games.json');
  let config=json(configFile,{emulator:'',steamDir:'',account:'',roots:[],sgdbKey:'',igdbId:'',igdbSecret:'',raUser:'',raKey:'',adminToken:crypto.randomBytes(32).toString('hex'),readToken:crypto.randomBytes(32).toString('hex')});
@@ -817,7 +817,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
   try{
    const games=db.games.filter(g=>!g.hidden&&!g.demo&&/\.exe$/i.test(String(g.path||''))&&Number(g.appId||g.bindings?.[config.account]||0));
    if(!games.length)return;
-   let rows;try{rows=await processSnapshot();}catch{return;}
+   let rows;try{rows=await snapshotProcess();}catch{return;}
    const names=new Map();for(const r of rows){const n=String(r.name||'').toLowerCase();if(!n)continue;const list=names.get(n)||[];list.push(r);names.set(n,list);}
    const now=Date.now();
    for(const g of games){

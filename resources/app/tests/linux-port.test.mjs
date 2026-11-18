@@ -177,17 +177,17 @@ test('Linux: jogo aberto pela Steam gera sessão e tempo de jogo sem passar pelo
  const steam = path.join(dir, 'steam'); fs.mkdirSync(steam);
  fs.writeFileSync(path.join(steam, 'steam.sh'), '#!/bin/sh\n');
  const dataDir = path.join(dir, 'data'); fs.mkdirSync(dataDir);
- const exe = path.join(dir, 'Jogo.exe'); fs.copyFileSync('/bin/sleep', exe); fs.chmodSync(exe, 0o755);
+ const exe = path.join(dir, 'Jogo.exe');
  const uuid = crypto.randomUUID();
  fs.writeFileSync(path.join(dataDir, 'config.json'), JSON.stringify({steamDir: steam, account: 'acc', adminToken: 'admin', readToken: 'reader'}));
  fs.writeFileSync(path.join(dataDir, 'games.json'), JSON.stringify({version: 1, games: [{id: 'g1', uuid, title: 'Jogo Steam', path: exe, profile: 'pc', appId: 123, bindings: {acc: 123}}]}));
  const port = 48771;
- const {server} = createApp({dataDir, port});
+ let gameRunning = true;
+ const snapshotProcess = async () => gameRunning ? [{pid: 4242, ppid: 0, born: Date.now() - 1000, exe, name: 'jogo.exe'}] : [];
+ const {server} = createApp({dataDir, port, snapshotProcess});
  await new Promise(r => server.listen(port, '127.0.0.1', r));
  t.after(() => new Promise(r => server.close(r)));
- const child = spawn(exe, ['30'], {stdio: 'ignore'});
- t.after(() => { if (!child.killed) child.kill(); });
- await new Promise(r => setTimeout(r, 7200));
+ await new Promise(r => setTimeout(r, 6600));
  const sessionFile = path.join(dataDir, 'sessions');
  const findSession = () => fs.readdirSync(sessionFile).map(f => {
   try { return JSON.parse(fs.readFileSync(path.join(sessionFile, f), 'utf8')); } catch { return null; }
@@ -196,8 +196,8 @@ test('Linux: jogo aberto pela Steam gera sessão e tempo de jogo sem passar pelo
  assert.ok(running, 'sessão do jogo aberto pela Steam deveria existir');
  assert.equal(running.status, 'running');
  assert.ok(running.seconds > 0);
- child.kill();
- await new Promise(r => setTimeout(r, 4200));
+ gameRunning = false;
+ await new Promise(r => setTimeout(r, 3600));
  const totals = JSON.parse(fs.readFileSync(path.join(dataDir, 'playtime.json'), 'utf8')).totals || {};
  assert.ok((totals[uuid + '|acc']?.seconds || 0) > 0, 'tempo de jogo deve ser contabilizado');
 });
