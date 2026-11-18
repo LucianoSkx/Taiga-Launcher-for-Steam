@@ -142,7 +142,7 @@ PPSSPP, PCSX2, DuckStation, ePSXe, RPCS3, Vita3K, shadPS4, Dolphin, Cemu, Ryujin
 
 The interface is the same as on Windows; only how it is started changes.
 
-**Requirements:** 64-bit Linux, Node.js 22+, Steam installed, and Chrome/CEF (provided by Steam). Windows `.exe` games are opened through their Steam shortcut — use Proton (Taiga does not run `.exe` files directly on Linux).
+**Requirements:** 64-bit Linux, Steam installed, and Chrome/CEF (provided by Steam). Windows `.exe` games are opened through their Steam shortcut — use Proton (Taiga does not run `.exe` files directly on Linux).
 
 **Install on the system** (menu shortcut, independent of the checkout):
 

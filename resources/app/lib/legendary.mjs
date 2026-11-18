@@ -77,7 +77,7 @@ export class Legendary {
  get exe() {
   if (this.platform === 'win32') return path.join(this.dataDir, 'tools', 'legendary', 'legendary.exe');
   // Linux: Legendary do sistema (pacote ou export do flatpak), procurado no PATH; nada é baixado.
-  return this._exe ??= linuxLegendary(this.env);
+  return this._exe || (this._exe = linuxLegendary(this.env));
  }
  installed() { if (this.platform !== 'win32') return !!this.exe; try { return fs.statSync(this.exe).size > 1000000; } catch { return false; } }
 

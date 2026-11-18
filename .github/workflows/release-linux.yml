@@ -27,6 +27,10 @@ jobs:
           test -x node_modules/electron/dist/electron || { echo "Binário do Electron não baixado" >&2; exit 1; }
           du -sh node_modules
 
+      - name: Testes
+        working-directory: resources/app
+        run: npm test
+
       - name: Gerar pasta portátil
         run: tools/build-portable-linux.sh "$RUNNER_TEMP/Taiga-Launcher-Portable"
 

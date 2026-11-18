@@ -142,7 +142,7 @@ PPSSPP, PCSX2, DuckStation, ePSXe, RPCS3, Vita3K, shadPS4, Dolphin, Cemu, Ryujin
 
 L'interface est identique à celle de Windows ; seul le lancement change.
 
-**Configuration requise :** Linux 64 bits, Node.js 22+, Steam installé et Chrome/CEF (fourni par Steam). Les jeux Windows `.exe` s'ouvrent via leur raccourci Steam — utilisez Proton (Taiga n'exécute pas les fichiers `.exe` directement sous Linux).
+**Configuration requise :** Linux 64 bits, Steam installé et Chrome/CEF (fourni par Steam). Les jeux Windows `.exe` s'ouvrent via leur raccourci Steam — utilisez Proton (Taiga n'exécute pas les fichiers `.exe` directement sous Linux).
 
 **Installer sur le système** (raccourci dans le menu, indépendant du dépôt) :
 

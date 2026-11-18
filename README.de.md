@@ -142,7 +142,7 @@ PPSSPP, PCSX2, DuckStation, ePSXe, RPCS3, Vita3K, shadPS4, Dolphin, Cemu, Ryujin
 
 Die Oberfläche ist identisch mit der Windows-Version; nur der Start unterscheidet sich.
 
-**Voraussetzungen:** 64-Bit-Linux, Node.js 22+, installiertes Steam und Chrome/CEF (von Steam bereitgestellt). Windows-`.exe`-Spiele werden über ihren Steam-Verknüpfungsstart geöffnet — verwende Proton (Taiga führt `.exe`-Dateien unter Linux nicht direkt aus).
+**Voraussetzungen:** 64-Bit-Linux, installiertes Steam und Chrome/CEF (von Steam bereitgestellt). Windows-`.exe`-Spiele werden über ihren Steam-Verknüpfungsstart geöffnet — verwende Proton (Taiga führt `.exe`-Dateien unter Linux nicht direkt aus).
 
 **Im System installieren** (Menüverknüpfung, unabhängig vom Repository):
 

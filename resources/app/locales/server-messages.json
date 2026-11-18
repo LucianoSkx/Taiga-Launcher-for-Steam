@@ -2301,5 +2301,19 @@
   "Código no válido. Pega el authorizationCode de la página de Epic.",
   "Code invalide. Collez le authorizationCode de la page Epic.",
   "Ungültiger Code. Füge den authorizationCode von der Epic-Seite ein."
+ ],
+ [
+  "Não foi possível abrir o navegador. Configure um navegador padrão no sistema.",
+  "Could not open the browser. Set a default browser in your system.",
+  "No se pudo abrir el navegador. Configura un navegador predeterminado en el sistema.",
+  "Impossible d'ouvrir le navigateur. Configurez un navigateur par défaut sur le système.",
+  "Browser konnte nicht geöffnet werden. Lege einen Standardbrowser im System fest."
+ ],
+ [
+  "Adicione o jogo à Steam pelo painel antes de abrir.",
+  "Add the game to Steam from the panel before opening it.",
+  "Añade el juego a Steam desde el panel antes de abrirlo.",
+  "Ajoutez le jeu à Steam depuis le panneau avant de l'ouvrir.",
+  "Füge das Spiel zuerst über das Bedienfeld zu Steam hinzu."
  ]
 ]

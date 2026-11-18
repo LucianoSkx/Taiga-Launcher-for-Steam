@@ -17,7 +17,11 @@ export async function steamLocation(selected){let target=selected;if(!LINUX&&pat
 // Steam aberta? Pelo tasklist (leve) em vez de um PowerShell inteiro; a resposta vale 3 s e pedidos juntos dividem a
 // mesma consulta. fresh: consulta agora (usado ao fechar/abrir a Steam).
 let runCache={at:0,value:false},runPending=null;
-export async function processRunning(image){if(TEST||(!LINUX&&process.platform!=='win32'))return false;try{if(LINUX){await run('pgrep',['-f',image]);return true;}const {stdout}=await run('tasklist.exe',['/FI','IMAGENAME eq '+image,'/FO','CSV','/NH'],{windowsHide:true,timeout:10000});return String(stdout).toLowerCase().includes('"'+image.toLowerCase()+'"');}catch{return (await ps("if(Get-Process "+image.replace(/\.exe$/i,'')+" -ErrorAction SilentlyContinue){'yes'}else{'no'}").catch(()=>'no'))==='yes';}}
+export async function processRunning(image){if(TEST||(!LINUX&&process.platform!=='win32'))return false;try{if(LINUX){
+   const checks=image===STEAM_EXE()?[['-x','steam'],['-f','com.valvesoftware.Steam'],['-f','steam.sh']]:[['-x',String(image).replace(/\.exe$/i,'')],['-f',image]];
+   for(const flags of checks)try{await run('pgrep',flags);return true;}catch{}
+   return false;
+  }const {stdout}=await run('tasklist.exe',['/FI','IMAGENAME eq '+image,'/FO','CSV','/NH'],{windowsHide:true,timeout:10000});return String(stdout).toLowerCase().includes('"'+image.toLowerCase()+'"');}catch{return (await ps("if(Get-Process "+image.replace(/\.exe$/i,'')+" -ErrorAction SilentlyContinue){'yes'}else{'no'}").catch(()=>'no'))==='yes';}}
 export async function running({fresh=false}={}){if(TEST||(!LINUX&&process.platform!=='win32'))return false;if(!fresh&&Date.now()-runCache.at<3000)return runCache.value;if(runPending)return runPending;runPending=processRunning(STEAM_EXE()).then(v=>{runCache={at:Date.now(),value:v};return v;}).finally(()=>{runPending=null;});return runPending;}
 export async function stopSteam(dir){
  if(!await running({fresh:true}))return;
@@ -34,7 +38,7 @@ export function startSteam(dir,port=8080){const args=['-cef-enable-debugging','-
  if(LINUX&&dir.includes(path.join('.var/app/com.valvesoftware.Steam'))){exe='flatpak';argv=['run','com.valvesoftware.Steam',...args];}
  const p=spawn(exe,argv,{detached:true,stdio:'ignore',windowsHide:true});p.on('error',()=>{});p.unref();}
 // Linha de comando da Steam em execução (para saber se já está com a integração ativa).
-export async function steamCommandLine(){if(LINUX){try{for(const name of fs.readdirSync('/proc')){if(!/^\d+$/.test(name))continue;let raw='';try{raw=fs.readFileSync('/proc/'+name+'/cmdline','utf8');}catch{continue;}const parts=raw.split('\0').filter(Boolean);if(parts.some(a=>a===STEAM_EXE()||a.endsWith('/'+STEAM_EXE())))return parts.join(' ');}return '';}catch{return null;}}
+export async function steamCommandLine(){if(LINUX){try{let first='',wrapper='';for(const name of fs.readdirSync('/proc')){if(!/^\d+$/.test(name))continue;let raw='';try{raw=fs.readFileSync('/proc/'+name+'/cmdline','utf8');}catch{continue;}const parts=raw.split('\0').filter(Boolean);if(!parts.some(a=>path.basename(a)==='steam'||a==='steam.sh'||a.endsWith('/steam.sh')||a.includes('com.valvesoftware.Steam')))continue;const line=parts.join(' ');if(/-cef-enable-debugging/i.test(line))return line;if(parts.some(a=>a==='steam.sh'||a.endsWith('/steam.sh')))wrapper||=line;else first||=line;}return first||wrapper;}catch{return null;}}
  if(process.platform!=='win32')return null;try{return await ps("(Get-CimInstance Win32_Process -Filter \"name='steam.exe'\" | Select-Object -First 1 -ExpandProperty CommandLine)")||'';}catch{return null;}}
 // Inicialização com o Windows: acrescenta os argumentos da integração à entrada "Steam" de HKCU\...\Run.
 const RUN_KEY='HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run';

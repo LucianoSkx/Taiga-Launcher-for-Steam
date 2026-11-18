@@ -1469,5 +1469,5 @@
   "epic.tokenHint": "Open the Epic page via the link below and copy the authorizationCode (32 characters) shown there.",
   "epic.tokenButton": "Paste code",
   "epic.tokenHowto": "Open Epic page",
-  "epic.tokenPlaceholder": "Paste the authorizationCode here (32 characters)"
+  "epic.tokenPlaceholder": "Paste the code or the whole line from the page"
 }

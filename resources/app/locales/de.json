@@ -1469,5 +1469,5 @@
   "epic.tokenHint": "Öffne die Epic-Seite über den Link unten und kopiere den dort angezeigten authorizationCode (32 Zeichen).",
   "epic.tokenButton": "Code einfügen",
   "epic.tokenHowto": "Epic-Seite öffnen",
-  "epic.tokenPlaceholder": "authorizationCode hier einfügen (32 Zeichen)"
+  "epic.tokenPlaceholder": "Code oder die ganze Zeile von der Seite einfügen"
 }

@@ -2,6 +2,7 @@ import {portProfile,nearPortExe} from './port-profiles.mjs';
 const DISC_PORT_EXT=new Set(['iso','cso','chd','bin','cue','img','gcm','rvz','wbfs','pbp']);
 import fs from 'node:fs';
 import path from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {digest} from './files.mjs';
 import {executableTitle} from './executable-title.mjs';
 import {inspectPSP,parseSFO,reader,isoFile} from './psp.mjs';
@@ -199,10 +200,13 @@ export function measureGameFolder(input){
  const root=fs.realpathSync(input);if(!fs.statSync(root).isDirectory()||root===path.parse(root).root||/^(windows|users|program files(?: \(x86\))?|games|jogos|downloads|desktop|common|steamapps)$/i.test(path.basename(root)))throw Error('Escolha a pasta de um único jogo, não a biblioteca ou o disco inteiro.');
  let bytes=0,files=0,entries=0;const stack=[root];while(stack.length){const dir=stack.pop();for(const entry of fs.readdirSync(dir,{withFileTypes:true})){if(++entries>200000)throw Error('Pasta muito grande para medir. Escolha somente a pasta deste jogo.');const file=path.join(dir,entry.name);if(entry.isSymbolicLink())continue;if(entry.isDirectory())stack.push(file);else if(entry.isFile()){bytes+=fs.statSync(file).size;files++;}}}return {root,bytes,files,at:new Date().toISOString()};
 }
+// ID de jogo de 64 bits usado pela Steam (o mesmo na gravacao de atalhos e no steam://rungameid/).
+const APP_ROOT=path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+export function steamGameId(appId){return ((BigInt(Number(appId)>>>0)<<32n)|0x02000000n).toString();}
 export function launchFor(g,config,demoExecutable,platform=process.platform){
  if(g.demo)return {exe:demoExecutable,args:'--taiga-demo '+g.id};
  // Jogo de loja ainda não instalado: o atalho abre o Taiga Launcher, que instala.
- if(g.notInstalled)return {exe:demoExecutable||process.execPath,args:'--taiga-launch '+(g.uuid||g.id)};
+ if(g.notInstalled)return {exe:demoExecutable||process.execPath,args:(process.platform!=='win32'&&/^electron(?:-runtime)?$/i.test(path.basename(String(demoExecutable||process.execPath)))?JSON.stringify(APP_ROOT)+' ':'')+'--taiga-launch '+(g.uuid||g.id)};
  const profile=g.profile||'psp';if(!PROFILES[profile])throw Error('Perfil de execução inválido.');
  if(profile==='pc'){
   if(!/\.exe$/i.test(g.path)&&platform==='win32')throw Error('Um jogo Windows precisa de um arquivo .exe.');
@@ -210,7 +214,7 @@ export function launchFor(g,config,demoExecutable,platform=process.platform){
   if(platform!=='win32'&&/\.exe$/i.test(g.path)){
    const appId=Number(g.appId||g.bindings?.[config.account]||0)>>>0;
     if(!appId)return {exe:'xdg-open',args:'"steam://open/main"'};
-   return {exe:'xdg-open',args:'"steam://rungameid/'+appId+'"'};
+   return {exe:'xdg-open',args:'"steam://rungameid/'+steamGameId(appId)+'"'};
   }
   return {exe:g.path,args:g.launch?.args||''};
  }

@@ -13,12 +13,13 @@ cat > "$BIN/taiga-launcher" <<EOF
 #!/bin/sh
 set -eu
 APP='__APP_PATH__'
-if [ ! -x "\$APP/node_modules/.bin/electron" ]; then
+ELECTRON="\$APP/node_modules/electron/dist/electron"
+if [ ! -x "\$ELECTRON" ]; then
   echo "Instalação incompleta. Rode tools/install-linux.sh novamente." >&2
   exit 1
 fi
 cd "\$APP"
-exec "\$APP/node_modules/.bin/electron" . "\$@"
+exec "\$ELECTRON" "\$APP" "\$@"
 EOF
 sed -i "s|__APP_PATH__|$DEST/app|" "$BIN/taiga-launcher"
 chmod +x "$BIN/taiga-launcher"

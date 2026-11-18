@@ -20,7 +20,7 @@ else
 fi
 
 # Dados do usuário: copiados da instalação atual (se houver) para a pasta portátil.
-DATA_SRC="${TAIGA_DATA:-${XDG_DATA_HOME:-$HOME/.local/share}/taiga-launcher/data}"
+DATA_SRC="${TAIGA_DATA:-${XDG_DATA_HOME:-$HOME/.local/share}/Taiga Launcher}"
 mkdir -p "$DEST/data"
 if [ -d "$DATA_SRC" ]; then
   cp -a "$DATA_SRC/." "$DEST/data/"
@@ -34,12 +34,13 @@ HERE="\$(CDPATH= cd -- "\$(dirname -- "\$(readlink -f -- "\$0")")" && pwd)"
 export TAIGA_DATA="\$HERE/Taiga-Launcher/data"
 mkdir -p "\$TAIGA_DATA"
 APP="\$HERE/Taiga-Launcher/app"
-if [ ! -x "\$APP/node_modules/.bin/electron" ]; then
+ELECTRON="\$APP/node_modules/electron/dist/electron"
+if [ ! -x "\$ELECTRON" ]; then
   echo "Instalação incompleta: rode build-portable-linux.sh novamente." >&2
   exit 1
 fi
 cd "\$APP"
-exec "\$APP/node_modules/.bin/electron" . "\$@"
+exec "\$ELECTRON" "\$APP" "\$@"
 EOF
 chmod +x "$OUT/iniciar-taiga.sh"
 cat > "$OUT/LEIA-ME.txt" <<'EOF'

@@ -53,14 +53,14 @@ function packageLogo(dir) {
 
 // Linux: ícone do tema pelo nome do executável (pixmaps e hicolor, nativo e flatpak); só PNG. `extra` é conferido
 // primeiro (testes).
-export function themeIcon(exe, extra = '') {
+export function themeIcon(exe, extra = '', env = process.env) {
  const stem = path.basename(exe).replace(/\.(appimage|exe)$/i, '').replace(/[-_.]v?\d+.*$/, '').toLowerCase();
  if (!stem) return '';
  // O binário nem sempre tem o mesmo nome do ícone: PPSSPPSDL → ppsspp, duckstation-qt → duckstation...
  const stems = [...new Set([stem, stem.replace(/(?:sdl|qt|gtk)$/, ''), stem.replace(/-emu$/, '')])].filter(Boolean);
  const sizes = ['256x256', '128x128', '64x64', '48x48', '32x32'];
  const bases = [extra, '/usr/share/pixmaps', '/usr/local/share/pixmaps', '/usr/share/icons/hicolor', '/usr/local/share/icons/hicolor',
-  '/var/lib/flatpak/exports/share/icons/hicolor', path.join(process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local/share'), 'flatpak/exports/share/icons/hicolor')].filter(Boolean);
+  '/var/lib/flatpak/exports/share/icons/hicolor', path.join(env.XDG_DATA_HOME || path.join(os.homedir(), '.local/share'), 'flatpak/exports/share/icons/hicolor')].filter(Boolean);
  for (const base of bases) for (const s of stems) {
   if (isFile(path.join(base, s + '.png'))) return path.join(base, s + '.png');
   for (const size of sizes) { const p = path.join(base, size, 'apps', s + '.png'); if (isFile(p)) return p; }
@@ -68,7 +68,7 @@ export function themeIcon(exe, extra = '') {
  return '';
 }
 
-export function iconSourceFor(exe, root = '') {
+export function iconSourceFor(exe, root = '', env = process.env) {
  const dirs = [...new Set([path.dirname(exe), root, path.dirname(path.dirname(exe))].filter(Boolean))];
  for (const d of dirs) { const logo = packageLogo(d); if (logo) return {png: logo}; }
  if (peHasIcon(exe)) return {exe};
@@ -78,6 +78,6 @@ export function iconSourceFor(exe, root = '') {
   others.sort((a, b) => { try { return fs.statSync(b).size - fs.statSync(a).size; } catch { return 0; } });
   for (const f of others.slice(0, 6)) if (peHasIcon(f)) return {exe: f};
  }
- if (process.platform === 'linux') { const png = themeIcon(exe); if (png) return {png}; return {exe: ''}; }
+ if (process.platform === 'linux') { const png = themeIcon(exe, '', env); if (png) return {png}; return {exe: ''}; }
  return {exe};
 }
