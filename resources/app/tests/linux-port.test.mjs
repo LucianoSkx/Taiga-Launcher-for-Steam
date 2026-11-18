@@ -167,3 +167,34 @@ test('Linux: readiness da Steam aceita steam.sh (destrava Adicionar à Steam)', 
  const settings = (await res.json()).settings;
  assert.equal(settings.readiness.steam, true);
 });
+
+test('Linux: jogo aberto pela Steam gera sessão e tempo de jogo sem passar pelo Play', async t => {
+ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lg-steam-watch-'));
+ t.after(() => fs.rmSync(dir, {recursive: true, force: true}));
+ const steam = path.join(dir, 'steam'); fs.mkdirSync(steam);
+ fs.writeFileSync(path.join(steam, 'steam.sh'), '#!/bin/sh\n');
+ const dataDir = path.join(dir, 'data'); fs.mkdirSync(dataDir);
+ const exe = path.join(dir, 'Jogo.exe'); fs.copyFileSync('/bin/sleep', exe); fs.chmodSync(exe, 0o755);
+ const uuid = crypto.randomUUID();
+ fs.writeFileSync(path.join(dataDir, 'config.json'), JSON.stringify({steamDir: steam, account: 'acc', adminToken: 'admin', readToken: 'reader'}));
+ fs.writeFileSync(path.join(dataDir, 'games.json'), JSON.stringify({version: 1, games: [{id: 'g1', uuid, title: 'Jogo Steam', path: exe, profile: 'pc', appId: 123, bindings: {acc: 123}}]}));
+ const port = 48771;
+ const {server} = createApp({dataDir, port});
+ await new Promise(r => server.listen(port, '127.0.0.1', r));
+ t.after(() => new Promise(r => server.close(r)));
+ const child = spawn(exe, ['30'], {stdio: 'ignore'});
+ t.after(() => { if (!child.killed) child.kill(); });
+ await new Promise(r => setTimeout(r, 7200));
+ const sessionFile = path.join(dataDir, 'sessions');
+ const findSession = () => fs.readdirSync(sessionFile).map(f => {
+  try { return JSON.parse(fs.readFileSync(path.join(sessionFile, f), 'utf8')); } catch { return null; }
+ }).find(r => r?.uuid === uuid);
+ const running = findSession();
+ assert.ok(running, 'sessão do jogo aberto pela Steam deveria existir');
+ assert.equal(running.status, 'running');
+ assert.ok(running.seconds > 0);
+ child.kill();
+ await new Promise(r => setTimeout(r, 4200));
+ const totals = JSON.parse(fs.readFileSync(path.join(dataDir, 'playtime.json'), 'utf8')).totals || {};
+ assert.ok((totals[uuid + '|acc']?.seconds || 0) > 0, 'tempo de jogo deve ser contabilizado');
+});

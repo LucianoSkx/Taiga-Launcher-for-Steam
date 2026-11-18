@@ -42,7 +42,7 @@ import {directPlay} from './lib/port-launch.mjs';
 import {retroArchPlatforms,clearRetroArchCache,retroArchCoreFor} from './lib/retroarch.mjs';
 import {MODERN} from './lib/emulator-registry.mjs';
 import {defaultDiscoveryRoots,applyDiscovery,preferredProfile,launcherSettings,detectedArguments,guessProfile,emulatorDisplayName,PROFILES as REGISTRY_PROFILES} from './lib/emulator-registry.mjs';
-import {SessionStore,UUID,defaultDataDir,portCaptureFile} from './lib/launch-engine.mjs';
+import {SessionStore,UUID,defaultDataDir,portCaptureFile,processSnapshot} from './lib/launch-engine.mjs';
 import {JobQueue} from './lib/job-queue.mjs';
 import {LibraryWatcher} from './lib/library-watcher.mjs';
 import {gameStatus} from './lib/game-status.mjs';
@@ -801,13 +801,37 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
   presence.set(g?buildActivity({title:g.title||run.title,platform:presencePlatform(g),cover:presenceCover(g),startedAt:run.startedAt}):null).catch(()=>{});}
  const queue=new JobQueue({dir:dataDir,canRun:job=>!busy&&!waiting&&(!job.payload.account||job.payload.account===config.account),onError:(job,error)=>log(job.type,error.message),handlers:{
   'steam-link-refresh':async payload=>{const game=db.games.find(g=>g.uuid===payload.uuid);if(!game||game.steamLinkDisabled||game.steamLink)return {skipped:true};const result=await steamLink.apply(game,payload.appId);if(!closed)persist();await achievementManager.get(game);return {gameId:game.id,warnings:result.warnings};},
-  'refresh-achievements':async payload=>{const game=db.games.find(g=>g.uuid===payload.uuid);const record=sessions.records().find(r=>r.id===payload.sessionId);if(!game){if(record)sessions.compact(record);return {skipped:true};}if(record?.repairs?.to&&!isFile(game.path)&&record.repairs.from===game.path){const check=await inventory('inspect',[record.repairs.to]);reconcile([game],check.items);}const data=await achievementManager.get(game);if(['offline','unavailable'].includes(data.status))throw Error(data.message||'A fonte de conquistas está indisponível.');if(!closed)persist();if(record)sessions.compact(record);return {gameId:game.id,achievementStatus:data.status};},
+  'refresh-achievements':async payload=>{const game=db.games.find(g=>g.uuid===payload.uuid);const record=sessions.records().find(r=>r.id===payload.sessionId);if(!game){if(record)sessions.compact(record);return {skipped:true};}if(record)sessions.compact(record);if(record?.repairs?.to&&!isFile(game.path)&&record.repairs.from===game.path){const check=await inventory('inspect',[record.repairs.to]);reconcile([game],check.items);}const data=await achievementManager.get(game);if(['offline','unavailable'].includes(data.status))throw Error(data.message||'A fonte de conquistas está indisponível.');if(!closed)persist();return {gameId:game.id,achievementStatus:data.status};},
   'library-check':async payload=>{const found=await inventory('scan',[payload.root]);const files=inventoryCandidates(found.files,db.games),inspected=await inventory('inspect',files.slice(0,1000));if(closed)return {cancelled:true};const result=reconcile(db.games,inspected.items);if(result.moved.length||result.changedIds.length)persist();scanStatus={newCandidates:result.items.length,at:new Date().toISOString(),errors:[...found.errors,...inspected.errors]};return {moved:result.moved.length,changed:result.changedIds.length,candidates:result.items.length};}
  }});
  const watcher=new LibraryWatcher({ignoreDir:dataDir,onChange:root=>queue.add('library-check',{root},'library:'+root),onError:(root,error)=>log('watch',error.code||error.message)});
  function setWatchRoots(){if(config.preferences.watchFolders!==false)watcher.setRoots(config.roots||[]);else watcher.close();}
  const collectSessions=()=>{if(closed)return;try{updatePresence();}catch{}try{sessions.recover();for(const record of sessions.records())if(record.status!=='running'&&!queue.jobs.some(j=>j.key==='session:'+record.id))queue.add('refresh-achievements',{uuid:record.uuid,gameId:record.gameId,sessionId:record.id,account:record.account},'session:'+record.id);}catch(error){log('sessions',error.message);}};
- const sessionTimer=setInterval(collectSessions,3000);sessionTimer.unref();
+ // Linux: jogo aberto direto pela Steam (Proton) não passa pelo /api/play. Acompanha o processo do .exe e grava
+ // uma sessão normal, para tempo de jogo e conquistas funcionarem como quando o Taiga inicia o jogo.
+ const externalSessions=new Map();let watchingExternal=false;
+ const watchSteamLaunched=async()=>{
+  if(closed||watchingExternal||process.platform==='win32'||!config.account)return;
+  watchingExternal=true;
+  try{
+   const games=db.games.filter(g=>!g.hidden&&!g.demo&&/\.exe$/i.test(String(g.path||''))&&Number(g.appId||g.bindings?.[config.account]||0));
+   if(!games.length)return;
+   let rows;try{rows=await processSnapshot();}catch{return;}
+   const names=new Map();for(const r of rows){const n=String(r.name||'').toLowerCase();if(!n)continue;const list=names.get(n)||[];list.push(r);names.set(n,list);}
+   const now=Date.now();
+   for(const g of games){
+    const key=g.uuid,watch=externalSessions.get(key),candidates=names.get(path.basename(String(g.path)).toLowerCase())||[],proc=candidates.sort((a,b)=>b.born-a.born)[0];
+    if(watch&&proc&&watch.pid!==proc.pid){const done=watch.record;done.seconds=Math.max(0,(now-watch.since)/1000);done.status='ended';done.endedAt=done.heartbeatAt=new Date().toISOString();sessions.write(done);externalSessions.delete(key);}
+    const current=externalSessions.get(key);
+    if(!proc){if(current){const done=current.record;done.seconds=Math.max(0,(now-current.since)/1000);done.status='ended';done.endedAt=done.heartbeatAt=new Date().toISOString();sessions.write(done);externalSessions.delete(key);log('sessions','Fim de '+g.title+' pela Steam: '+Math.round(done.seconds)+' s');}continue;}
+    if(current){current.record.seconds=Math.max(0,(now-current.since)/1000);current.record.heartbeatAt=new Date().toISOString();sessions.write(current.record);continue;}
+    if(sessions.records().some(r=>r.status==='running'&&r.uuid===key))continue;
+    const record={id:crypto.randomUUID(),uuid:key,gameId:g.id,title:g.title,account:config.account,launcherPid:process.pid,status:'running',seconds:0,startedAt:new Date().toISOString(),heartbeatAt:new Date().toISOString(),via:'steam',externalPid:proc.pid};
+    sessions.write(record);externalSessions.set(key,{record,pid:proc.pid,since:now});log('sessions','Jogo aberto pela Steam: '+g.title);
+   }
+  }finally{watchingExternal=false;}
+ };
+ const sessionTimer=setInterval(async()=>{await watchSteamLaunched().catch(()=>{});collectSessions();},3000);sessionTimer.unref();
  const server=http.createServer(async(req,res)=>{
   const origin=req.headers.origin||'',local=`http://127.0.0.1:${port}`;
   if(![`127.0.0.1:${port}`,`localhost:${port}`].includes(req.headers.host)){res.writeHead(403);return res.end();}
