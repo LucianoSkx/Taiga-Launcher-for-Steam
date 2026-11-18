@@ -1464,5 +1464,9 @@
   "stor.nothing": "Todo bien: no había nada sobrante para borrar.",
   "news2.light.t": "Más ligero y más rápido",
   "news2.light.d": "El programa ocupa menos espacio, guarda las imágenes de forma más compacta, borra solo lo que ya no usa y libera memoria cuando queda en la bandeja. La lectura de los juegos y la búsqueda de portadas también son más rápidas.",
-  "supd.abroad": "¿Vives fuera de Brasil?"
+  "supd.abroad": "¿Vives fuera de Brasil?",
+  "epic.tokenTitle": "Inicio por token",
+  "epic.tokenHint": "Pega el código de Epic (como Heroic) para entrar sin abrir la ventana.",
+  "epic.tokenButton": "Pegar código",
+  "epic.tokenHowto": "Cómo obtener el código"
 }

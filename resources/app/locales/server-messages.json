@@ -2294,5 +2294,12 @@
   "Extracción .7z no disponible: instala 7z/7za o extrae el archivo manualmente.",
   "Extraction .7z indisponible : installez 7z/7za ou extrayez le fichier manuellement.",
   "7z-Extraktion nicht verfügbar: installiere 7z/7za oder entpacke die Datei manuell."
+ ],
+ [
+  "Código inválido. Cole o authorizationCode da página da Epic.",
+  "Invalid code. Paste the authorizationCode from the Epic page.",
+  "Código no válido. Pega el authorizationCode de la página de Epic.",
+  "Code invalide. Collez le authorizationCode de la page Epic.",
+  "Ungültiger Code. Füge den authorizationCode von der Epic-Seite ein."
  ]
 ]

@@ -1464,5 +1464,9 @@
   "stor.nothing": "Alles gut: Es gab nichts Überflüssiges zu löschen.",
   "news2.light.t": "Leichter und schneller",
   "news2.light.d": "Das Programm braucht weniger Platz, speichert Bilder kompakter, räumt selbst auf, was es nicht mehr nutzt, und gibt Arbeitsspeicher frei, solange es nur im Infobereich läuft. Auch das Einlesen der Spiele und die Cover-Suche sind schneller.",
-  "supd.abroad": "Außerhalb Brasiliens?"
+  "supd.abroad": "Außerhalb Brasiliens?",
+  "epic.tokenTitle": "Token-Anmeldung",
+  "epic.tokenHint": "Füge den Epic-Code (wie bei Heroic) ein, um dich ohne Login-Fenster anzumelden.",
+  "epic.tokenButton": "Code einfügen",
+  "epic.tokenHowto": "Code erhalten"
 }
