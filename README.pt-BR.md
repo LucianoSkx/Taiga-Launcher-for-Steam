@@ -154,7 +154,7 @@ PPSSPP, PCSX2, DuckStation, ePSXe, RPCS3, Vita3K, shadPS4, Dolphin, Cemu, Ryujin
 
 Este fork adiciona suporte a Linux. A interface é a mesma do Windows; o que muda é como ele é iniciado.
 
-**Requisitos:** Linux 64 bits, Node.js 22+, Steam instalada e Chrome/CEF (a Steam fornece). Jogos Windows `.exe` precisam de Wine ou binfmt para rodar.
+**Requisitos:** Linux 64 bits, Node.js 22+, Steam instalada e Chrome/CEF (a Steam fornece). Jogos Windows `.exe` são abertos pelo atalho da Steam — use o Proton (o Taiga não executa `.exe` direto no Linux).
 
 **Instalar no sistema** (atalho no menu, independente do checkout):
 

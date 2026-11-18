@@ -150,6 +150,39 @@ Portabel: kein Installer, kein Millennium, kein SFP, kein Node.js.
 
 > Windows zeigt eventuell „Der Computer wurde durch Windows geschützt“, weil das Programm noch keine digitale Signatur hat. Klicke auf **Weitere Informationen › Trotzdem ausführen**.
 
+### Linux (in diesem Fork)
+
+Dieser Fork fügt Linux-Unterstützung hinzu. Die Oberfläche ist identisch mit der Windows-Version; nur der Start unterscheidet sich.
+
+**Voraussetzungen:** 64-Bit-Linux, Node.js 22+, installiertes Steam und Chrome/CEF (von Steam bereitgestellt). Windows-`.exe`-Spiele werden über ihren Steam-Verknüpfungsstart geöffnet — verwende Proton (Taiga führt `.exe`-Dateien unter Linux nicht direkt aus).
+
+**Im System installieren** (Menüverknüpfung, unabhängig vom Repository):
+
+```bash
+git clone https://github.com/LucianoSkx/Taiga-Launcher-for-Steam
+cd Taiga-Launcher-for-Steam/resources/app && npm install && cd ../..
+tools/install-linux.sh
+```
+
+Danach **Taiga Launcher** im Menü öffnen oder `taiga-launcher` ausführen. Zum Aktualisieren `tools/install-linux.sh` erneut ausführen.
+
+**Portabler Ordner** (App + Daten zusammen, keine Installation — kann auf einen anderen PC oder USB-Stick verschoben werden):
+
+```bash
+tools/build-portable-linux.sh
+# erzeugt dist/Taiga-Launcher-Portable/iniciar-taiga.sh
+```
+
+**Direkt aus dem Repository starten**, ohne Installation:
+
+```bash
+cd resources/app && npm install && npm start
+```
+
+Beim ersten Start erkennt Taiga Steam unter `~/.local/share/Steam` (oder flatpak) und setzt die Markierung `.cef-enable-remote-debugging`. Die Daten liegen in `~/.local/share/Taiga Launcher/` (XDG).
+
+> Automatische Updates sind unter Linux deaktiviert: die Releases des Originalprojekts sind nur für Windows. Aktualisiere mit `git pull` im Fork und führe `tools/install-linux.sh` erneut aus.
+
 ---
 
 ## ❓ Häufige Fragen
