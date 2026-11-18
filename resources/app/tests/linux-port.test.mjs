@@ -11,6 +11,7 @@ import {resolveDownload, extractArchive} from '../lib/emulator-download.mjs';
 import {execFileSync,spawn} from 'node:child_process';
 import {launchFor,steamGameId} from '../lib/games.mjs';
 import {createApp} from '../server.mjs';
+import {Providers} from '../lib/providers.mjs';
 import {LaunchEngine, processSnapshot} from '../lib/launch-engine.mjs';
 import {EventEmitter} from 'node:events';
 import crypto from 'node:crypto';
@@ -199,4 +200,27 @@ test('Linux: jogo aberto pela Steam gera sessão e tempo de jogo sem passar pelo
  await new Promise(r => setTimeout(r, 4200));
  const totals = JSON.parse(fs.readFileSync(path.join(dataDir, 'playtime.json'), 'utf8')).totals || {};
  assert.ok((totals[uuid + '|acc']?.seconds || 0) > 0, 'tempo de jogo deve ser contabilizado');
+});
+
+
+test('Busca de artes responde mesmo se o provedor externo não responde', async t => {
+ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lg-art-timeout-'));
+ t.after(() => fs.rmSync(dir, {recursive: true, force: true}));
+ const dataDir = path.join(dir, 'data'); fs.mkdirSync(dataDir);
+ const uuid = crypto.randomUUID();
+ fs.writeFileSync(path.join(dataDir, 'config.json'), JSON.stringify({adminToken: 'admin', readToken: 'reader'}));
+ fs.writeFileSync(path.join(dataDir, 'games.json'), JSON.stringify({version: 1, games: [{id: 'g1', uuid, title: 'Jogo', path: path.join(dir, 'Jogo.iso'), profile: 'psp'}]}));
+ const previous = process.env.TAIGA_ART_TIMEOUT; process.env.TAIGA_ART_TIMEOUT = '200';
+ t.after(() => { if (previous === undefined) delete process.env.TAIGA_ART_TIMEOUT; else process.env.TAIGA_ART_TIMEOUT = previous; });
+ const providersFactory = (c, d) => { const p = new Providers(c, d); p.artwork = () => new Promise(() => {}); return p; };
+ const port = 48772;
+ const {server} = createApp({dataDir, port, providersFactory});
+ const token = JSON.parse(fs.readFileSync(path.join(dataDir, 'config.json'), 'utf8')).adminToken;
+ await new Promise(r => server.listen(port, '127.0.0.1', r));
+ t.after(() => new Promise(r => server.close(r)));
+ const start = Date.now();
+ const res = await fetch(`http://127.0.0.1:${port}/api/art-list`, {method: 'POST', headers: {Authorization: 'Bearer ' + token, 'Content-Type': 'application/json'}, body: JSON.stringify({id: 'g1', kind: 'cover', page: 0})});
+ const data = await res.json();
+ assert.ok(Date.now() - start < 3000, 'a rota não pode ficar pendurada');
+ assert.match(data.error || '', /demorou muito/);
 });
