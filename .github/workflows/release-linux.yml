@@ -46,7 +46,22 @@ jobs:
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
           TITLE="Taiga Launcher $TAG - Linux"
-          NOTES="Portable Linux build: extract the archive and run \`./iniciar-taiga.sh\`. Windows games run through Steam + Proton."
+          NOTES=$(cat <<'EOF'
+Portable Linux build of Taiga Launcher. The app and its data stay inside the extracted folder, so you can move or copy it to another Linux PC or a USB drive.
+
+Requirements: 64-bit Linux and Steam. To play Windows games, enable Proton for non-Steam games in Steam — Taiga never runs `.exe` files directly on Linux.
+
+How to use:
+
+1. Download `taiga-launcher-linux-portable.tar.gz` and extract it anywhere.
+2. Run `./iniciar-taiga.sh` from the extracted folder. Nothing is installed system-wide.
+3. Set the Steam folder on first launch (detected under `~/.local/share/Steam` or flatpak).
+
+Included: Steam page and achievement injection over CDP, native/flatpak/AppImage emulator discovery, XDG paths and theme icons, store libraries through Legendary, `.desktop` shortcuts, playtime tracking and cross-platform VDF handling.
+
+Automatic updates are disabled on Linux (upstream releases are Windows-only). Download a newer release to update. The full automated test suite runs in CI before each release is published.
+EOF
+)
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" taiga-launcher-linux-portable.tar.gz --clobber
           else
