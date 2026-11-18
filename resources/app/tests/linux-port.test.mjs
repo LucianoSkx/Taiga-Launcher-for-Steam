@@ -10,6 +10,7 @@ import {linuxRoots} from '../lib/discover.mjs';
 import {resolveDownload, extractArchive} from '../lib/emulator-download.mjs';
 import {execFileSync,spawn} from 'node:child_process';
 import {launchFor,steamGameId} from '../lib/games.mjs';
+import {createApp} from '../server.mjs';
 import {LaunchEngine, processSnapshot} from '../lib/launch-engine.mjs';
 import {EventEmitter} from 'node:events';
 import crypto from 'node:crypto';
@@ -145,4 +146,24 @@ test('Linux: pastas e ícones respeitam o ambiente injetado', () => {
  const icons = path.join(dir, 'flatpak/exports/share/icons/hicolor/48x48/apps');
  fs.mkdirSync(icons, {recursive: true}); fs.writeFileSync(path.join(icons, 'meuemu.png'), 'png');
  assert.equal(themeIcon('/usr/bin/meuemu', '', {XDG_DATA_HOME: dir}), path.join(icons, 'meuemu.png'));
+});
+
+
+test('Linux: readiness da Steam aceita steam.sh (destrava Adicionar à Steam)', async t => {
+ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lg-ready-'));
+ t.after(() => fs.rmSync(dir, {recursive: true, force: true}));
+ const steam = path.join(dir, 'steam'); fs.mkdirSync(steam);
+ fs.writeFileSync(path.join(steam, 'steam.sh'), '#!/bin/sh\n');
+ fs.mkdirSync(path.join(steam, 'config'));
+ fs.writeFileSync(path.join(steam, 'config/loginusers.vdf'), '"users" { "76561197960265729" { "PersonaName" "teste" } }');
+ const dataDir = path.join(dir, 'data'); fs.mkdirSync(dataDir);
+ fs.writeFileSync(path.join(dataDir, 'config.json'), JSON.stringify({steamDir: steam, account: '76561197960265729', adminToken: 'admin', readToken: 'reader'}));
+ const port = 48769;
+ const {server} = createApp({dataDir, port});
+ const token = JSON.parse(fs.readFileSync(path.join(dataDir, 'config.json'), 'utf8')).adminToken;
+ await new Promise(r => server.listen(port, '127.0.0.1', r));
+ t.after(() => new Promise(r => server.close(r)));
+ const res = await fetch(`http://127.0.0.1:${port}/api/state`, {headers: {Authorization: 'Bearer ' + token}});
+ const settings = (await res.json()).settings;
+ assert.equal(settings.readiness.steam, true);
 });
