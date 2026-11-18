@@ -53,6 +53,17 @@ export function accountSources(config = {}, env = process.env) {
  const fly = exeDir(config, 'flycast');
  add('Flycast', 'flycast', fly && path.join(fly, 'emu.cfg'));
  add('Flycast', 'flycast', appdata && path.join(appdata, 'flycast', 'emu.cfg'));
+ // Linux: emuladores guardam config em ~/.config (APPDATA), ~/.local/share (LOCALAPPDATA) e flatpak em ~/.var/app.
+ const cfg = env.APPDATA || '', localDir = env.LOCALAPPDATA || '', homeDir = env.HOME || '';
+ add('RetroArch', 'retroarch', cfg && path.join(cfg, 'retroarch', 'retroarch.cfg'));
+ add('RetroArch', 'retroarch', homeDir && path.join(homeDir, '.var/app/org.libretro.RetroArch/config/retroarch/retroarch.cfg'));
+ add('PCSX2', 'pcsx2', cfg && path.join(cfg, 'PCSX2', 'inis', 'PCSX2.ini'));
+ add('PCSX2', 'pcsx2', homeDir && path.join(homeDir, '.var/app/net.pcsx2.PCSX2/config/PCSX2/inis/PCSX2.ini'));
+ add('DuckStation', 'duckstation', cfg && path.join(cfg, 'DuckStation', 'settings.ini'));
+ add('DuckStation', 'duckstation', homeDir && path.join(homeDir, '.var/app/org.duckstation.DuckStation/config/DuckStation/settings.ini'));
+ for (const base of [cfg && path.join(cfg, 'ppsspp', 'PSP', 'SYSTEM'), localDir && path.join(localDir, 'ppsspp', 'PSP', 'SYSTEM'), homeDir && path.join(homeDir, '.var/app/org.ppsspp.PPSSPP/config/ppsspp/PSP/SYSTEM')]) add('PPSSPP', 'ppsspp', base && path.join(base, 'ppsspp.ini'), {tokenFile: base && path.join(base, 'ppsspp_retroachievements.dat')});
+ for (const base of [cfg && path.join(cfg, 'dolphin-emu', 'Config'), localDir && path.join(localDir, 'dolphin-emu', 'Config'), homeDir && path.join(homeDir, '.var/app/org.DolphinEmu.dolphin-emu/config/dolphin-emu/Config')]) add('Dolphin', 'dolphin', base && path.join(base, 'RetroAchievements.ini'));
+ add('Flycast', 'flycast', cfg && path.join(cfg, 'flycast', 'emu.cfg'));
  const hawk = exeDir(config, 'bizhawk');
  add('BizHawk', 'bizhawk', hawk && path.join(hawk, 'config.ini'));
  return list;
