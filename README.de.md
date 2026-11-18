@@ -167,9 +167,9 @@ tools/build-portable-linux.sh
 cd resources/app && npm install && npm start
 ```
 
-Beim ersten Start erkennt Taiga Steam unter `~/.local/share/Steam` (oder flatpak) und setzt die Markierung `.cef-enable-remote-debugging`. Die Daten liegen in `~/.local/share/Taiga Launcher/` (XDG).
+Beim ersten Start erkennt Taiga Steam unter `~/.local/share/Steam` (oder flatpak) und setzt die Markierung `.cef-enable-remote-debugging`. Die installierte Version und die Checkout-Version speichern Daten in `~/.local/share/Taiga Launcher/` (XDG), die portable Version innerhalb ihres eigenen Ordners. Für Windows-Spiele Proton für Nicht-Steam-Spiele aktivieren.
 
-> Automatische Updates sind unter Linux deaktiviert: die Releases des Originalprojekts sind nur für Windows. Aktualisiere mit `git pull` im Fork und führe `tools/install-linux.sh` erneut aus.
+> Automatische Updates sind unter Linux deaktiviert: die Original-Releases sind nur für Windows. Aktualisiere durch den Download einer neueren Linux-Release oder, bei Installationen aus dem Quellcode, mit `git pull` und `tools/install-linux.sh`.
 
 <details>
 <summary>Windows-Version (Originalprojekt)</summary>
