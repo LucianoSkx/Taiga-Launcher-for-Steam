@@ -1273,7 +1273,7 @@ if(route==='/api/epic-login'||route==='/api/epic-login-token'){const code=String
      const g=getGame(body.id),hadSgdb=g.sgdbId;let timer;
      const items=await Promise.race([
       providers.artwork(g,body.kind,body.page,{steamAppId:g.native&&!g.shortcut?Number(g.appId):steamAppIdFor(g)}),
-      new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('A busca de artes demorou muito. Tente de novo ou escolha uma imagem do computador.')),Number(process.env.TAIGA_ART_TIMEOUT)||8000);})
+      new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('A busca de artes demorou muito. Tente de novo ou escolha uma imagem do computador.')),Number(process.env.TAIGA_ART_TIMEOUT)||12000);})
      ]).finally(()=>clearTimeout(timer));
      if(!hadSgdb&&g.sgdbId)persist();const choices=items.map(item=>{const key=crypto.randomBytes(12).toString('hex');artChoices.set(key,{...item,gameId:g.id,kind:body.kind});return {...item,choice:key};});return send({items:choices});
     }

@@ -22,16 +22,19 @@ export class Providers{
  async cached(key,ttl,fn){const hit=this.cache.get(key);if(hit&&hit.until>Date.now())return structuredClone(hit.value);if(this.pending.has(key))return structuredClone(await this.pending.get(key));const pending=(async()=>{const value=await fn();if(ttl){if(this.cache.size>=300)this.cache.delete(this.cache.keys().next().value);this.cache.set(key,{value:structuredClone(value),until:Date.now()+ttl});}return value;})();this.pending.set(key,pending);try{return structuredClone(await pending);}finally{this.pending.delete(key);}}
  async request(url,options={}){
   if(this.offline)throw Error('Sem conexão (modo offline).');
-  const key=digest(url+JSON.stringify(options.headers||{})+String(options.body||''));
+  const {priority=false,timeout=20000,...fetchOptions}=options;
+  const key=digest(url+JSON.stringify(fetchOptions.headers||{})+String(fetchOptions.body||''));
   return this.cached('request:'+key,0,async()=>{
    const host=new URL(url).hostname,lane=this.lanes.get(host)||{last:0,tail:Promise.resolve()};this.lanes.set(host,lane);
    const job=async()=>{for(let i=0;i<3;i++){
-    await sleep(Math.max(0,300-(Date.now()-lane.last)));lane.last=Date.now();
-    const res=await fetch(url,{...options,signal:options.signal||AbortSignal.timeout(20000)});
+    if(!priority)await sleep(Math.max(0,300-(Date.now()-lane.last)));lane.last=Date.now();
+    const res=await fetch(url,{...fetchOptions,signal:fetchOptions.signal||AbortSignal.timeout(timeout)});
     if((res.status===429||res.status>=500)&&i<2){const raw=res.headers.get('retry-after'),seconds=Number(raw),delay=raw?(Number.isFinite(seconds)?seconds*1000:Date.parse(raw)-Date.now()):(i+1)*1000;await res.body?.cancel();await sleep(Math.max(0,Math.min(60000,Number.isFinite(delay)?delay:1000)));continue;}
     if(!res.ok)throw Error(`Serviço respondeu HTTP ${res.status}. Verifique as credenciais e tente novamente.`);
     const data=await res.json();if(data?.success===false||data?.Error||data?.error)throw Error('O serviço não aceitou a consulta.');return data;
-   }};const pending=lane.tail.then(job,job);lane.tail=pending.catch(()=>{});return pending;
+   }};
+   if(priority)return job();
+   const pending=lane.tail.then(job,job);lane.tail=pending.catch(()=>{});return pending;
   });
  }
  // Texto (bancos DAT e listas de miniaturas) somente de hosts conhecidos, com limite de tamanho.
@@ -55,7 +58,7 @@ export class Providers{
  server(){const v=String(this.config().profileServer||this.defaultServer||'').trim();return /^https:\/\//.test(v)?v.replace(/\/+$/,''):'';}
  sgAvailable(){return !!(this.config().sgdbKey||this.server());}
  igAvailable(){const c=this.config();return !!((c.igdbId&&c.igdbSecret)||this.server());}
- async sg(endpoint){const key=this.config().sgdbKey,server=this.server();if(!key&&!server)throw Error('SteamGridDB indisponível.');const r=await this.cached('sg:'+digest((key||server)+':'+endpoint),300000,()=>key?this.request('https://www.steamgriddb.com/api/v2/'+endpoint,{headers:{Authorization:'Bearer '+key}}):this.request(server+'/v1/sgdb/'+endpoint));if(!Array.isArray(r.data)){if(/^games\/(steam|egs|origin|uplay|bnet|id)\//.test(endpoint)&&r.data?.id)return [r.data];throw Error('Resposta SteamGridDB inesperada.');}return r.data;}
+ async sg(endpoint,options={}){const key=this.config().sgdbKey,server=this.server();if(!key&&!server)throw Error('SteamGridDB indisponível.');const r=await this.cached('sg:'+digest((key||server)+':'+endpoint),300000,()=>key?this.request('https://www.steamgriddb.com/api/v2/'+endpoint,{...options,headers:{Authorization:'Bearer '+key}}):this.request(server+'/v1/sgdb/'+endpoint,options));if(!Array.isArray(r.data)){if(/^games\/(steam|egs|origin|uplay|bnet|id)\//.test(endpoint)&&r.data?.id)return [r.data];throw Error('Resposta SteamGridDB inesperada.');}return r.data;}
  async ig(query,endpoint='games'){if(!['games','characters'].includes(endpoint))throw Error('IGDB: consulta inválida.');const c=this.config();if(!c.igdbId||!c.igdbSecret){const server=this.server();if(!server)throw Error('IGDB indisponível.');return this.cached('ig:server:'+(endpoint==='games'?'':endpoint+':')+digest(query),300000,()=>this.request(server+'/v1/igdb/'+endpoint,{method:'POST',headers:{'Content-Type':'text/plain'},body:query}));}
   const fingerprint=digest(c.igdbId+c.igdbSecret);
   if(!this.token||this.token.fingerprint!==fingerprint||this.token.expires<Date.now()){
@@ -139,7 +142,7 @@ export class Providers{
   if(game.sgdbId){
    const dims=kind==='cover'?'&dimensions=600x900':kind==='wide'?'&dimensions=460x215,920x430':'';
    const mimes=kind==='logo'?'image/png,image/webp':kind==='icon'?'image/png':'image/png,image/jpeg';
-   const data=await within(this.sg(`${endpoints[kind]}/game/${game.sgdbId}?types=static&mimes=${mimes}${dims}&page=${Math.max(0,Math.min(20,Number(page)||0))}`),budget,[]);
+   const data=await within(this.sg(`${endpoints[kind]}/game/${game.sgdbId}?types=static&mimes=${mimes}${dims}&page=${Math.max(0,Math.min(20,Number(page)||0))}`,{priority:true,timeout:6000}),7000,[]);
    out.push(...data.filter(a=>!a.nsfw&&!a.humor&&a.url).map(a=>({id:a.id,url:a.url,preview:a.thumb||a.url,author:a.author?.name||'SteamGridDB',width:a.width||0,height:a.height||0})));
   }
   // Sem chave nenhuma: capa, telas e logo do libretro-thumbnails (jogos de emulador).
