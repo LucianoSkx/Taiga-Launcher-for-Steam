@@ -10,7 +10,7 @@
 </p>
 
 <h2 align="center">
-  <a href="https://github.com/GabrielTaiga/Taiga-Launcher/releases/latest">Télécharger</a>
+  <a href="https://github.com/LucianoSkx/Taiga-Launcher-for-Steam/releases/latest">Télécharger la version Linux</a>
 </h2>
 
 <p align="center">
@@ -21,8 +21,8 @@
   <a href="README.de.md">Deutsch</a>
 </p>
 
-> [!WARNING]
-> **Version initiale :** le programme peut encore contenir de nombreux bugs. Signalez-les quand vous le pouvez, avec **Signaler un problème** dans le programme ou dans les [Issues](https://github.com/GabrielTaiga/Taiga-Launcher/issues).
+> [!NOTE]
+> **Version Linux de Taiga Launcher.** Ce fork est centré sur Linux : dossier portable, Proton pour les jeux Windows et émulateurs natifs. La version Windows d'origine reste dans le projet amont.
 
 
 ---
@@ -138,21 +138,9 @@ PPSSPP, PCSX2, DuckStation, ePSXe, RPCS3, Vita3K, shadPS4, Dolphin, Cemu, Ryujin
 
 ---
 
-## 📥 Installation
+## 📥 Installer sur Linux
 
-1. Téléchargez le `.zip` de la **[dernière version](https://github.com/GabrielTaiga/Taiga-Launcher/releases/latest)**.
-2. Extrayez tout le dossier où vous voulez (par exemple `C:\Jeux\Taiga Launcher`). Gardez le `.exe` avec les autres fichiers.
-3. Ouvrez **Taiga Launcher.exe**. Un court assistant demande la langue, le compte Steam et l'emplacement de vos jeux.
-
-**Configuration requise :** Windows 10 ou 11 (64 bits) et Steam installé, avec votre compte déjà utilisé au moins une fois sur ce PC. Internet est nécessaire pour les visuels, les informations et les listes de succès ; les jeux eux-mêmes fonctionnent hors ligne.
-
-C'est portable : pas d'installateur, pas de Millennium, pas de SFP, pas de Node.js.
-
-> Windows peut afficher « Windows a protégé votre ordinateur » car le programme n'a pas encore de signature numérique. Cliquez sur **Informations complémentaires › Exécuter quand même**.
-
-### Linux (dans ce fork)
-
-Ce fork ajoute la prise en charge de Linux. L'interface est identique à celle de Windows ; seul le lancement change.
+L'interface est identique à celle de Windows ; seul le lancement change.
 
 **Configuration requise :** Linux 64 bits, Node.js 22+, Steam installé et Chrome/CEF (fourni par Steam). Les jeux Windows `.exe` s'ouvrent via leur raccourci Steam — utilisez Proton (Taiga n'exécute pas les fichiers `.exe` directement sous Linux).
 
@@ -183,12 +171,27 @@ Au premier lancement, Taiga détecte Steam dans `~/.local/share/Steam` (ou flatp
 
 > Les mises à jour automatiques sont désactivées sous Linux : les versions du projet original sont réservées à Windows. Mettez à jour avec `git pull` dans le fork et relancez `tools/install-linux.sh`.
 
+<details>
+<summary>Version Windows (projet d'origine)</summary>
+
+1. Téléchargez le `.zip` de la **[dernière version](https://github.com/GabrielTaiga/Taiga-Launcher/releases/latest)**.
+2. Extrayez tout le dossier où vous voulez (par exemple `C:\Jeux\Taiga Launcher`). Gardez le `.exe` avec les autres fichiers.
+3. Ouvrez **Taiga Launcher.exe**. Un court assistant demande la langue, le compte Steam et l'emplacement de vos jeux.
+
+**Configuration requise :** Windows 10 ou 11 (64 bits) et Steam installé, avec votre compte déjà utilisé au moins une fois sur ce PC. Internet est nécessaire pour les visuels, les informations et les listes de succès ; les jeux eux-mêmes fonctionnent hors ligne.
+
+C'est portable : pas d'installateur, pas de Millennium, pas de SFP, pas de Node.js.
+
+> Windows peut afficher « Windows a protégé votre ordinateur » car le programme n'a pas encore de signature numérique. Cliquez sur **Informations complémentaires › Exécuter quand même**.
+
+</details>
+
 ---
 
 ## ❓ Questions fréquentes
 
 **Modifie-t-il mes jeux ou mes comptes ?**
-Non. Il crée seulement des raccourcis Steam et lit des fichiers de progression. Dans vos comptes (Epic, GOG, Xbox, RetroAchievements), il lit uniquement les succès. Les identifiants sont chiffrés par Windows et seul votre utilisateur sur ce PC peut les lire.
+Non. Il crée seulement des raccourcis Steam et lit des fichiers de progression. Dans vos comptes (Epic, GOG, Xbox, RetroAchievements), il lit uniquement les succès. Les identifiants sont stockés dans le trousseau du système lorsqu'il est disponible.
 
 **Est-ce que j'obtiens des licences, des cartes ou de vrais succès Steam ?**
 Non. Tout est affiché localement dans votre Steam. Rien ne change pour la possession des jeux, l'inventaire ou votre profil Steam public.
@@ -196,14 +199,17 @@ Non. Tout est affiché localement dans votre Steam. Rien ne change pour la posse
 **Pourquoi Steam doit-il redémarrer une fois ?**
 La page du jeu et les notifications entrent dans Steam par son port de débogage local. La première fois, Steam est rouvert avec cette option activée ; ensuite, c'est automatique.
 
+**Jeux Windows `.exe` sous Linux ?**
+Ils s'ouvrent via leur raccourci Steam — activez Proton pour eux dans Steam. Les émulateurs Linux fonctionnent nativement.
+
 **Où sont mes données ?**
-Dans `%LOCALAPPDATA%\Taiga Launcher`. Vous pouvez déplacer ou remplacer le dossier du programme sans rien perdre.
+Dans `~/.local/share/Taiga Launcher` (XDG). Le dossier portable garde ses propres données dans `Taiga-Launcher/data`, à côté de l'application.
 
 **La page du jeu n'est pas apparue dans Steam.**
 Utilisez **Paramètres › Tester l'intégration**. Il vérifie chaque partie et indique quoi corriger.
 
 **J'ai trouvé un bug.**
-Utilisez **Signaler un problème** dans le menu latéral, ou ouvrez une [issue](https://github.com/GabrielTaiga/Taiga-Launcher/issues).
+Utilisez **Signaler un problème** dans le menu latéral, ou ouvrez une [issue](https://github.com/LucianoSkx/Taiga-Launcher-for-Steam/issues).
 
 ---
 

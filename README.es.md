@@ -10,7 +10,7 @@
 </p>
 
 <h2 align="center">
-  <a href="https://github.com/GabrielTaiga/Taiga-Launcher/releases/latest">Descargar</a>
+  <a href="https://github.com/LucianoSkx/Taiga-Launcher-for-Steam/releases/latest">Descargar versión Linux</a>
 </h2>
 
 <p align="center">
@@ -21,8 +21,8 @@
   <a href="README.de.md">Deutsch</a>
 </p>
 
-> [!WARNING]
-> **Versión inicial:** el programa todavía puede tener muchos errores. Informa de los fallos cuando puedas, con **Informar un problema** en el programa o en [Issues](https://github.com/GabrielTaiga/Taiga-Launcher/issues).
+> [!NOTE]
+> **Versión para Linux de Taiga Launcher.** Este fork está enfocado en Linux: carpeta portátil, Proton para juegos de Windows y emuladores nativos. La versión original de Windows sigue en el proyecto upstream.
 
 
 ---
@@ -138,21 +138,9 @@ PPSSPP, PCSX2, DuckStation, ePSXe, RPCS3, Vita3K, shadPS4, Dolphin, Cemu, Ryujin
 
 ---
 
-## 📥 Instalación
+## 📥 Instalar en Linux
 
-1. Descarga el `.zip` de la **[última versión](https://github.com/GabrielTaiga/Taiga-Launcher/releases/latest)**.
-2. Extrae la carpeta completa donde quieras (por ejemplo `C:\Juegos\Taiga Launcher`). No separes el `.exe` del resto de archivos.
-3. Abre **Taiga Launcher.exe**. Un asistente rápido te pide el idioma, la cuenta de Steam y dónde están tus juegos.
-
-**Requisitos:** Windows 10 u 11 (64 bits) y Steam instalado, con tu cuenta usada al menos una vez en este PC. Se necesita internet para el arte, la información y las listas de logros; los juegos funcionan sin conexión.
-
-Es portable: sin instalador, sin Millennium, sin SFP, sin Node.js.
-
-> Windows puede mostrar "Windows protegió tu PC" porque el programa todavía no tiene firma digital. Haz clic en **Más información › Ejecutar de todas formas**.
-
-### Linux (en este fork)
-
-Este fork añade soporte para Linux. La interfaz es la misma que en Windows; solo cambia cómo se inicia.
+La interfaz es la misma que en Windows; solo cambia cómo se inicia.
 
 **Requisitos:** Linux de 64 bits, Node.js 22+, Steam instalado y Chrome/CEF (lo proporciona Steam). Los juegos `.exe` de Windows se abren mediante su acceso directo en Steam — usa Proton (Taiga no ejecuta archivos `.exe` directamente en Linux).
 
@@ -183,12 +171,27 @@ En el primer inicio, Taiga detecta Steam en `~/.local/share/Steam` (o flatpak) y
 
 > Las actualizaciones automáticas están desactivadas en Linux: las versiones del proyecto original son solo para Windows. Actualiza con `git pull` en el fork y ejecuta `tools/install-linux.sh`.
 
+<details>
+<summary>Versión de Windows (proyecto original)</summary>
+
+1. Descarga el `.zip` de la **[última versión](https://github.com/GabrielTaiga/Taiga-Launcher/releases/latest)**.
+2. Extrae la carpeta completa donde quieras (por ejemplo `C:\Juegos\Taiga Launcher`). No separes el `.exe` del resto de archivos.
+3. Abre **Taiga Launcher.exe**. Un asistente rápido te pide el idioma, la cuenta de Steam y dónde están tus juegos.
+
+**Requisitos:** Windows 10 u 11 (64 bits) y Steam instalado, con tu cuenta usada al menos una vez en este PC. Se necesita internet para el arte, la información y las listas de logros; los juegos funcionan sin conexión.
+
+Es portable: sin instalador, sin Millennium, sin SFP, sin Node.js.
+
+> Windows puede mostrar "Windows protegió tu PC" porque el programa todavía no tiene firma digital. Haz clic en **Más información › Ejecutar de todas formas**.
+
+</details>
+
 ---
 
 ## ❓ Preguntas frecuentes
 
 **¿Modifica mis juegos o mis cuentas?**
-No. Solo crea accesos directos en Steam y lee archivos de progreso. En tus cuentas (Epic, GOG, Xbox, RetroAchievements) solo lee los logros. Los inicios de sesión los cifra el propio Windows y solo tu usuario en este PC puede leerlos.
+No. Solo crea accesos directos en Steam y lee archivos de progreso. En tus cuentas (Epic, GOG, Xbox, RetroAchievements) solo lee los logros. Los inicios de sesión se guardan en el llavero del sistema cuando está disponible.
 
 **¿Obtengo licencias, cromos o logros reales de Steam?**
 No. Todo se muestra localmente en tu Steam. No cambia la propiedad de los juegos, el inventario ni tu perfil público de Steam.
@@ -196,14 +199,17 @@ No. Todo se muestra localmente en tu Steam. No cambia la propiedad de los juegos
 **¿Por qué Steam tiene que reiniciarse una vez?**
 La página del juego y las notificaciones entran en Steam por su puerto local de depuración. La primera vez, Steam se abre con esa opción activada; después es automático.
 
+**¿Juegos `.exe` de Windows en Linux?**
+Se abren mediante su acceso directo en Steam — activa Proton para ellos en Steam. Los emuladores de Linux funcionan de forma nativa.
+
 **¿Dónde están mis datos?**
-En `%LOCALAPPDATA%\Taiga Launcher`. Puedes mover o reemplazar la carpeta del programa sin perder nada.
+En `~/.local/share/Taiga Launcher` (XDG). La carpeta portátil guarda sus propios datos en `Taiga-Launcher/data`, junto a la app.
 
 **La página del juego no apareció en Steam.**
 Usa **Configuración › Probar integración**. Revisa cada parte y te dice qué arreglar.
 
 **Encontré un error.**
-Usa **Informar un problema** en el menú lateral o abre un [issue](https://github.com/GabrielTaiga/Taiga-Launcher/issues).
+Usa **Informar un problema** en el menú lateral o abre un [issue](https://github.com/LucianoSkx/Taiga-Launcher-for-Steam/issues).
 
 ---
 
