@@ -140,7 +140,10 @@ export function windowsDrives(io = defaults) {
 // Linux: a pasta do usuário e os pontos de montagem removível (equivalente às unidades do Windows).
 export function linuxRoots(io = defaults) {
  const home = process.env.HOME || process.env.USERPROFILE || '', user = process.env.USER || '';
- return [home, user && path.join('/media', user), user && path.join('/run/media', user)].filter(p => p && io.exists(p));
+ const mounts = [user && path.join('/media', user), user && path.join('/run/media', user)].filter(p => p && io.exists(p));
+ // Não varrer o HOME inteiro: só as pastas onde jogos costumam ficar, iguais às do sweepRoots.
+ const folders = ['Desktop', 'Downloads', 'Documents', 'Games', 'Jogos', 'ROMs', 'Roms', 'Emulation'].map(p => home && path.join(home, p)).filter(p => p && io.exists(p));
+ return [...new Set([...folders, ...mounts])];
 }
 
 // Remove duplicadas e pastas dentro de outras já incluídas.
@@ -188,5 +191,6 @@ export function emulatorSearchRoots({env = process.env, platform = process.platf
  const home = env.USERPROFILE || env.HOME || '', out = [];
  for (const rel of ['Desktop', 'Downloads', 'Documents', 'Documentos', 'Games', 'Jogos', 'Emuladores', 'Emulators']) { const p = home && path.join(home, rel); if (p && io.exists(p)) out.push(p); }
  for (const d of drives || (platform === 'win32' ? windowsDrives(io) : [])) for (const n of ['Emuladores', 'Emulators', 'Emulation', 'Games', 'Jogos', 'RetroArch', 'PPSSPP', 'PCSX2', 'DuckStation', 'Dolphin', 'RPCS3']) { const p = path.join(d, n); if (io.exists(p)) out.push(p); }
+ if (platform === 'linux') { const data = process.env.XDG_DATA_HOME || path.join(home, '.local/share'); for (const p of [path.join(data, 'flatpak/exports/share/applications'), '/var/lib/flatpak/exports/share/applications', path.join(home, '.var/app/org.libretro.RetroArch/config/retroarch'), path.join(data, 'retroarch')]) if (p && io.exists(p)) out.push(p); }
  return [...new Set(out)];
 }
