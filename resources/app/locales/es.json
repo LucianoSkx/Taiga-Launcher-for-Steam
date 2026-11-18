@@ -1470,5 +1470,11 @@
   "epic.tokenButton": "Pegar código",
   "epic.tokenHowto": "Abrir página de Epic",
   "epic.tokenPlaceholder": "Pega el código o la línea completa de la página",
-  "boot.linuxLabel": "Iniciar al entrar"
+  "boot.linuxLabel": "Iniciar al entrar",
+  "set.pcLinux": "PC",
+  "set.steamHintLinux": "Selecciona la carpeta que contiene steam.sh",
+  "set.pickFiles": "Selecciona los archivos…",
+  "set.pickFolder": "Selecciona la carpeta…",
+  "inj.autostartLinux": "Steam ya inicia al entrar",
+  "inj.autostartOffLinux": "Steam no está configurada para iniciar al entrar."
 }

@@ -70,7 +70,7 @@ export class SessionStore{
 // Saída capturada de um port (troféus no stdout).
 export const portCaptureFile=(dir,uuid)=>path.join(dir,'port-logs',String(uuid).replace(/[^\w-]/g,'')+'.log');
 export class LaunchEngine{
- constructor({dir,snapshot=processSnapshot,spawnProcess=spawn,shellOpen=shellStart,interval=process.platform==='win32'?2500:150,grace=1200}={}){this.dir=dir;this.snapshot=snapshot;this.spawnProcess=spawnProcess;this.shellStart=shellOpen;this.interval=interval;this.grace=grace;this.store=new SessionStore(dir);}
+ constructor({dir,snapshot=processSnapshot,spawnProcess=spawn,shellOpen=shellStart,interval=process.platform==='win32'?2500:1000,grace=1200}={}){this.dir=dir;this.snapshot=snapshot;this.spawnProcess=spawnProcess;this.shellStart=shellOpen;this.interval=interval;this.grace=grace;this.store=new SessionStore(dir);}
  async run(game,config,{command=null,demoExecutable=process.execPath,repairs=null}={}){
   if(!UUID.test(game.uuid))throw Error('Jogo sem identificador permanente. Abra o Taiga Launcher para atualizar o cadastro.');if(game.demo)throw Error('Este cadastro não tem arquivo para executar.');{let ok=false;try{ok=fs.statSync(game.path).isFile();}catch(e){ok=/\.exe$/i.test(String(game.path))&&(e?.code==='EPERM'||e?.code==='EACCES');if(!ok&&e?.code!=='ENOENT'&&e?.code!=='ENOTDIR')throw e;}if(!ok)throw Error('Arquivo do jogo não encontrado.');}const launch=command||launchFor(game,config,demoExecutable);
   if(launch.exe==='xdg-open'&&/steam:\/\/open\/main/.test(launch.args||''))throw Error('Adicione o jogo à Steam pelo painel antes de abrir.');

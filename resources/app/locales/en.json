@@ -1470,5 +1470,11 @@
   "epic.tokenButton": "Paste code",
   "epic.tokenHowto": "Open Epic page",
   "epic.tokenPlaceholder": "Paste the code or the whole line from the page",
-  "boot.linuxLabel": "Start at login"
+  "boot.linuxLabel": "Start at login",
+  "set.pcLinux": "PC",
+  "set.steamHintLinux": "Select the folder containing steam.sh",
+  "set.pickFiles": "Select the files…",
+  "set.pickFolder": "Select the folder…",
+  "inj.autostartLinux": "Steam already starts at login",
+  "inj.autostartOffLinux": "Steam is not set to start at login."
 }

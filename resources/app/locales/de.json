@@ -1470,5 +1470,11 @@
   "epic.tokenButton": "Code einfügen",
   "epic.tokenHowto": "Epic-Seite öffnen",
   "epic.tokenPlaceholder": "Code oder die ganze Zeile von der Seite einfügen",
-  "boot.linuxLabel": "Beim Anmelden starten"
+  "boot.linuxLabel": "Beim Anmelden starten",
+  "set.pcLinux": "PC",
+  "set.steamHintLinux": "Wähle den Ordner mit steam.sh",
+  "set.pickFiles": "Dateien auswählen…",
+  "set.pickFolder": "Ordner auswählen…",
+  "inj.autostartLinux": "Steam startet bereits beim Anmelden",
+  "inj.autostartOffLinux": "Steam ist nicht für den Start beim Anmelden konfiguriert."
 }

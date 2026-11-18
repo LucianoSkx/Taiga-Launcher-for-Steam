@@ -124,7 +124,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
  const gameStoreKey=g=>{const s=g.store||{};if(s.name==='epic')return s.appName?'epic:'+String(s.appName).toLowerCase():'';if(s.name==='xbox'){const p=s.pfn||pfnFromUrl(s.url)||pfnFromUrl(g.launch?.args);return p?'xbox:'+p.toLowerCase():'';}return '';};
  const epicAuthNow=()=>validSession(config.epicAuth,{save:next=>{config.epicAuth=next;saveConfig();}}).catch(()=>null);
  const xboxAuthNow=()=>validXbox(config.xboxAuth,{save:next=>{config.xboxAuth=next;saveConfig();}}).catch(()=>null);
- const defaultEpicDir=()=>path.join(process.env.SystemDrive?process.env.SystemDrive+'\\':os.homedir(),'Games','Epic Games');
+ const defaultEpicDir=()=>process.platform==='win32'?path.join(process.env.SystemDrive?process.env.SystemDrive+'\\':os.homedir(),'Games','Epic Games'):path.join(os.homedir(),'Games');
  const epicInstallDir=()=>config.epicInstallDir||defaultEpicDir();
  const openLink=url=>new Promise(resolve=>{
   let c;if(process.platform==='win32')c=spawn(explorer(),[url],{detached:true,stdio:'ignore',windowsHide:true});

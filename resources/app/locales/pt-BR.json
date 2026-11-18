@@ -1470,5 +1470,11 @@
   "epic.tokenButton": "Colar código",
   "epic.tokenHowto": "Abrir página da Epic",
   "epic.tokenPlaceholder": "Cole o código ou a linha inteira da página",
-  "boot.linuxLabel": "Iniciar com o sistema"
+  "boot.linuxLabel": "Iniciar com o sistema",
+  "set.pcLinux": "PC",
+  "set.steamHintLinux": "Selecione a pasta que contém steam.sh",
+  "set.pickFiles": "Selecione os arquivos…",
+  "set.pickFolder": "Selecione a pasta…",
+  "inj.autostartLinux": "A Steam já inicia com o sistema",
+  "inj.autostartOffLinux": "A Steam não está configurada para iniciar com o sistema."
 }

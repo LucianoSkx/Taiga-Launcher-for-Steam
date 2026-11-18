@@ -1470,5 +1470,11 @@
   "epic.tokenButton": "Coller le code",
   "epic.tokenHowto": "Ouvrir la page Epic",
   "epic.tokenPlaceholder": "Collez le code ou la ligne entière de la page",
-  "boot.linuxLabel": "Démarrer à la connexion"
+  "boot.linuxLabel": "Démarrer à la connexion",
+  "set.pcLinux": "PC",
+  "set.steamHintLinux": "Sélectionnez le dossier contenant steam.sh",
+  "set.pickFiles": "Sélectionnez les fichiers…",
+  "set.pickFolder": "Sélectionnez le dossier…",
+  "inj.autostartLinux": "Steam démarre déjà à la connexion",
+  "inj.autostartOffLinux": "Steam n'est pas configurée pour démarrer à la connexion."
 }
