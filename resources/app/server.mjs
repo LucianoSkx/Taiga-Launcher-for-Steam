@@ -533,11 +533,15 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
  const exeMark=launcherExecutable&&!/(^|[\\/])TaigaPSP\.exe$/i.test(launcherExecutable)?launcherExecutable.toLowerCase():null;
  const steamLaunchFor=g=>{
   if(process.platform!=='win32'&&/\.exe$/i.test(String(g.path||''))&&(g.profile||'pc')==='pc')return {exe:g.path,args:g.launch?.args||''};
+  if(portableLauncher&&!g.demo)return {exe:portableLauncher,args:'--taiga-launch '+g.uuid};
   if(launcherExecutable&&!g.demo)return {exe:launcherExecutable,args:(process.platform!=='win32'&&/^electron(?:-runtime)?$/i.test(path.basename(String(launcherExecutable)))?JSON.stringify(ROOT)+' ':'')+'--taiga-launch '+g.uuid};
   return launchFor(g,config,demoExecutable);
  };
  const signature=g=>digest(JSON.stringify([g.title,launcherExecutable&&!g.demo?g.uuid:g.path,...(exeMark&&!g.demo?[exeMark]:[]),g.demo?demoExecutable:launcherExecutable||config.emulator,launcherExecutable?null:g.profile,launcherExecutable?null:g.launch,...(process.platform!=='win32'&&/\.exe$/i.test(String(g.path||''))&&(g.profile||'pc')==='pc'?[{exe:g.path,args:g.launch?.args||''}]:[]),launcherExecutable?null:config.launchers,g.media,Object.entries(g.art||{}).sort(),g.metadata,g.raId,g.bytes,g.installedBytes,g.platformName,g.sizeSynthetic,g.sizeBasis,g.sizeApproximate,[g.steamLink?.appId,g.steamLink?.about,g.steamLink?.language]]));
  const isFile=p=>{try{return fs.statSync(p).isFile();}catch(e){return /\.exe$/i.test(String(p))&&(e?.code==='EPERM'||e?.code==='EACCES');}};
+ // Pacote portátil: o script define TAIGA_DATA antes de chamar o Electron. Sem ele, o --taiga-launch da Steam
+ // usaria a pasta de dados global em vez da pasta portátil.
+ const portableLauncher=process.env.TAIGA_DATA&&isFile(path.join(ROOT,'..','..','iniciar-taiga.sh'))?path.join(ROOT,'..','..','iniciar-taiga.sh'):'';
  const metadataView=g=>{const m={...(g.metadata||{})};if(config.language&&m.summaryLanguage&&m.summaryLanguage!==config.language&&!g.metadataPinned?.summary&&m.summaryOriginal){m.summary=m.summaryOriginal;m.summaryLanguage=m.summaryOriginalLanguage||'en';}return m;};
  const sessions=new SessionStore(dataDir);let discoveryResult=null,scanStatus={newCandidates:0,errors:[]};
  const matchesLaunch=(entry,g)=>{const direct=launchFor(g,config,demoExecutable),proxy=steamLaunchFor(g),exe=windowsPath(entry.exe);if(exe===windowsPath(proxy.exe))return entry.options===proxy.args;if(exe!==windowsPath(direct.exe))return false;if(g.profile==='pc')return true;return windowsPath(entry.options).includes(windowsPath(g.path));};
@@ -979,7 +983,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
       if(result.error||result.failedIds?.length)throw Error(result.error||'Não foi possível adicionar o jogo à Steam.');
      }
      if(!isFile(g.path))throw Error('Arquivo do jogo não encontrado.');launchFor(g,config,demoExecutable);
-     const child=spawn(launcherExecutable,process.platform==='win32'||!/^electron(?:-runtime)?$/i.test(path.basename(String(launcherExecutable)))?['--taiga-launch',g.uuid]:[ROOT,'--taiga-launch',g.uuid],{detached:true,stdio:'ignore',windowsHide:true});await new Promise((resolve,reject)=>{child.once('spawn',resolve);child.once('error',reject);});child.unref();return send({message:'Iniciando jogo.'});
+     const child=spawn(portableLauncher||launcherExecutable,process.platform==='win32'||portableLauncher||!/^electron(?:-runtime)?$/i.test(path.basename(String(launcherExecutable)))?['--taiga-launch',g.uuid]:[ROOT,'--taiga-launch',g.uuid],{detached:true,stdio:'ignore',windowsHide:true});await new Promise((resolve,reject)=>{child.once('spawn',resolve);child.once('error',reject);});child.unref();return send({message:'Iniciando jogo.'});
     }
     if(route==='/api/job-retry'){queue.retry(body.id);return send({message:'Tarefa agendada novamente.'});}
     if(route==='/api/repair-check'){
