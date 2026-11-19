@@ -1,5 +1,5 @@
 // Biblioteca das lojas (jogos da conta, instalados ou não), lida com o login que o usuário já fez no Taiga Launcher.
-//  - Epic: o mesmo caminho do Legendary (legendary/core.py, get_game_and_dlc_list): a lista de "assets" do launcher
+//  - Epic: a lista de "assets" do launcher
 //    para Windows diz o que pode ser instalado no PC; o catálogo dá o nome, as imagens e se é DLC.
 //    DLC, mods e conteúdo da Unreal Engine (namespace "ue") ficam de fora.
 //  - Xbox: o histórico de títulos da conta (titlehub), como o Playnite: só jogos com versão para PC e nome de pacote.

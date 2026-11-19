@@ -221,10 +221,8 @@ export function launchFor(g,config,demoExecutable,platform=process.platform){
  // Jogos de lojas que exigem o próprio iniciador (Epic gerenciado, Ubisoft, Amazon): abre o link da loja.
  if(profile==='store'){const exe=g.launch?.exe;if(!exe||!fs.existsSync(exe))throw Error('Iniciador da loja não encontrado para '+g.title);const args=String(g.launch?.args||'');if(/[\r\n\0"]/.test(args))throw Error('Link da loja inválido.');
   // Riot Client: argumentos de produto (não é um link). Xbox: shell:AppsFolder\<família>!<app>.
-  // Legendary (jogos da Epic instalados pelo Taiga Launcher): "launch <app>".
-  if(/^legendary(?:\.exe)?$/i.test(path.basename(exe))&&/^launch [\w.-]{1,120}$/.test(args))return {exe,args:args+' --skip-version-check'};
   if(/^riotclientservices\.exe$/i.test(path.basename(exe))&&/^--launch-product=[\w-]+ --launch-patchline=[\w-]+$/.test(args))return {exe,args};
-  if(!/^(?:com\.epicgames\.launcher|uplay|amazon-games|goggalaxy|steam|heroic|battlenet|link2ea|origin2):\/\//.test(args)&&!/^shell:AppsFolder\\[\w.-]+_[0-9a-z]{13}![\w.-]+$/.test(args))throw Error('Link da loja inválido.');return {exe,args:'"'+args+'"'};}
+  if(!/^(?:com\.epicgames\.launcher|uplay|amazon-games|goggalaxy|steam|battlenet|link2ea|origin2):\/\//.test(args)&&!/^shell:AppsFolder\\[\w.-]+_[0-9a-z]{13}![\w.-]+$/.test(args))throw Error('Link da loja inválido.');return {exe,args:'"'+args+'"'};}
  const defaults=config.launchers?.[profile]||{},exe=g.launch?.exe||defaults.exe||(profile==='psp'?config.emulator:'');if(!exe||!fs.existsSync(exe)||!fs.statSync(exe).isFile())throw Error('Configure o executável de '+PROFILES[profile].name+' em Como executar: '+g.title);
  let args=g.launch?.args??defaults.args??PROFILES[profile].args,core=g.launch?.core||defaults.core||(profile==='retroarch'?coreFor(g,exe):'');
  if(!/\{(?:game|titleid|stem)\}/.test(args))throw Error('Os argumentos precisam conter {game}.');if(args.includes('{core}')&&(!core||!fs.existsSync(core)))throw Error('Selecione o núcleo do RetroArch para '+g.title);

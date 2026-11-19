@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {Legendary} from '../lib/legendary.mjs';
 import {parseDesktopEntry, listShortcuts} from '../lib/shortcut-folder.mjs';
+import {scanEpic} from '../lib/stores.mjs';
 import {iconSourceFor, themeIcon} from '../lib/exe-icon-source.mjs';
 import {linuxRoots} from '../lib/discover.mjs';
 import {resolveDownload, extractArchive} from '../lib/emulator-download.mjs';
@@ -114,24 +114,6 @@ test('.desktop: Exec com códigos de campo e aspas vira alvo + argumentos; listS
  assert.equal(items[0].target, path.join(dir, 'game.exe'));
  assert.equal(items[0].name, 'Celeste');
 });
-
-test('Legendary no Linux: binário do sistema no PATH é usado; sem ele, o erro orienta a instalação', async () => {
- const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lg-linux-'));
- const exe = path.join(dir, 'legendary');
- fs.writeFileSync(exe, '#!/bin/sh\n'); fs.chmodSync(exe, 0o755);
- const lg = new Legendary({platform: 'linux', env: {PATH: dir}, dataDir: dir});
- assert.equal(lg.exe, exe);
- assert.ok(lg.installed());
- assert.equal(await lg.ensure(), exe);
- const none = new Legendary({platform: 'linux', env: {PATH: path.join(dir, 'vazio')}, dataDir: dir, fetchImpl: async () => { throw Error('offline'); }});
- assert.equal(none.exe, '');
- assert.ok(!none.installed());
- await assert.rejects(() => none.ensure(), /offline/);
- none.env.PATH = dir;
- assert.equal(none.exe, exe, 'legendary instalado durante a sessão deve ser encontrado');
- assert.ok(none.installed());
-});
-
 
 test('Linux: abrir jogo sem appId na Steam avisa em vez de abrir só a janela da Steam', async () => {
  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lg-noapp-'));
@@ -316,126 +298,16 @@ test('Faxina de artes ignora art-origins.json como referência', async t => {
  assert.ok(result.files >= 1, 'arte órfã citada só por art-origins.json deve aparecer na faxina');
 });
 
-test('Linux: Legendary é baixado e verificado quando não está no PATH', async t => {
- const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lg-legendary-'));
- t.after(() => fs.rmSync(dir, {recursive: true, force: true}));
- const elf = Buffer.concat([Buffer.from([0x7f, 0x45, 0x4c, 0x46]), Buffer.alloc(3 * 1024 * 1024, 7)]);
- const sum = crypto.createHash('sha256').update(elf).digest('hex');
- let downloads = 0;
- const fakeFetch = async (url) => {
-  if (String(url).includes('api.github.com')) return {json: async () => ({assets: [{name: 'legendary_linux_x64', digest: 'sha256:' + sum}]})};
-  if (String(url).includes('legendary_linux_x64')) { downloads++; return {ok: true, arrayBuffer: async () => elf.buffer.slice(elf.byteOffset, elf.byteOffset + elf.byteLength)}; }
-  throw Error('URL inesperada: ' + url);
- };
- const legendary = new Legendary({dataDir: dir, platform: 'linux', env: {PATH: ''}, fetchImpl: fakeFetch});
- assert.equal(legendary.installed(), false);
- const exe = await legendary.ensure();
- assert.equal(exe, path.join(dir, 'tools', 'legendary', 'legendary'));
- assert.equal(downloads, 1);
- assert.equal(fs.statSync(exe).mode & 0o111, 0o111, 'binário precisa ser executável');
- assert.equal(legendary.installed(), true);
- assert.equal(await legendary.ensure(), exe, 'segunda chamada não baixa de novo');
- assert.equal(downloads, 1);
-});
 
-test('POST /api/epic-setup instala a ferramenta da Epic no Linux', async t => {
- const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lg-epic-setup-'));
- t.after(() => fs.rmSync(dir, {recursive: true, force: true}));
- const dataDir = path.join(dir, 'data'); fs.mkdirSync(dataDir);
- fs.writeFileSync(path.join(dataDir, 'config.json'), JSON.stringify({adminToken: 'admin', steamDir: path.join(dir, 'Steam'), account: '1', roots: [], launchers: {}, profiles: {}, preferences: {}}));
- const elf = Buffer.concat([Buffer.from([0x7f, 0x45, 0x4c, 0x46]), Buffer.alloc(3 * 1024 * 1024, 9)]);
- const sum = crypto.createHash('sha256').update(elf).digest('hex');
- const realFetch = globalThis.fetch;
- globalThis.fetch = async (url, opts) => {
-  if (String(url).includes('api.github.com')) return {json: async () => ({assets: [{name: 'legendary_linux_x64', digest: 'sha256:' + sum}]})};
-  if (String(url).includes('legendary_linux_x64')) return {ok: true, arrayBuffer: async () => elf.buffer.slice(elf.byteOffset, elf.byteOffset + elf.byteLength)};
-  return realFetch(url, opts);
- };
- t.after(() => { globalThis.fetch = realFetch; });
- const port = 48991;
- const {server} = createApp({dataDir, port});
- await new Promise(r => server.listen(port, '127.0.0.1', r));
- t.after(() => new Promise(r => server.close(r)));
- const res = await fetch(`http://127.0.0.1:${port}/api/epic-setup`, {method: 'POST', headers: {Authorization: 'Bearer admin', 'Content-Type': 'application/json'}, body: '{}'});
- const data = await res.json();
- assert.equal(res.status, 200, JSON.stringify(data));
- assert.equal(data.installed, true);
- assert.match(data.message, /Ferramenta da Epic instalada/);
- assert.ok(fs.existsSync(path.join(dataDir, 'tools', 'legendary', 'legendary')));
- const state = await (await fetch(`http://127.0.0.1:${port}/api/state`, {headers: {Authorization: 'Bearer admin'}})).json();
- assert.equal(state.epicTool.installed, true);
-});
-
-test('Linux: espaço necessário de um jogo Epic é calculado na página da Steam', async t => {
- const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lg-epic-size-'));
- t.after(() => fs.rmSync(dir, {recursive: true, force: true}));
- const dataDir = path.join(dir, 'data'), tool = path.join(dataDir, 'tools', 'legendary');
- fs.mkdirSync(tool, {recursive: true});
- const fake = path.join(tool, 'legendary');
- fs.writeFileSync(fake, '#!/bin/sh\nif [ "$1" = info ]; then echo \'{"manifest":{"disk_size":123456789,"download_size":100000000}}\'; exit 0; fi\nexit 1\n');
- fs.chmodSync(fake, 0o755);
- const lgdConfig = path.join(dir, 'legendary-config'); fs.mkdirSync(lgdConfig);
- fs.writeFileSync(path.join(lgdConfig, 'user.json'), JSON.stringify({account_id: 'abc123', refresh_token: 'r'}));
- const oldEnv = process.env.LEGENDARY_CONFIG_PATH; process.env.LEGENDARY_CONFIG_PATH = lgdConfig;
- t.after(() => { if (oldEnv === undefined) delete process.env.LEGENDARY_CONFIG_PATH; else process.env.LEGENDARY_CONFIG_PATH = oldEnv; });
- fs.writeFileSync(path.join(dataDir, 'config.json'), JSON.stringify({
-  adminToken: 'admin', steamDir: path.join(dir, 'Steam'), account: '1', roots: [], launchers: {}, profiles: {}, preferences: {showUninstalled: true},
-  epicAuth: {accessToken: 'token', accountId: 'abc123', refreshToken: 'r', expiresAt: Date.now() + 3600000}
- }));
- fs.mkdirSync(path.join(dataDir, 'art'));
- const artName = 'a'.repeat(32) + '.jpg'; fs.writeFileSync(path.join(dataDir, 'art', artName), Buffer.alloc(2 * 1024 * 1024, 3));
- fs.writeFileSync(path.join(dataDir, 'games.json'), JSON.stringify({version: 1, games: [{id: 'g1', uuid: crypto.randomUUID(), title: 'Ender Lilies', notInstalled: true, art: {wide: artName}, store: {name: 'epic', appName: 'Ender'}}]}));
- const port = 48993;
- const {server} = createApp({dataDir, port});
- await new Promise(r => server.listen(port, '127.0.0.1', r));
- t.after(() => new Promise(r => server.close(r)));
- const res = await fetch(`http://127.0.0.1:${port}/api/store-install-info`, {method: 'POST', headers: {Authorization: 'Bearer admin', 'Content-Type': 'application/json'}, body: JSON.stringify({id: 'g1', wait: true})});
- const data = await res.json();
- assert.equal(res.status, 200, JSON.stringify(data));
- assert.equal(data.sizeBytes, 123456789, 'o tamanho deve vir do Legendary no Linux também');
- assert.match(data.header, /^http:\/\/127\.0\.0\.1:\d+\/art\//, 'a imagem da janela deve ser URL, não baseado em base64');
- assert.ok(JSON.stringify(data).length < 100000, 'resposta precisa caber no canal CDP da Steam');
-});
-
-test('Linux: cancelar instalação da Epic encerra o Legendary', async t => {
- const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lg-epic-cancel-'));
- t.after(() => fs.rmSync(dir, {recursive: true, force: true}));
- const dataDir = path.join(dir, 'data'), tool = path.join(dataDir, 'tools', 'legendary');
- fs.mkdirSync(tool, {recursive: true});
- const pidFile = path.join(dir, 'install.pid');
- const fake = path.join(tool, 'legendary');
- fs.writeFileSync(fake, `#!/bin/sh
-if [ "$1" = info ]; then echo '{"manifest":{"disk_size":123,"download_size":100}}'; exit 0; fi
-if [ "$1" = auth ]; then exit 0; fi
-if [ "$1" = install ]; then echo $$ > '${pidFile}'; sleep 120 & echo $! > '${dir}/desc.pid'; echo '= Progress: 10.0% (1/10) ETA: 00:01:00'; wait; fi
-`);
- fs.chmodSync(fake, 0o755);
- const lgdConfig = path.join(dir, 'legendary-config'); fs.mkdirSync(lgdConfig);
- fs.writeFileSync(path.join(lgdConfig, 'user.json'), JSON.stringify({account_id: 'abc123', refresh_token: 'r'}));
- const oldEnv = process.env.LEGENDARY_CONFIG_PATH; process.env.LEGENDARY_CONFIG_PATH = lgdConfig;
- t.after(() => { if (oldEnv === undefined) delete process.env.LEGENDARY_CONFIG_PATH; else process.env.LEGENDARY_CONFIG_PATH = oldEnv; });
- fs.writeFileSync(path.join(dataDir, 'config.json'), JSON.stringify({
-  adminToken: 'admin', steamDir: path.join(dir, 'Steam'), account: '1', roots: [], launchers: {}, profiles: {}, preferences: {},
-  epicAuth: {accessToken: 'token', accountId: 'abc123', refreshToken: 'r', expiresAt: Date.now() + 3600000}
- }));
- fs.writeFileSync(path.join(dataDir, 'games.json'), JSON.stringify({version: 1, games: [{id: 'g1', uuid: crypto.randomUUID(), title: 'Jogo', notInstalled: true, store: {name: 'epic', appName: 'Jogo'}}]}));
- const port = 48994;
- const {server} = createApp({dataDir, port});
- await new Promise(r => server.listen(port, '127.0.0.1', r));
- t.after(() => new Promise(r => server.close(r)));
- const call = (route, body) => fetch(`http://127.0.0.1:${port}/api/${route}`, {method: 'POST', headers: {Authorization: 'Bearer admin', 'Content-Type': 'application/json'}, body: JSON.stringify(body)}).then(r => r.json());
- const started = await call('store-install', {id: 'g1', dir: path.join(dir, 'install')});
- assert.equal(started.state, 'installing', JSON.stringify(started));
- await new Promise(r => setTimeout(r, 200));
- const pid = Number(fs.readFileSync(pidFile, 'utf8').trim());
- const desc = Number(fs.readFileSync(path.join(dir, 'desc.pid'), 'utf8').trim());
- const alive = p => { try { process.kill(p, 0); return true; } catch { return false; } };
- assert.ok(alive(pid) && alive(desc), 'processo de instalação e filho precisam estar rodando');
- const cancelled = await call('store-install-cancel', {id: 'g1'});
- assert.equal(cancelled.state, 'none', JSON.stringify(cancelled));
- await new Promise(r => setTimeout(r, 200));
- assert.equal(alive(pid), false, 'cancelar deve encerrar o processo do Legendary');
- assert.equal(alive(desc), false, 'cancelar deve encerrar também os processos filhos');
- const state = await call('store-install-state', {id: 'g1'});
- assert.equal(state.state, 'none');
+test('Linux: jogos instalados pela Epic são lidos do XDG_DATA_HOME', async () => {
+ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lg-eglv2-'));
+ const dataHome = path.join(dir, 'data'), game = path.join(dir, 'Games', 'EnderLilies');
+ fs.mkdirSync(path.join(dataHome, 'com.epicgames.eglv2'), {recursive: true});
+ fs.mkdirSync(game, {recursive: true}); fs.writeFileSync(path.join(game, 'EnderLilies.exe'), 'MZ');
+ fs.writeFileSync(path.join(dataHome, 'com.epicgames.eglv2', 'installations.jsonl'), JSON.stringify({complete: true, dir: game, platform: 'Windows', namespace: 'ns', itemId: 'item', artifactId: 'app', launchExecutable: 'EnderLilies.exe'}) + '\n');
+ const found = scanEpic({XDG_DATA_HOME: dataHome});
+ assert.equal(found.length, 1, 'o launcher nativo grava em ~/.local/share no Linux');
+ assert.equal(found[0].path, path.join(game, 'EnderLilies.exe'));
+ assert.match(found[0].url, /action=launch/);
+ fs.rmSync(dir, {recursive: true, force: true});
 });

@@ -56,9 +56,8 @@ import {identifyLocal,identifyPC,displayTitle,steamAppByName,steamAppIdEvidence}
 import {scoreCandidate,confidentChoice,normalizeTitle} from './lib/title-match.mjs';
 import {isMainEntry,preferredPlatform} from './lib/external.mjs';
 import {publicAccounts} from './lib/emulator-accounts.mjs';
-import {scanStores,explorer,scanEpic,regQuery,setLegendaryExe} from './lib/stores.mjs';
+import {scanStores,explorer,scanEpic,regQuery} from './lib/stores.mjs';
 import {epicLibrary,xboxLibrary,xboxStoreLink,epicInstallLink} from './lib/store-library.mjs';
-import {Legendary} from './lib/legendary.mjs';
 import {cardSet,cardSvg} from './lib/cards.mjs';
 import {findInstalledGames} from './lib/installed-games.mjs';
 import {guessNames,guessSteamGame} from './lib/title-guess.mjs';
@@ -129,10 +128,9 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
  const storeInfo=(info,store)=>({...info,title:store.title,internalTitle:store.title,identitySource:'Loja',store:{name:store.store,label:store.storeName,id:store.id,...(store.namespace?{namespace:store.namespace,appName:store.appName||''}:{}),url:store.url||'',...(store.titleId?{titleId:String(store.titleId)}:{}),...(store.pfn?{pfn:String(store.pfn)}:{}),needsLauncher:!!store.needsLauncher,launcherExe:store.launcherExe||null,args:store.args||'',workingDir:store.workingDir||''},suggestedRoot:store.root||info.suggestedRoot,gameRoot:store.root||null,auxiliary:false});
  // ── Jogos das lojas que não estão instalados (Epic e Xbox) ──
  // Opção "Mostrar jogos não instalados das lojas": cada jogo da conta entra na coleção e na Steam com o botão
- // Instalar. Epic: instala pelo Legendary (progresso e cancelar de verdade) ou pelo Epic Games Launcher.
+ // Instalar. Epic: abre a instalação no Epic Games Launcher.
  // Xbox: abre a página do jogo no app Xbox. Quando o jogo aparece instalado, a mesma entrada vira o jogo
  // instalado (mesmo atalho da Steam, mesmas artes e tempo de jogo).
- const legendary=new Legendary({dataDir,log:m=>nglNote('[epic] '+m)});setLegendaryExe(legendary.exe);
  const installWatch=new Map();
  const pfnFromUrl=u=>String(u||'').match(/AppsFolder\\([^!\\]+)!/i)?.[1]||'';
  const itemStoreKey=it=>it.store==='epic'?(it.appName?'epic:'+String(it.appName).toLowerCase():''):it.store==='xbox'?((it.pfn||pfnFromUrl(it.url))?'xbox:'+String(it.pfn||pfnFromUrl(it.url)).toLowerCase():''):'';
@@ -147,7 +145,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
   else return resolve(false);
   c.once('error',()=>resolve(false));c.once('exit',code=>resolve(code===0));c.unref();
  });
- // Jogos de loja que abrem por URL (heroic://, com.epicgames.launcher://...): explorer.exe no Windows, xdg-open no Linux.
+ // Jogos de loja que abrem por URL (com.epicgames.launcher://...): explorer.exe no Windows, xdg-open no Linux.
  const urlLauncher=()=>process.platform==='win32'?explorer():'xdg-open';
  function placeholderGame(it){const key=itemStoreKey(it),title=String(it.title||'').slice(0,200);
   return {id:digest('store-'+key).slice(0,20),path:path.join(dataDir,'not-installed',digest(key).slice(0,16)+'.exe'),title,fileTitle:title,internalTitle:title,identitySource:'Loja',bytes:0,mtime:0,sizeBasis:null,profile:'store',profileLocked:true,platformName:PROFILES.store.platform,platformKey:'pc',platformSource:'store',discId:'',serial:'',revision:null,region:[],languages:[],discNumber:null,needsReview:false,art:{},bindings:{},metadata:{},addedAt:new Date().toISOString(),notInstalled:true,...(it.titleEn&&it.titleEn!==title?{storeTitleEn:String(it.titleEn).slice(0,200)}:{}),
@@ -173,10 +171,10 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
   const out={added:0,removed:0,installed:0,errors:[],stores:[]};
   let scanned=[];try{scanned=(await scanStores()).items||[];}catch{}
   const byKey=new Map();for(const s of scanned){const k=itemStoreKey(s);if(k&&!byKey.has(k))byKey.set(k,s);}
-  // Instalados por fora (Epic, app Xbox, Legendary): a entrada vira o jogo instalado.
+  // Instalados por fora (Epic, app Xbox): a entrada vira o jogo instalado.
   for(const g of notInstalledGames()){const s=byKey.get(gameStoreKey(g));if(s&&!db.games.some(o=>o!==g&&!o.notInstalled&&o.path.toLowerCase()===s.path.toLowerCase())){convertInstalled(g,s);out.installed++;}}
   if(!config.preferences.showUninstalled){
-   const list=notInstalledGames().filter(g=>!g.hidden&&!legendary.state(g.store?.appName||'')?.phase?.match(/^(tool|preparing|downloading|finishing)$/));
+   const list=notInstalledGames().filter(g=>!g.hidden);
    if(list.length){const bound=list.filter(g=>g.bindings?.[config.account]).map(g=>g.id);if(bound.length)try{await sync(bound,{remove:true,restart:false,openSteam:false});}catch(e){out.errors.push({file:'Steam',message:e.message});persist();return out;}
     const drop=new Set(list.map(g=>g.id));db.games=db.games.filter(g=>!drop.has(g.id));out.removed=list.length;}
    if(out.installed||out.removed)persist();return out;
@@ -188,7 +186,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
   const added=[],libKeys=new Set();
   for(const it of lib){const k=itemStoreKey(it);if(!k)continue;libKeys.add(k);if(known.has(k))continue;known.add(k);const g=placeholderGame(it);if(db.games.some(o=>o.id===g.id))continue;db.games.push(g);added.push(g.id);}
   // Jogo que saiu da conta (devolvido, fim do Game Pass): a entrada não instalada sai também.
-  const gone=notInstalledGames().filter(g=>fetched.has(g.store?.name)&&!libKeys.has(gameStoreKey(g))&&!installWatch.has(g.id)&&!legendary.state(g.store?.appName||''));
+  const gone=notInstalledGames().filter(g=>fetched.has(g.store?.name)&&!libKeys.has(gameStoreKey(g))&&!installWatch.has(g.id));
   if(gone.length){const bound=gone.filter(g=>g.bindings?.[config.account]).map(g=>g.id);let ok=true;if(bound.length)try{await sync(bound,{remove:true,restart:false,openSteam:false});}catch{ok=false;}if(ok){const drop=new Set(gone.map(g=>g.id));db.games=db.games.filter(g=>!drop.has(g.id));out.removed=gone.length;}}
   out.added=added.length;persist();
   // Jogos já cadastrados que ainda não acharam o jogo na Steam: ganham o nome em inglês e tentam de novo.
@@ -203,16 +201,14 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
    try{await autoAddToSteam(added);}catch(e){out.errors.push({file:'Steam',message:e.message});}}
   if(retry.length)refreshSteamLive?.().catch?.(()=>{});
   nglNote('Biblioteca das lojas: '+out.added+' novo(s), '+out.installed+' instalado(s), '+out.removed+' removido(s).');
-  setTimeout(()=>{try{prefetchSizes();}catch(e){log('sizes',e.message);}},15000).unref?.();
   return out;
  }
  // Estado da instalação de um jogo (página da Steam e janela do jogo).
  function installState(g){
   if(!g)return {state:'unknown'};if(!g.notInstalled)return {state:'installed'};
   const store=g.store?.name||'';
-  if(store==='epic'){const j=legendary.state(g.store.appName);if(j&&!['done','cancelled'].includes(j.phase)&&!(j.phase==='error'&&installWatch.has(g.id))){if(j.phase==='error'&&!installWatch.has(g.id))return {state:'error',store,error:j.error||'',errorCode:j.errorCode||'',errorValues:j.errorValues||{}};if(j.phase==='paused')return {state:'paused',store,phase:'paused',percent:Math.round((j.percent||0)*10)/10,downloadedMiB:j.downloadedMiB||0,totalMiB:j.totalMiB||0};return {state:'installing',store,phase:j.phase,percent:Math.round((j.percent||0)*10)/10,eta:j.eta||'',downloadedMiB:j.downloadedMiB||0,totalMiB:j.totalMiB||0,speedMiB:j.speedMiB||0};}}
   if(installWatch.has(g.id))return {state:'external',store};
-  return {state:'none',store,method:store==='epic'?(config.preferences.epicInstaller==='launcher'?'launcher':'legendary'):'app',sizeBytes:g.store?.diskBytes||0};
+  return {state:'none',store,method:store==='epic'?'launcher':'app',sizeBytes:g.store?.diskBytes||0};
  }
  let installTimer=null;
  function watchExternalInstalls(){if(installTimer)return;installTimer=setInterval(async()=>{if(closed||!installWatch.size){clearInterval(installTimer);installTimer=null;return;}for(const [id,w] of installWatch)if(Date.now()-w.since>6*3600000)installWatch.delete(id);try{await refreshInstalledStores();}catch{}},20000);installTimer.unref?.();}
@@ -220,74 +216,11 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
   for(const g of notInstalledGames()){const s=byKey.get(gameStoreKey(g));if(s&&!db.games.some(o=>o!==g&&!o.notInstalled&&o.path.toLowerCase()===s.path.toLowerCase())){convertInstalled(g,s);n++;}}
   if(n){persist();injector?.reload().catch(()=>{});refreshSteamLive?.().catch?.(()=>{});}return n;}
  // ── Janela "Instalar" (igual à da Steam): tamanho do jogo, discos e atalhos ──
- let driveLabels={at:0,map:{}};
- async function volumeLabels(){if(process.platform!=='win32')return {};if(Date.now()-driveLabels.at<600000)return driveLabels.map;
-  try{const {stdout}=await new Promise((ok,no)=>execFile('powershell.exe',['-NoProfile','-Command','[Console]::OutputEncoding=New-Object System.Text.UTF8Encoding($false);Get-CimInstance Win32_LogicalDisk | Select-Object DeviceID,VolumeName,DriveType | ConvertTo-Json -Compress'],{windowsHide:true,timeout:15000},(e,so)=>e?no(e):ok({stdout:String(so)})));
-   const rows=[].concat(JSON.parse(stdout.trim()||'[]')),map={};for(const r of rows)if(r?.DeviceID)map[String(r.DeviceID).toUpperCase()]={label:String(r.VolumeName||''),type:Number(r.DriveType)};driveLabels={at:Date.now(),map};}catch{}
-  return driveLabels.map;}
- async function installDrives(needBytes){
-  const labels=await volumeLabels(),cfgDir=epicInstallDir(),defLetter=(path.parse(cfgDir).root||'C:\\').slice(0,2).toUpperCase(),out=[];
-  for(let c=67;c<=90;c++){const letter=String.fromCharCode(c)+':',root=letter+'\\';if(process.platform==='win32'&&!fs.existsSync(root))continue;const info=labels[letter];if(info&&![2,3].includes(info.type))continue;
-   let free=0,total=0;try{const st=fs.statfsSync(root);free=Number(st.bavail)*Number(st.bsize);total=Number(st.blocks)*Number(st.bsize);}catch{continue;}
-   const dir=letter===defLetter?cfgDir:path.join(root,'Games','Epic Games');out.push({letter,label:info?.label||'',free,total,dir,default:letter===defLetter,enough:!needBytes||free>needBytes});}
-  if(process.platform!=='win32'&&!out.length){try{let target=cfgDir.startsWith('/')?cfgDir:os.homedir(),st;try{st=fs.statfsSync(target);}catch{st=fs.statfsSync(os.homedir());target=os.homedir();}const free=Number(st.bavail)*Number(st.bsize);out.push({letter:'/',label:'',free,total:Number(st.blocks)*Number(st.bsize),dir:cfgDir,default:true,enough:!needBytes||free>needBytes});}catch{}}
-  return out;}
- const sizeJobs=new Map();
- // Tamanho do jogo (Epic): guardado no cadastro; a primeira consulta roda em segundo plano.
- function epicSize(g){if(g.store?.diskBytes)return Promise.resolve(g.store.diskBytes);if(sizeJobs.has(g.id))return sizeJobs.get(g.id);
-  const job=(async()=>{const auth=await epicAuthNow();if(!auth)return 0;const r=await legendary.info(g.store.appName,auth);if(r.diskBytes){g.store.diskBytes=r.diskBytes;g.store.downloadBytes=r.downloadBytes;persist();}return r.diskBytes;})().catch(e=>{nglNote('Tamanho do jogo ('+g.title+'): '+e.message);return 0;}).finally(()=>sizeJobs.delete(g.id));
-  sizeJobs.set(g.id,job);return job;}
- // Tamanhos calculados antes, em segundo plano e devagar (um jogo por vez, com pausa), para a página já abrir com o
- // "Espaço necessário". Para enquanto houver jogo aberto, para não pesar.
- let sizePrefetch=null;
- function prefetchSizes(){if(sizePrefetch||closed||!config.preferences.showUninstalled||!config.epicAuth)return;sizePrefetch=(async()=>{
-  const todo=notInstalledGames().filter(g=>g.store?.name==='epic'&&!g.store.diskBytes&&!g.hidden&&(process.platform==='win32'||legendary.installed())&&!(g.store.sizeTriedAt&&Date.now()-g.store.sizeTriedAt<86400000));
-  for(const g of todo){if(closed||!config.preferences.showUninstalled)break;if(db.games.some(x=>x.uuid&&sessions.forGame(x.uuid,config.account)?.running))break;if(legendary.active().length)break;
-   g.store.sizeTriedAt=Date.now();try{await epicSize(g);}catch{}await new Promise(r=>setTimeout(r,2500));}
-  persist();})().finally(()=>{sizePrefetch=null;});}
- async function installInfo(g,{wait=false}={}){
+ async function installInfo(g){
   if(!g?.notInstalled)return {state:'installed'};const st=installState(g);
-  let size=g.store?.diskBytes||0;if(!size&&g.store?.name==='epic'){const p=epicSize(g);if(wait)size=await Promise.race([p,new Promise(r=>setTimeout(()=>r(0),45000))]);}
   let header='';const art=g.art?.wide||g.art?.hero||g.art?.cover,name=path.basename(String(art||''));if(/^[a-f0-9]+\.(png|jpe?g|ico)$/.test(name)&&isFile(path.join(dataDir,'art',name)))header=artUrl(name);
-  return {...st,title:g.title,sizeBytes:size,header,drives:g.store?.name==='epic'?await installDrives(size):[]};}
+  return {...st,title:g.title,sizeBytes:g.store?.diskBytes||0,header,drives:[]};}
  // Atalhos como os da Steam: abrem o jogo pela Steam (steam://rungameid), com o ícone do jogo.
- let desktopDir=null;
- async function shellFolder(name){if(process.platform!=='win32')return '';try{const {stdout}=await new Promise((ok,no)=>execFile('powershell.exe',['-NoProfile','-Command','[Environment]::GetFolderPath("'+name+'")'],{windowsHide:true,timeout:10000},(e,so)=>e?no(e):ok({stdout:String(so)})));return stdout.trim();}catch{return '';}}
- async function createGameShortcuts(g,{desktop=false,startMenu=false}={}){
-  const id=Number(g.bindings?.[config.account])>>>0;if(!id||(!desktop&&!startMenu))return;
-  const url='steam://rungameid/'+steamGameId(id),icon=isFile(g.path)?g.path:'';
-  const name=String(g.title).replace(/[<>:"/\\|?*\x00-\x1f]/g,'').trim().slice(0,120)||'Jogo';
-  if(process.platform!=='win32'){
-   // Linux: atalho .desktop no Desktop e em applications, com o comando da Steam (nativo ou flatpak) recebendo a URL steam://.
-   const dataShare=process.env.XDG_DATA_HOME||path.join(os.homedir(),'.local/share');
-   const run=String(process.env.PATH||'').split(':').some(d=>isFile(path.join(d,'steam')))?'steam':(['/var/lib/flatpak/exports/bin',path.join(dataShare,'flatpak/exports/bin')].some(d=>isFile(path.join(d,'com.valvesoftware.Steam')))?'flatpak run com.valvesoftware.Steam':'steam');
-   const body='[Desktop Entry]\nType=Application\nName='+name+'\nExec='+run+' '+url+'\nIcon=steam\nTerminal=false\n';
-   const writeDesktop=file=>{try{fs.writeFileSync(file,body);fs.chmodSync(file,0o755);}catch{}};
-   if(desktop){const dir=path.join(os.homedir(),'Desktop');if(fs.existsSync(dir))writeDesktop(path.join(dir,name+'.desktop'));}
-   if(startMenu){const dir=path.join(dataShare,'applications');try{fs.mkdirSync(dir,{recursive:true});}catch{}writeDesktop(path.join(dir,name+'.desktop'));}
-   return;
-  }
-  const body='[InternetShortcut]\r\nIDList=\r\nURL='+url+'\r\n'+(icon?'IconIndex=0\r\nIconFile='+icon+'\r\n':'');
-  if(desktop){desktopDir??=await shellFolder('Desktop');if(desktopDir)try{fs.writeFileSync(path.join(desktopDir,name+'.url'),body);}catch{}}
-  if(startMenu){const dir=await shellFolder('Programs');if(dir)try{fs.writeFileSync(path.join(dir,name+'.url'),body);}catch{}}}
- async function startInstall(g,{via='',dir='',shortcuts=null}={}){
-  if(!g?.notInstalled)return installState(g);
-  const store=g.store?.name;
-  if(store==='xbox'){if(process.platform!=='win32')throw Error('Esta operação requer Windows.');openLink(xboxStoreLink(g.store));installWatch.set(g.id,{since:Date.now()});watchExternalInstalls();return installState(g);}
-  if(store!=='epic')throw Error('Instalação não disponível para esta loja.');
-  if((config.preferences.epicInstaller==='launcher'&&via!=='legendary')||via==='launcher'){openLink(epicInstallLink(g.store));installWatch.set(g.id,{since:Date.now()});watchExternalInstalls();return installState(g);}
-  const auth=await epicAuthNow();if(!auth)throw Error('Entre com a sua conta Epic em Contas para instalar jogos da Epic.');
-  let baseDir=epicInstallDir();const want=String(dir||'').trim();if(want){if(!path.isAbsolute(want)||/[<>"|?*]/.test(want.slice(2)))throw Error('Escolha uma pasta válida para instalar os jogos da Epic.');baseDir=want;}
-  if(shortcuts&&typeof shortcuts==='object')g.installShortcuts={desktop:!!shortcuts.desktop,startMenu:!!shortcuts.startMenu};
-  await legendary.install(g.store.appName,{auth,baseDir,onDone:async st=>{
-   if(st.phase==='done'){const n=await refreshInstalledStores().catch(()=>0);if(n&&g.installShortcuts){try{await createGameShortcuts(g,g.installShortcuts);}catch{}delete g.installShortcuts;persist();}if(!n)nglNote('Instalação Epic terminou, mas o jogo não foi encontrado: '+g.title);}
-   // Jogo que só instala pelo Ubisoft Connect: a própria Epic cuida da instalação.
-   else if(st.phase==='error'&&st.errorCode==='uplay'){openLink(epicInstallLink(g.store));installWatch.set(g.id,{since:Date.now()});watchExternalInstalls();}
-  }});
-  return installState(g);
- }
- async function pauseInstall(g){if(g?.store?.name==='epic')await legendary.pause(g.store.appName);return installState(g);}
- async function cancelInstall(g){if(!g)return {state:'unknown'};if(g.store?.name==='epic'&&legendary.state(g.store.appName))await legendary.cancel(g.store.appName);installWatch.delete(g.id);return installState(g);}
  // Arquivos escolhidos à mão: atalhos (.lnk/.url) viram o jogo de destino. Atalho do Xbox (shell:AppsFolder, sem
  // arquivo de destino) é ligado ao jogo do Xbox pela família do pacote ou pelo nome do atalho.
  async function resolvePicked(paths){let stores=null;const getStores=async()=>stores??=(await scanStores().catch(()=>({items:[]}))).items||[];const norm=t=>String(t||'').toLowerCase().replace(/[^a-z0-9]+/g,'');const out=[];
@@ -922,7 +855,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
    if(req.method==='GET'&&route==='/api/playtime')return send(sessions.forGame(getGame(url.searchParams.get('id')).uuid,config.account));
    if(req.method==='GET'&&route==='/api/library-status')return send({scanStatus,steamNeedsRestart:integration.needsRestart&&config.injectSteam!==false,dataVersion,busy:queue.jobs.filter(j=>['queued','running'].includes(j.status)).length,update:update.available?{version:update.available.version,downloading:update.downloading,progress:Math.round(update.progress*100)}:null});
    if(req.method==='GET'&&route==='/api/jobs')return send({jobs:queue.summary(),scanStatus});
-   if(req.method==='GET'&&route==='/api/state'){readSteamSnapshot();return send({settings:configView(),epicTool:{installed:legendary.installed(),path:legendary.exe},games:db.games.filter(g=>!g.hidden).map(privateGame),hiddenGames:db.games.filter(g=>g.hidden).map(privateGame),busy,lastSync:json(path.join(dataDir,'last-sync.json'),null)});}
+   if(req.method==='GET'&&route==='/api/state'){readSteamSnapshot();return send({settings:configView(),games:db.games.filter(g=>!g.hidden).map(privateGame),hiddenGames:db.games.filter(g=>g.hidden).map(privateGame),busy,lastSync:json(path.join(dataDir,'last-sync.json'),null)});}
    if(req.method!=='POST')return send({error:'Rota não encontrada'},404);
    let text='';for await(const chunk of req){text+=chunk;if(text.length>1024*1024)throw Error('Requisição muito grande');}const body=JSON.parse(text||'{}');
    if(route==='/api/owned-cover'){
@@ -991,15 +924,8 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
      const exe=String(body.exe||''),profile=String(body.profile||'')||guessProfile(exe)||'';if(!isFile(exe)||!/\.exe$/i.test(exe)&&process.platform==='win32')throw Error('Selecione o arquivo .exe do emulador.');if(!profile||!REGISTRY_PROFILES[profile]?.files){const pf=portMainExe(exe);if(pf){const g=await addPortGame(pf);return send({message:'Este é um port para PC, não um emulador: {0} foi adicionado como jogo.'.replace('{0}',g.title),port:true,gameId:g.id});}}if(!profile||!REGISTRY_PROFILES[profile]?.files)throw Error('Não reconhecemos este emulador. Escolha o .exe de um emulador da lista (PPSSPP, PCSX2, DuckStation, Dolphin, RetroArch...).');
      const old=config.launchers?.[profile]||{};config.launchers||={};config.launchers[profile]=launcherSettings(old,profile,exe);if(profile==='psp')config.emulator=exe;config.emulatorIgnore=(config.emulatorIgnore||[]).filter(k=>k!==profile);saveConfig();clearRetroArchCache();await reassignProfiles();return send({message:'{0} configurado.'.replace('{0}',emulatorDisplayName(profile,exe)),profile});
     }
-    if(route==='/api/epic-setup'){
-     if(process.platform==='win32')throw Error('Esta ferramenta já vem instalada no Windows.');
-     const exe=await legendary.ensure();
-     setLegendaryExe(exe);
-     nglNote('[epic] Ferramenta de instalação pronta: '+exe);
-     return send({message:'Ferramenta da Epic instalada. Os jogos continuam sendo abertos pela Steam.',installed:true,path:exe});
-    }
     if(route==='/api/store-library'){const r=await syncStoreLibrary();return send(r);}
-    if(route==='/api/store-install'){const g=getGame(body.id);return send(await startInstall(g,{via:['launcher','legendary'].includes(body.via)?body.via:'',dir:typeof body.dir==='string'?body.dir:'',shortcuts:body.shortcuts||null}));}
+    if(route==='/api/store-install'){const g=getGame(body.id);return send(await startInstall(g));}
     if(route==='/api/store-install-info'){const g=getGame(body.id);return send(await installInfo(g,{wait:!!body.wait}));}
     if(route==='/api/store-install-pause'){const g=getGame(body.id);return send(await pauseInstall(g));}
     if(route==='/api/store-install-cancel'){const g=getGame(body.id);return send(await cancelInstall(g));}
@@ -1111,7 +1037,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
      const hadArtKeys=!!config.sgdbKey,hadIgdb=!!(config.igdbId&&config.igdbSecret);for(const key of ['sgdbKey','igdbId','igdbSecret','raKey','steamKey'])if(typeof body[key]==='string')config[key]=body[key].trim();if(!hadArtKeys&&config.sgdbKey||!hadIgdb&&config.igdbId&&config.igdbSecret)setTimeout(()=>completeArtworkAfterKeys().catch(()=>{}),500);
      if(typeof body.steamDir==='string'){const ac=win.accounts(config.steamDir);if(!ac.some(a=>a.id===config.account))config.account=ac.find(a=>a.recent)?.id||ac[0]?.id||'';}
      if(Array.isArray(body.roots))config.roots=body.roots.filter(x=>typeof x==='string'&&x.trim());
-     const raBefore=!!config.preferences.retroarchFirst,libBefore=!!config.preferences.showUninstalled,colBefore=!!config.preferences.storeCollections+'|'+!!config.preferences.emuCollection;if(typeof body.retroarchAsked==='boolean'){config.retroarchAsked=body.retroarchAsked;}if(typeof body.setupDone==='boolean'){config.setupDone=body.setupDone;}if(typeof body.seenVersion==='string'&&/^\d+\.\d+\.\d+$/.test(body.seenVersion)){config.seenVersion=body.seenVersion;}if(body.supportHideUntil!==undefined){const n=Number(body.supportHideUntil);config.supportHideUntil=Number.isFinite(n)&&n>0?Math.min(n,Date.now()+400*864e5):0;}if(body.preferences){for(const k of ['autoLookup','closeSteam','scanOnStart','autoCollection','watchFolders','autoDiscover','autoSync','discordPresence','startWithWindows','showUninstalled','storeCollections','retroarchFirst','emuCollection'])if(typeof body.preferences[k]==='boolean')config.preferences[k]=body.preferences[k];if(['legendary','launcher'].includes(body.preferences.epicInstaller))config.preferences.epicInstaller=body.preferences.epicInstaller;if(typeof body.preferences.startWithWindows==='boolean')try{onStartupChange?.(body.preferences.startWithWindows);}catch{}if(['system','light','dark'].includes(body.preferences.theme))config.preferences.theme=body.preferences.theme;}
+     const raBefore=!!config.preferences.retroarchFirst,libBefore=!!config.preferences.showUninstalled,colBefore=!!config.preferences.storeCollections+'|'+!!config.preferences.emuCollection;if(typeof body.retroarchAsked==='boolean'){config.retroarchAsked=body.retroarchAsked;}if(typeof body.setupDone==='boolean'){config.setupDone=body.setupDone;}if(typeof body.seenVersion==='string'&&/^\d+\.\d+\.\d+$/.test(body.seenVersion)){config.seenVersion=body.seenVersion;}if(body.supportHideUntil!==undefined){const n=Number(body.supportHideUntil);config.supportHideUntil=Number.isFinite(n)&&n>0?Math.min(n,Date.now()+400*864e5):0;}if(body.preferences){for(const k of ['autoLookup','closeSteam','scanOnStart','autoCollection','watchFolders','autoDiscover','autoSync','discordPresence','startWithWindows','showUninstalled','storeCollections','retroarchFirst','emuCollection'])if(typeof body.preferences[k]==='boolean')config.preferences[k]=body.preferences[k];if(typeof body.preferences.startWithWindows==='boolean')try{onStartupChange?.(body.preferences.startWithWindows);}catch{}if(['system','light','dark'].includes(body.preferences.theme))config.preferences.theme=body.preferences.theme;}
      if(typeof body.epicInstallDir==='string'){const d=body.epicInstallDir.trim();if(d&&!path.isAbsolute(d))throw Error('Escolha uma pasta válida para instalar os jogos da Epic.');config.epicInstallDir=d;}
      saveConfig();setWatchRoots();
      if(raBefore!==!!config.preferences.retroarchFirst)reassignProfiles().catch(e=>nglNote('Emuladores: '+e.message));
@@ -1478,7 +1404,7 @@ if(startInjector){setTimeout(()=>coverSweep().catch(()=>{}),15000).unref?.();con
  // de edição, Wikidata pelo nome). Em segundo plano, um por vez.
  if(startInjector)setTimeout(async()=>{const todo=db.games.filter(g=>!g.demo&&!g.hidden&&g.store&&!steamAppIdFor(g)&&!g.steamLinkDisabled&&!g.storeLinkRetry254);for(const g of todo){if(closed)return;g.storeLinkRetry254=true;delete g.storeSteamCheckedAt;delete g.steamNameCheckedAt;delete g.steamResolve;try{await autoSteamLink(g);}catch{}}if(todo.length){try{persist();}catch(e){nglNote('Ao salvar links automáticos: '+e.message);}refreshSteamLive?.().catch?.(()=>{});}},90000).unref?.();
  // Biblioteca das lojas (jogos não instalados): ao abrir e a cada 6 h; também confere jogos instalados por fora.
- if(startInjector){const lib=()=>{if(config.preferences.showUninstalled||notInstalledGames().length)syncStoreLibrary().catch(e=>nglNote('Biblioteca das lojas: '+e.message));};setTimeout(lib,70000).unref?.();const lt=setInterval(lib,6*3600000);lt.unref?.();server.on('close',()=>{clearInterval(lt);for(const a of legendary.active())legendary.cancel(a).catch(()=>{});});}
+ if(startInjector){const lib=()=>{if(config.preferences.showUninstalled||notInstalledGames().length)syncStoreLibrary().catch(e=>nglNote('Biblioteca das lojas: '+e.message));};setTimeout(lib,70000).unref?.();const lt=setInterval(lib,6*3600000);lt.unref?.();server.on('close',()=>clearInterval(lt));}
  // Descrições que ficaram em outro idioma (tradução indisponível na hora da importação): tenta de novo.
  // Tradução que ficou para depois (cota, sem internet): tenta de novo ao abrir e a cada 2 horas, descrições e conquistas,
  // até tudo estar no idioma do programa. Nada fica em inglês para sempre.

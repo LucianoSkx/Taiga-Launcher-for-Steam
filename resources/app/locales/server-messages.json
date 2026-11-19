@@ -2205,27 +2205,6 @@
   "Wähle einen gültigen Ordner für die Installation der Epic-Spiele."
  ],
  [
-  "O Legendary não foi encontrado no sistema. Instale-o para instalar jogos da Epic (ex.: sudo pacman -S legendary, apt install legendary ou flatpak install --user com.github.derrod.legendary).",
-  "Legendary was not found on the system. Install it to download Epic games (e.g.: sudo pacman -S legendary, apt install legendary or flatpak install --user com.github.derrod.legendary).",
-  "No se encontró Legendary en el sistema. Instálalo para descargar juegos de Epic (p. ej.: sudo pacman -S legendary, apt install legendary o flatpak install --user com.github.derrod.legendary).",
-  "Legendary n'a pas été trouvé sur le système. Installez-le pour télécharger les jeux Epic (ex. : sudo pacman -S legendary, apt install legendary ou flatpak install --user com.github.derrod.legendary).",
-  "Legendary wurde auf dem System nicht gefunden. Installiere es, um Epic-Spiele herunterzuladen (z. B.: sudo pacman -S legendary, apt install legendary oder flatpak install --user com.github.derrod.legendary)."
- ],
- [
-  "O arquivo do Legendary baixado não é válido.",
-  "The downloaded Legendary file is not valid.",
-  "El archivo de Legendary descargado no es válido.",
-  "Le fichier Legendary téléchargé n'est pas valide.",
-  "Die heruntergeladene Legendary-Datei ist ungültig."
- ],
- [
-  "O Legendary baixado não confere com o publicado no GitHub. Nada foi instalado.",
-  "The downloaded Legendary does not match the one published on GitHub. Nothing was installed.",
-  "El Legendary descargado no coincide con el publicado en GitHub. No se instaló nada.",
-  "Le Legendary téléchargé ne correspond pas à celui publié sur GitHub. Rien n'a été installé.",
-  "Das heruntergeladene Legendary stimmt nicht mit dem auf GitHub veröffentlichten überein. Es wurde nichts installiert."
- ],
- [
   "A Epic não liberou o login para a instalação. Entre de novo com a conta Epic em Contas.",
   "Epic did not allow the sign-in for the installation. Sign in again with your Epic account in Accounts.",
   "Epic no autorizó el inicio de sesión para la instalación. Vuelve a iniciar sesión con tu cuenta Epic en Cuentas.",
@@ -2259,20 +2238,6 @@
   "Inicia sesión con tu cuenta Microsoft en Cuentas.",
   "Connectez votre compte Microsoft dans Comptes.",
   "Melde dich unter Konten mit deinem Microsoft-Konto an."
- ],
- [
-  "Não foi possível baixar o Legendary (HTTP {0}).",
-  "Could not download Legendary (HTTP {0}).",
-  "No se pudo descargar Legendary (HTTP {0}).",
-  "Impossible de télécharger Legendary (HTTP {0}).",
-  "Legendary konnte nicht heruntergeladen werden (HTTP {0})."
- ],
- [
-  "O Legendary parou com o código {0}.",
-  "Legendary stopped with code {0}.",
-  "Legendary se detuvo con el código {0}.",
-  "Legendary s'est arrêté avec le code {0}.",
-  "Legendary wurde mit Code {0} beendet."
  ],
  [
   "Abra o Taiga Launcher para instalar {0}.",
@@ -2343,19 +2308,5 @@
   "Token de estado no válido.",
   "Jeton de statut invalide.",
   "Ungültiges Status-Token."
- ],
- [
-  "Ferramenta da Epic instalada. Os jogos continuam sendo abertos pela Steam.",
-  "Epic tool installed. Games are still opened by Steam.",
-  "Herramienta de Epic instalada. Los juegos siguen abriéndose con Steam.",
-  "Outil Epic installé. Les jeux sont toujours ouverts par Steam.",
-  "Epic-Werkzeug installiert. Die Spiele werden weiterhin von Steam geöffnet."
- ],
- [
-  "O Legendary não foi encontrado no sistema.",
-  "Legendary was not found on the system.",
-  "Legendary no se encontró en el sistema.",
-  "Legendary est introuvable sur le système.",
-  "Legendary wurde auf dem System nicht gefunden."
  ]
 ]

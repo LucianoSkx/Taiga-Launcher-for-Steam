@@ -12,7 +12,7 @@ export function storeIds(game) {
 import {editionBase, normalizeTitle} from './title-match.mjs';
 const UA = 'TaigaLauncher/2.5 (https://github.com/GabrielTaiga/Taiga-Launcher)';
 const getJSON = async (fetchImpl, url, options = {}) => { const res = await fetchImpl(url, {...options, headers: {'User-Agent': UA, Accept: 'application/json', ...(options.headers || {})}, signal: AbortSignal.timeout(20000)}); if (!res.ok) throw Error('HTTP ' + res.status); return res.json(); };
-// Endereço da página do jogo na Epic (pageSlug), pelo mesmo GraphQL que o Heroic usa.
+// Endereço da página do jogo na Epic (pageSlug), pelo GraphQL da loja.
 export async function epicSlug(namespace, fetchImpl = (...a) => fetch(...a)) {
  if (!/^[\w-]{3,80}$/.test(String(namespace || ''))) return '';
  const query = '{ Catalog { catalogNs(namespace: "' + namespace + '") { mappings(pageType: "productHome") { pageSlug pageType } } } }';

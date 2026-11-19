@@ -1306,12 +1306,6 @@
   "slib.showHint": "Os jogos da sua conta Epic e Xbox que não estão no PC aparecem no programa e na Steam com o botão Instalar.",
   "slib.collections": "Coleção separada para cada loja",
   "slib.collectionsHint": "Cria na Steam coleções como \"Epic Games\" e \"Xbox\" com os jogos de cada loja. A coleção Taiga Launcher continua igual.",
-  "slib.epicMethod": "Instalar jogos da Epic por",
-  "slib.epicMethodHint": "Taiga Launcher: baixa direto, com progresso e Cancelar na Steam (usa o Legendary, código aberto). Epic Games Launcher: abre a instalação na Epic.",
-  "slib.methodLegendary": "Taiga Launcher (progresso na Steam)",
-  "slib.methodLauncher": "Epic Games Launcher",
-  "slib.epicDir": "Pasta dos jogos da Epic",
-  "slib.epicDirHint": "Onde os jogos da Epic instalados pelo Taiga Launcher ficam.",
   "slib.refresh": "Biblioteca das lojas",
   "slib.refreshHint": "Atualiza a lista agora. Ela também é atualizada sozinha a cada 6 horas.",
   "slib.needLogin": "Entre com a conta Epic ou Xbox em Contas para ver os jogos não instalados.",
@@ -1491,9 +1485,5 @@
   "shortcuts.repairText": "{count} jogo(s) têm atalho ausente ou diferente do esperado.",
   "shortcuts.repairNone": "Nenhum atalho divergente.",
   "shortcuts.repairDone": "{count} atalho(s) regravados.",
-  "shortcuts.repairScanning": "Procurando atalhos divergentes…",
-  "ui.7f1ba693b779": "Ferramenta da Epic",
-  "ui.ed4b5e5a56e4": "Instala o programa usado para baixar e instalar jogos da Epic. Para jogar, a Steam abre o jogo com Proton ou a versão nativa.",
-  "ui.a9d7882f6ff2": "Instalar ferramenta",
-  "ui.5604601f440f": "Instalando ferramenta da Epic..."
+  "shortcuts.repairScanning": "Procurando atalhos divergentes…"
 }

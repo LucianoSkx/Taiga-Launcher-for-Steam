@@ -3,7 +3,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import vm from 'node:vm';
 import {iso} from './fixtures.mjs';
 import {StoreAchievements,epicGameInfo,parseEpicAccount,extractJSON,gogProductId} from '../lib/store-achievements.mjs';
-import {packageFamilyName,scanXbox,scanRiot,scanHeroic,gameEvidence,scanInstalledGames} from '../lib/stores-more.mjs';
+import {packageFamilyName,scanXbox,scanRiot,gameEvidence,scanInstalledGames} from '../lib/stores-more.mjs';
 import {sweepGames,launchFor} from '../lib/games.mjs';
 import {resolveDownload} from '../lib/emulator-download.mjs';
 import {encodeVDF,uint} from '../lib/vdf.mjs';
@@ -45,7 +45,7 @@ test('GOG achievements are read from the public profile page',async t=>{
  assert.equal(r.status,'ok');assert.equal(r.achievements[0].unlocked,true);assert.equal(r.achievements[0].title,'Herói');assert.equal(r.achievements[0].date,new Date(1700000000000).toISOString());
 });
 
-test('Xbox package family name, Riot and Heroic installs, installed games need engine evidence',async t=>{
+test('Xbox package family name, Riot installs, installed games need engine evidence',async t=>{
  assert.equal(packageFamilyName('Microsoft.WindowsCalculator','CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US'),'Microsoft.WindowsCalculator_8wekyb3d8bbwe');
  const d=tmp(t),drive=path.join(d,'D');
  write(path.join(drive,'XboxGames','Halo MCC','Content','MicrosoftGame.config'),'<Game><Identity Name="Microsoft.Chelan" Publisher="CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US"/><ExecutableList><Executable Name="mcclauncher.exe" Id="Game"/></ExecutableList><ShellVisuals DefaultDisplayName="Halo: The Master Chief Collection"/></Game>');
@@ -56,9 +56,6 @@ test('Xbox package family name, Riot and Heroic installs, installed games need e
  const r=scanRiot({PROGRAMDATA:pd});assert.equal(r.length,1);assert.equal(r[0].title,'VALORANT');assert.equal(r[0].url,'--launch-product=valorant --launch-patchline=live');
  const g={profile:'store',path:r[0].path,launch:{exe:r[0].launcherExe,args:r[0].url}};assert.deepEqual(launchFor(g,{}),{exe:r[0].launcherExe,args:'--launch-product=valorant --launch-patchline=live'});
  assert.match(launchFor({profile:'store',launch:{exe:r[0].launcherExe,args:x[0].url}},{}).args,/^"shell:AppsFolder\\Microsoft\.Chelan_8wekyb3d8bbwe!Game"$/);
- const appdata=path.join(d,'AppData'),gameDir=path.join(d,'Heroic','Celeste');write(path.join(gameDir,'Celeste.exe'),'MZ');
- write(path.join(appdata,'heroic','legendaryConfig','legendary','installed.json'),JSON.stringify({Salt:{app_name:'Salt',title:'Celeste',install_path:gameDir,executable:'Celeste.exe'}}));
- const h=scanHeroic({APPDATA:appdata});assert.equal(h[0].url,'heroic://launch/legendary/Salt');
  const unity=path.join(d,'Programs','Cool Game');write(path.join(unity,'Cool Game.exe'),'MZ'.padEnd(500,'x'));write(path.join(unity,'UnityPlayer.dll'),'x');write(path.join(unity,'Cool Game_Data','globalgamemanagers'),'x');
  const app=path.join(d,'Programs','Editor');write(path.join(app,'editor.exe'),'MZ');
  assert.deepEqual(gameEvidence(unity),['unity']);assert.deepEqual(gameEvidence(app),[]);

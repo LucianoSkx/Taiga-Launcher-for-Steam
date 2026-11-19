@@ -1306,12 +1306,6 @@
   "slib.showHint": "Games from your Epic and Xbox accounts that are not on this PC show up in the app and in Steam with an Install button.",
   "slib.collections": "Separate collection for each store",
   "slib.collectionsHint": "Creates Steam collections such as \"Epic Games\" and \"Xbox\" with each store's games. The Taiga Launcher collection stays the same.",
-  "slib.epicMethod": "Install Epic games with",
-  "slib.epicMethodHint": "Taiga Launcher: downloads directly, with progress and Cancel in Steam (uses Legendary, open source). Epic Games Launcher: opens the installation in Epic.",
-  "slib.methodLegendary": "Taiga Launcher (progress in Steam)",
-  "slib.methodLauncher": "Epic Games Launcher",
-  "slib.epicDir": "Epic games folder",
-  "slib.epicDirHint": "Where Epic games installed by Taiga Launcher are kept.",
   "slib.refresh": "Store library",
   "slib.refreshHint": "Refreshes the list now. It also refreshes by itself every 6 hours.",
   "slib.needLogin": "Sign in with your Epic or Xbox account in Accounts to see games that are not installed.",
@@ -1491,9 +1485,5 @@
   "shortcuts.repairText": "{count} game(s) have a missing or unexpected shortcut.",
   "shortcuts.repairNone": "No divergent shortcuts.",
   "shortcuts.repairDone": "{count} shortcut(s) rewritten.",
-  "shortcuts.repairScanning": "Checking shortcuts…",
-  "ui.7f1ba693b779": "Tool for Epic",
-  "ui.ed4b5e5a56e4": "Installs the program used to download and install Epic games. To play, Steam opens the game with Proton or the native version.",
-  "ui.a9d7882f6ff2": "Install tool",
-  "ui.5604601f440f": "Installing Epic tool..."
+  "shortcuts.repairScanning": "Checking shortcuts…"
 }

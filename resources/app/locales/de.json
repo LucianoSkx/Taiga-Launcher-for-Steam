@@ -1306,12 +1306,6 @@
   "slib.showHint": "Spiele deiner Epic- und Xbox-Konten, die nicht auf dem PC sind, erscheinen im Programm und in Steam mit einer Installieren-Schaltfläche.",
   "slib.collections": "Eigene Sammlung für jeden Store",
   "slib.collectionsHint": "Erstellt in Steam Sammlungen wie „Epic Games\" und „Xbox\" mit den Spielen jedes Stores. Die Sammlung Taiga Launcher bleibt gleich.",
-  "slib.epicMethod": "Epic-Spiele installieren mit",
-  "slib.epicMethodHint": "Taiga Launcher: lädt direkt herunter, mit Fortschritt und Abbrechen in Steam (nutzt Legendary, Open Source). Epic Games Launcher: öffnet die Installation in Epic.",
-  "slib.methodLegendary": "Taiga Launcher (Fortschritt in Steam)",
-  "slib.methodLauncher": "Epic Games Launcher",
-  "slib.epicDir": "Ordner für Epic-Spiele",
-  "slib.epicDirHint": "Wo die von Taiga Launcher installierten Epic-Spiele liegen.",
   "slib.refresh": "Store-Bibliothek",
   "slib.refreshHint": "Aktualisiert die Liste jetzt. Sie aktualisiert sich außerdem alle 6 Stunden selbst.",
   "slib.needLogin": "Melde dich unter Konten mit deinem Epic- oder Xbox-Konto an, um nicht installierte Spiele zu sehen.",
@@ -1491,9 +1485,5 @@
   "shortcuts.repairText": "{count} Spiel(e) haben eine fehlende oder abweichende Verknüpfung.",
   "shortcuts.repairNone": "Keine abweichenden Verknüpfungen.",
   "shortcuts.repairDone": "{count} Verknüpfung(en) neu geschrieben.",
-  "shortcuts.repairScanning": "Verknüpfungen werden geprüft…",
-  "ui.7f1ba693b779": "Epic-Werkzeug",
-  "ui.ed4b5e5a56e4": "Installiert das Programm zum Herunterladen und Installieren von Epic-Spielen. Zum Spielen öffnet Steam das Spiel mit Proton oder der nativen Version.",
-  "ui.a9d7882f6ff2": "Werkzeug installieren",
-  "ui.5604601f440f": "Epic-Werkzeug wird installiert..."
+  "shortcuts.repairScanning": "Verknüpfungen werden geprüft…"
 }

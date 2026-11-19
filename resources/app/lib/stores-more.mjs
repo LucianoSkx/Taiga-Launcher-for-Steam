@@ -1,7 +1,6 @@
 // Mais lojas e jogos instalados no Windows (somente leitura dos registros locais).
 //  - Xbox / PC Game Pass: pastas XboxGames (arquivo .GamingRoot de cada unidade) e MicrosoftGame.config.
 //  - Riot Client: metadados em ProgramData\Riot Games.
-//  - Heroic (Epic/GOG/Amazon pelo Heroic): installed.json do Heroic.
 //  - EA app, Rockstar, Battle.net e outros jogos instalados: entradas de desinstalação do Windows, aceitas só com
 //    prova de que a pasta é de um jogo (motor Unity/Unreal/Godot/GameMaker/Ren'Py/RPG Maker, Steamworks, EOS, Bink…).
 import fs from 'node:fs';
@@ -86,24 +85,6 @@ export function scanRiot(env = process.env) {
   if (!exe || !client) continue;
   out.push({store: 'riot', storeName: 'Riot Games', id: e.name, title: titles[m[1]] || m[1].replace(/_/g, ' '), path: exe, root, launcherExe: client, url: '--launch-product=' + m[1] + ' --launch-patchline=' + m[2], needsLauncher: true});
  }
- return out;
-}
-
-// ── Heroic ──
-export function scanHeroic(env = process.env) {
- const base = env.APPDATA ? path.join(env.APPDATA, 'heroic') : ''; if (!base || !isDir(base)) return [];
- const out = [], add = (runner, appName, title, root, exe) => { if (!appName || !root || !isFile(exe)) return; out.push({store: 'heroic', storeName: 'Heroic', id: runner + ':' + appName, title: title || appName, path: exe, root, url: 'heroic://launch/' + runner + '/' + encodeURIComponent(appName), needsLauncher: true}); };
- const legendary = readJSON(path.join(base, 'legendaryConfig', 'legendary', 'installed.json')) || {};
- for (const [k, v] of Object.entries(legendary)) if (v && v.install_path && v.executable && !v.is_dlc) add('legendary', v.app_name || k, v.title, v.install_path, path.join(v.install_path, ...String(v.executable).split(/[\\/]/)));
- const gog = readJSON(path.join(base, 'gog_store', 'installed.json'));
- for (const v of Array.isArray(gog?.installed) ? gog.installed : []) {
-  if (!v?.install_path || v.platform === 'linux' || v.platform === 'osx') continue;
-  const info = list(v.install_path).find(f => /^goggame-\d+\.info$/i.test(f.name)); const data = info ? readJSON(path.join(v.install_path, info.name)) : null;
-  const task = (data?.playTasks || []).find(t => t.isPrimary && t.path) || (data?.playTasks || []).find(t => t.path);
-  if (task) add('gog', v.appName, data.name, v.install_path, path.join(v.install_path, ...String(task.path).split(/[\\/]/)));
- }
- const nile = readJSON(path.join(base, 'nile_config', 'nile', 'installed.json'));
- for (const v of Array.isArray(nile) ? nile : []) { const fuel = v?.path ? readJSON(path.join(v.path, 'fuel.json')) : null, cmd = fuel?.Main?.Command; if (cmd) add('nile', v.id, v.title || path.basename(v.path), v.path, path.join(v.path, ...String(cmd).split(/[\\/]/))); }
  return out;
 }
 

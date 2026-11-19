@@ -1,18 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parseProgress, failureCode} from '../lib/legendary.mjs';
 import {wikidataSteamByStore, epicSlug, steamIdFromStore} from '../lib/store-steam-id.mjs';
 import {epicLibrary} from '../lib/store-library.mjs';
-
-test('Falha do Legendary: o motivo real ("! Failure") vira um código traduzível', () => {
- const st = {};
- parseProgress(' ! Failure: Not enough available disk space! 12.30 GiB < 85.00 GiB', st);
- parseProgress('[cli] CRITICAL: Installation cannot proceed, exiting.', st);
- assert.equal(st.errorCode, 'disk'); assert.deepEqual(st.errorValues, {free: '12.30', need: '85.00'});
- assert.ok(!st.lastError, 'a frase genérica não esconde o motivo');
- assert.equal(failureCode('This game requires installation via Uplay and does not ship executable game files.').errorCode, 'uplay');
- assert.equal(failureCode('Install path "D:\\Jogos" does not exist, make sure').errorCode, 'path');
-});
 
 test('Epic → Steam pela Wikidata: slug da Epic (P6278) e productId da Microsoft Store (P5885)', async () => {
  const seen = [];

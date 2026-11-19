@@ -1306,12 +1306,6 @@
   "slib.showHint": "Les jeux de vos comptes Epic et Xbox absents du PC apparaissent dans l'application et dans Steam avec un bouton Installer.",
   "slib.collections": "Collection séparée pour chaque boutique",
   "slib.collectionsHint": "Crée dans Steam des collections comme « Epic Games » et « Xbox » avec les jeux de chaque boutique. La collection Taiga Launcher ne change pas.",
-  "slib.epicMethod": "Installer les jeux Epic avec",
-  "slib.epicMethodHint": "Taiga Launcher : téléchargement direct, avec progression et Annuler dans Steam (utilise Legendary, open source). Epic Games Launcher : ouvre l'installation dans Epic.",
-  "slib.methodLegendary": "Taiga Launcher (progression dans Steam)",
-  "slib.methodLauncher": "Epic Games Launcher",
-  "slib.epicDir": "Dossier des jeux Epic",
-  "slib.epicDirHint": "Où sont placés les jeux Epic installés par Taiga Launcher.",
   "slib.refresh": "Bibliothèque des boutiques",
   "slib.refreshHint": "Met à jour la liste maintenant. Elle se met aussi à jour toute seule toutes les 6 heures.",
   "slib.needLogin": "Connectez votre compte Epic ou Xbox dans Comptes pour voir les jeux non installés.",
@@ -1491,9 +1485,5 @@
   "shortcuts.repairText": "{count} jeu(x) ont un raccourci absent ou différent.",
   "shortcuts.repairNone": "Aucun raccourci divergent.",
   "shortcuts.repairDone": "{count} raccourci(s) réécrits.",
-  "shortcuts.repairScanning": "Vérification des raccourcis…",
-  "ui.7f1ba693b779": "Outil Epic",
-  "ui.ed4b5e5a56e4": "Installe le programme utilisé pour télécharger et installer les jeux Epic. Pour jouer, Steam ouvre le jeu avec Proton ou la version native.",
-  "ui.a9d7882f6ff2": "Installer l’outil",
-  "ui.5604601f440f": "Installation de l’outil Epic..."
+  "shortcuts.repairScanning": "Vérification des raccourcis…"
 }

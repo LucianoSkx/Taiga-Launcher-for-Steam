@@ -54,7 +54,7 @@ if(launchIndex>=0){
    if(kind==='game'&&process.platform==='win32')try{const {execFile}=require('child_process');const out=await new Promise((ok,no)=>execFile('powershell.exe',['-NoProfile','-STA','-ExecutionPolicy','Bypass','-File',path.join(__dirname,'..','windows','pick.ps1'),'game'],{windowsHide:true,maxBuffer:4*1024*1024},(e,so)=>e?no(e):ok(String(so||''))));const list=JSON.parse(out.trim()||'[]');return Array.isArray(list)?list.filter(x=>typeof x==='string'):[];}catch{}
    const result=await dialog.showOpenDialog(mainWindow,options);return result.canceled?[]:result.filePaths;
   };
-  // Login da Epic (como o SuccessStory/Heroic): página oficial numa janela separada; o código de autorização é lido
+  // Login da Epic: página oficial numa janela separada; o código de autorização é lido
   // na página de retorno da própria Epic e a janela fecha sozinha.
   const epicLogin=async()=>{const {EPIC_LOGIN_URL,EPIC_REDIRECT,authorizationCode}=await import('../lib/epic-auth.mjs');return new Promise(resolve=>{
    const win=new BrowserWindow({width:520,height:760,parent:mainWindow||undefined,modal:false,autoHideMenuBar:true,title:'Epic Games',webPreferences:{partition:'persist:epic-login',contextIsolation:true,nodeIntegration:false,sandbox:true}});

@@ -3,13 +3,10 @@
 // Epic Games, GOG (Galaxy e instaladores offline), Ubisoft Connect, itch.io e Amazon Games.
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
-import {scanXbox,scanRiot,scanHeroic,scanInstalledGames} from './stores-more.mjs';
-import {scanLegendary} from './legendary.mjs';
-// Jogos da Epic instalados pelo Taiga Launcher (Legendary): abrem pelo próprio Legendary.
-let legendaryExe = '';
-export const setLegendaryExe = exe => { legendaryExe = String(exe || ''); };
+import {scanXbox,scanRiot,scanInstalledGames} from './stores-more.mjs';
 import {windowsDrives} from './discover.mjs';
 import {executableTitle} from './executable-title.mjs';
 
@@ -53,20 +50,24 @@ export function scanEpic(env = process.env) {
   out.push({store: 'epic', storeName: 'Epic Games', id: m.CatalogItemId || m.AppName, namespace: m.CatalogNamespace || '', appName: m.AppName || '', title: m.DisplayName, path: exe, root: winPath(m.InstallLocation), url, needsLauncher});
  }
 
- // Novo Epic Games Launcher (EGL v2): instalações em %LOCALAPPDATA%\com.epicgames.eglv2\installations.jsonl, uma por linha.
- const v2 = path.join(env.LOCALAPPDATA || path.join(env.USERPROFILE || '', 'AppData', 'Local'), 'com.epicgames.eglv2', 'installations.jsonl');
- let text = ''; try { if (fs.statSync(v2).size < 8 * 1024 * 1024) text = fs.readFileSync(v2, 'utf8'); } catch {}
- for (const line of text.split(/\r?\n/)) {
-  let m = null; try { m = JSON.parse(line.trim().replace(/^\uFEFF/, '')); } catch { continue; }
-  const dir = m?.dir || m?.installDir || m?.installLocation, launch = m?.launchExecutable || m?.launchExe;
-  if (!m || m.complete === false || !dir || !launch || (m.platform && !/windows/i.test(m.platform))) continue;
-  const root = winPath(dir), exe = path.join(root, ...String(launch).split(/[\\/]/).filter(p => p && p !== '.'));
-  if (out.some(o => o.root.toLowerCase() === root.toLowerCase())) continue;
-  let title = m.displayName || m.title || ''; if (!title) { try { title = executableTitle(exe) || ''; } catch {} }
-  if (!title || /launcher|bootstrap/i.test(title)) title = (root.split(/[\\/]/).filter(Boolean).pop() || '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2').trim();
-  const app = m.artifactId || m.appName || '', item = m.itemId || m.catalogItemId || '';
-  const url = m.namespace && item && app ? `com.epicgames.launcher://apps/${m.namespace}%3A${item}%3A${app}?action=launch&silent=true` : '';
-  out.push({store: 'epic', storeName: 'Epic Games', id: item || app || root, namespace: m.namespace || '', appName: app, title, path: exe, root, url, needsLauncher: false, egl2: true});
+ // Novo Epic Games Launcher (EGL v2): instalações em installations.jsonl, uma por linha.
+ const v2Files = env.LOCALAPPDATA ? [path.join(env.LOCALAPPDATA, 'com.epicgames.eglv2', 'installations.jsonl')]
+  : env.PROGRAMDATA ? []
+  : [path.join(env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share'), 'com.epicgames.eglv2', 'installations.jsonl'), path.join(path.join(env.USERPROFILE || '', 'AppData', 'Local'), 'com.epicgames.eglv2', 'installations.jsonl')];
+ for (const v2 of v2Files) {
+  let text = ''; try { if (fs.statSync(v2).size < 8 * 1024 * 1024) text = fs.readFileSync(v2, 'utf8'); } catch {}
+  for (const line of text.split(/\r?\n/)) {
+   let m = null; try { m = JSON.parse(line.trim().replace(/^\uFEFF/, '')); } catch { continue; }
+   const dir = m?.dir || m?.installDir || m?.installLocation, launch = m?.launchExecutable || m?.launchExe;
+   if (!m || m.complete === false || !dir || !launch || (m.platform && !/windows/i.test(m.platform))) continue;
+   const root = winPath(dir), exe = path.join(root, ...String(launch).split(/[\\/]/).filter(p => p && p !== '.'));
+   if (out.some(o => o.root.toLowerCase() === root.toLowerCase())) continue;
+   let title = m.displayName || m.title || ''; if (!title) { try { title = executableTitle(exe) || ''; } catch {} }
+   if (!title || /launcher|bootstrap/i.test(title)) title = (root.split(/[\\/]/).filter(Boolean).pop() || '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2').trim();
+   const app = m.artifactId || m.appName || '', item = m.itemId || m.catalogItemId || '';
+   const url = m.namespace && item && app ? `com.epicgames.launcher://apps/${m.namespace}%3A${item}%3A${app}?action=launch&silent=true` : '';
+   out.push({store: 'epic', storeName: 'Epic Games', id: item || app || root, namespace: m.namespace || '', appName: app, title, path: exe, root, url, needsLauncher: false, egl2: true});
+  }
  }
  return out;
 }
@@ -211,7 +212,7 @@ export async function scanStores({env = process.env, platform = process.platform
  const results = [], errors = [];
  const drives = platform === 'win32' ? windowsDrives() : [];
  const tasks = [['Epic Games', () => scanEpic(env)], ['GOG', () => scanGOG(env, [], drives)], ['GOG', () => scanGOGRegistry()], ['Ubisoft Connect', () => scanUbisoft()], ['itch.io', () => scanItch(env)], ['Amazon Games', () => scanAmazon(env)],
-  ['Epic Games', () => scanLegendary({env, exe: legendaryExe})], ['Xbox', () => scanXbox({drives})], ['Xbox', async () => { if (platform !== 'win32') return []; const have = new Set(results.filter(r => r.store === 'xbox').map(r => r.id.toLowerCase())); return (await scanXboxPackages()).filter(i => !have.has(i.id.toLowerCase())); }], ['Riot Games', () => scanRiot(env)], ['Heroic', () => scanHeroic(env)],
+  ['Xbox', () => scanXbox({drives})], ['Xbox', async () => { if (platform !== 'win32') return []; const have = new Set(results.filter(r => r.store === 'xbox').map(r => r.id.toLowerCase())); return (await scanXboxPackages()).filter(i => !have.has(i.id.toLowerCase())); }], ['Riot Games', () => scanRiot(env)], 
   // Por último: EA app, Rockstar, Battle.net e jogos instalados sem loja (só com prova de que é jogo).
   ['Windows', () => scanInstalledGames({regQuery, skipRoots: results.map(r => r.root).filter(Boolean)})]];
  for (const [name, fn] of tasks) { try { results.push(...await fn()); } catch (e) { errors.push({file: name, message: String(e.message || e).slice(0, 200)}); } }

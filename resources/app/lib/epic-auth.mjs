@@ -1,5 +1,5 @@
 // Login da Epic para ler as conquistas mesmo com o perfil privado, o mesmo caminho do SuccessStory
-// (playnite-plugincommon/CommonPluginsStores/Epic/EpicApi.cs, MIT, Lacro59), do Heroic e do Legendary:
+// (playnite-plugincommon/CommonPluginsStores/Epic/EpicApi.cs, MIT, Lacro59):
 //  1. o usuário entra na página oficial da Epic (janela do Taiga Launcher);
 //  2. a Epic devolve um código de autorização em /id/api/redirect;
 //  3. o código vira um token OAuth (cliente do launcher, token_type eg1), renovado com o refresh_token.
