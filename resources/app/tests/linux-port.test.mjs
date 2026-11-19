@@ -396,3 +396,44 @@ test('Linux: espaço necessário de um jogo Epic é calculado na página da Stea
  assert.match(data.header, /^http:\/\/127\.0\.0\.1:\d+\/art\//, 'a imagem da janela deve ser URL, não baseado em base64');
  assert.ok(JSON.stringify(data).length < 100000, 'resposta precisa caber no canal CDP da Steam');
 });
+
+test('Linux: cancelar instalação da Epic encerra o Legendary', async t => {
+ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lg-epic-cancel-'));
+ t.after(() => fs.rmSync(dir, {recursive: true, force: true}));
+ const dataDir = path.join(dir, 'data'), tool = path.join(dataDir, 'tools', 'legendary');
+ fs.mkdirSync(tool, {recursive: true});
+ const pidFile = path.join(dir, 'install.pid');
+ const fake = path.join(tool, 'legendary');
+ fs.writeFileSync(fake, `#!/bin/sh
+if [ "$1" = info ]; then echo '{"manifest":{"disk_size":123,"download_size":100}}'; exit 0; fi
+if [ "$1" = auth ]; then exit 0; fi
+if [ "$1" = install ]; then echo $$ > '${pidFile}'; echo '= Progress: 10.0% (1/10) ETA: 00:01:00'; sleep 120; fi
+`);
+ fs.chmodSync(fake, 0o755);
+ const lgdConfig = path.join(dir, 'legendary-config'); fs.mkdirSync(lgdConfig);
+ fs.writeFileSync(path.join(lgdConfig, 'user.json'), JSON.stringify({account_id: 'abc123', refresh_token: 'r'}));
+ const oldEnv = process.env.LEGENDARY_CONFIG_PATH; process.env.LEGENDARY_CONFIG_PATH = lgdConfig;
+ t.after(() => { if (oldEnv === undefined) delete process.env.LEGENDARY_CONFIG_PATH; else process.env.LEGENDARY_CONFIG_PATH = oldEnv; });
+ fs.writeFileSync(path.join(dataDir, 'config.json'), JSON.stringify({
+  adminToken: 'admin', steamDir: path.join(dir, 'Steam'), account: '1', roots: [], launchers: {}, profiles: {}, preferences: {},
+  epicAuth: {accessToken: 'token', accountId: 'abc123', refreshToken: 'r', expiresAt: Date.now() + 3600000}
+ }));
+ fs.writeFileSync(path.join(dataDir, 'games.json'), JSON.stringify({version: 1, games: [{id: 'g1', uuid: crypto.randomUUID(), title: 'Jogo', notInstalled: true, store: {name: 'epic', appName: 'Jogo'}}]}));
+ const port = 48994;
+ const {server} = createApp({dataDir, port});
+ await new Promise(r => server.listen(port, '127.0.0.1', r));
+ t.after(() => new Promise(r => server.close(r)));
+ const call = (route, body) => fetch(`http://127.0.0.1:${port}/api/${route}`, {method: 'POST', headers: {Authorization: 'Bearer admin', 'Content-Type': 'application/json'}, body: JSON.stringify(body)}).then(r => r.json());
+ const started = await call('store-install', {id: 'g1', dir: path.join(dir, 'install')});
+ assert.equal(started.state, 'installing', JSON.stringify(started));
+ await new Promise(r => setTimeout(r, 200));
+ const pid = Number(fs.readFileSync(pidFile, 'utf8').trim());
+ const alive = () => { try { process.kill(pid, 0); return true; } catch { return false; } };
+ assert.ok(alive(), 'processo de instalação precisa estar rodando');
+ const cancelled = await call('store-install-cancel', {id: 'g1'});
+ assert.equal(cancelled.state, 'none', JSON.stringify(cancelled));
+ await new Promise(r => setTimeout(r, 200));
+ assert.equal(alive(), false, 'cancelar deve encerrar o processo do Legendary');
+ const state = await call('store-install-state', {id: 'g1'});
+ assert.equal(state.state, 'none');
+});

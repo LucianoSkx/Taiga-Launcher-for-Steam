@@ -180,6 +180,7 @@ export class Legendary {
  async pause(appName) {
   const job = this.jobs.get(appName); if (!job?.child) return false;
   job.paused = true;
+  job.state.phase = 'paused';
   await this.kill(job);
   return true;
  }
@@ -192,9 +193,9 @@ export class Legendary {
   const job = this.jobs.get(appName); if (!job) return false;
   if (job.state.phase === 'paused') { this.cleanup(job); job.state.phase = 'cancelled'; return true; }
   job.cancelled = true;
+  job.state.phase = 'cancelled';
   const pid = job.child?.pid;
   if (pid) { if (this.platform === 'win32') await new Promise(r => execFile('taskkill', ['/PID', String(pid), '/T', '/F'], {windowsHide: true}, () => r())); else { try { job.child.kill('SIGKILL'); } catch {} } }
-  else { job.state.phase = 'cancelled'; }
   return true;
  }
  active() { return [...this.jobs.entries()].filter(([, j]) => ['tool', 'preparing', 'downloading', 'finishing'].includes(j.state.phase)).map(([k]) => k); }
