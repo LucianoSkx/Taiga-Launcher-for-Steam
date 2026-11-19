@@ -225,6 +225,8 @@ test('Busca de artes responde mesmo se o provedor externo não responde', async 
  const data = await res.json();
  assert.ok(Date.now() - start < 3000, 'a rota não pode ficar pendurada');
  assert.match(data.error || '', /demorou muito/);
+ const cover = await fetch(`http://127.0.0.1:${port}/api/owned-cover`, {method: 'POST', headers: {Authorization: 'Bearer admin', 'Content-Type': 'application/json'}, body: JSON.stringify({appId: 0})});
+ assert.deepEqual(await cover.json(), {url: ''});
 });
 
 

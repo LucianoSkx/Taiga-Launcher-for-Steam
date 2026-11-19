@@ -384,8 +384,10 @@ function libraryView(){
 async function loadOwned(){const r=await api('steam-library');UI.ownedMessage=r.message;UI.ownedComplete=r.complete;S.nativeGames=r.games.map(g=>({...g,native:true,edited:Object.keys(g.art||{}).length,art:{...(!g.shortcut?{cover:'url:https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/'+g.appId+'/library_600x900.jpg'}:{}),...Object.fromEntries(Object.entries(g.localArt||{}).map(([k,v])=>[k,'url:'+v])),...g.art}}));render();probeOwnedCovers().catch(()=>{});}
 // Biblioteca Steam: confere em segundo plano quais capas existem; as que a Steam não tem vão para o fim da lista
 // (um único redesenho no final, mantendo a rolagem).
-async function probeOwnedCovers(){const list=S.nativeGames.filter(g=>g.art?.cover&&!UI.ownedNoCover?.has(g.id)),bad=UI.ownedNoCover||=new Set(),token=UI.ownedProbe=Symbol();let i=0,changed=false;
- const one=g=>new Promise(r=>{const im=new Image();let done=false;const end=()=>{done=true;clearTimeout(t);r();},t=setTimeout(end,15000);im.onload=()=>{if(!done)end();};im.onerror=()=>{if(done)return;bad.add(g.id);changed=true;end();};im.src=artURL(g.art.cover);});
+async function probeOwnedCovers(){const list=S.nativeGames.filter(g=>g.art?.cover&&!UI.ownedNoCover?.has(g.id)),bad=UI.ownedNoCover||=new Set(),token=UI.ownedProbe=Symbol();let i=0,changed=false,fixes=0;
+ const one=g=>new Promise(r=>{const im=new Image();let done=false;const end=()=>{done=true;clearTimeout(t);r();},t=setTimeout(end,15000);im.onload=()=>{if(!done)end();};im.onerror=()=>{if(done)return;bad.add(g.id);changed=true;end();
+   if(!g.shortcut&&g.appId&&fixes++<20)api('owned-cover',{appId:g.appId,sgdbId:g.sgdbId}).then(r=>{if(r.url&&UI.ownedProbe===token){g.art={...g.art,cover:'url:'+r.url};bad.delete(g.id);if(UI.view==='owned')render();}}).catch(()=>{});
+  };im.src=artURL(g.art.cover);});
  await Promise.all(Array.from({length:8},async()=>{while(i<list.length&&UI.ownedProbe===token)await one(list[i++]);}));
  if(changed&&UI.ownedProbe===token&&UI.view==='owned'){const sc=document.scrollingElement,el=$('.main')||$('#app'),y=sc?.scrollTop||0,y2=el?.scrollTop||0;render();if(sc)sc.scrollTop=y;const el2=$('.main')||$('#app');if(el2)el2.scrollTop=y2;}}
 function ownedView(){

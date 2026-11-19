@@ -910,6 +910,13 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
    if(req.method==='GET'&&route==='/api/state'){readSteamSnapshot();return send({settings:configView(),games:db.games.filter(g=>!g.hidden).map(privateGame),hiddenGames:db.games.filter(g=>g.hidden).map(privateGame),busy,lastSync:json(path.join(dataDir,'last-sync.json'),null)});}
    if(req.method!=='POST')return send({error:'Rota não encontrada'},404);
    let text='';for await(const chunk of req){text+=chunk;if(text.length>1024*1024)throw Error('Requisição muito grande');}const body=JSON.parse(text||'{}');
+   if(route==='/api/owned-cover'){
+    const appId=Number(body.appId)||0,sgdbId=Number(body.sgdbId)||0;if(!appId)return send({url:''});
+    let url='';
+    if(sgdbId)try{const items=await providers.sg('grids/game/'+sgdbId+'?types=static&mimes=image/png,image/jpeg&dimensions=600x900');url=String(items[0]?.url||'');}catch{}
+    if(!url)try{const r=await providers.request('https://store.steampowered.com/api/appdetails?appids='+appId+'&l=english');url=String(r?.[String(appId)]?.data?.header_image||'');}catch{}
+    return send({url});
+   }
    // 2.2.3: uma tarefa em segundo plano (artes, busca na Steam, conquistas) ou outro pedido em andamento não recusa
    // mais o clique: o pedido espera a vez (a fila não começa outra tarefa enquanto houver pedido esperando).
    // Login de contas e escolha de arquivo/pasta não mexem na coleção: abrem na hora, sem esperar outra tarefa.
