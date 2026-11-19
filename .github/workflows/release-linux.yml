@@ -40,6 +40,15 @@ jobs:
           tar -czf taiga-launcher-linux-portable.tar.gz -C "$RUNNER_TEMP" Taiga-Launcher-Portable
           test "$(stat -c%s taiga-launcher-linux-portable.tar.gz)" -gt 50000000 || { echo "Artefato suspeitosamente pequeno" >&2; exit 1; }
 
+      - name: Conferir pacote portátil
+        run: |
+          ROOT="$RUNNER_TEMP/Taiga-Launcher-Portable"
+          test -x "$ROOT/iniciar-taiga.sh"
+          test -x "$ROOT/Taiga-Launcher/app/node_modules/electron/dist/electron"
+          test -f "$ROOT/Taiga-Launcher/app/web/app.js"
+          test ! -e "$ROOT/Taiga-Launcher/data/config.json"
+          test "$(node -p "require('./package.json').version")" = "$(node -p "require('./resources/app/package.json').version")"
+
       - name: Publicar na Release da tag
         env:
           GH_TOKEN: ${{ github.token }}

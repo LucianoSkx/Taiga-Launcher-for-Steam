@@ -1476,5 +1476,6 @@
   "set.pickFiles": "Sélectionnez les fichiers…",
   "set.pickFolder": "Sélectionnez le dossier…",
   "inj.autostartLinux": "Steam démarre déjà à la connexion",
-  "inj.autostartOffLinux": "Steam n'est pas configurée pour démarrer à la connexion."
+  "inj.autostartOffLinux": "Steam n'est pas configurée pour démarrer à la connexion.",
+  "art.refresh": "Rechercher à nouveau"
 }

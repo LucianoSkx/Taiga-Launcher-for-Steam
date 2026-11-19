@@ -1476,5 +1476,6 @@
   "set.pickFiles": "Select the files…",
   "set.pickFolder": "Select the folder…",
   "inj.autostartLinux": "Steam already starts at login",
-  "inj.autostartOffLinux": "Steam is not set to start at login."
+  "inj.autostartOffLinux": "Steam is not set to start at login.",
+  "art.refresh": "Search again"
 }

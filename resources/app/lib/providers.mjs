@@ -134,8 +134,11 @@ export class Providers{
   if(!appId||this.offline)return [];const base='https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/'+Number(appId)+'/';
   // Steam publica vários tamanhos no CDN; o SteamGridDB complementa o que falta (principalmente ícones).
   const urls={cover:['library_600x900_2x.jpg','library_600x900.jpg'],hero:['library_hero.jpg','library_hero_2x.jpg'],logo:['logo.png','logo_2x.png'],wide:['header.jpg','capsule_616x353.jpg','capsule_231x87.jpg'],icon:[]}[kind]||[];
-  const ok=await Promise.all(urls.map(async n=>{try{const r=await fetch(base+n,{method:'HEAD',signal:AbortSignal.timeout(2500)});return r.ok?base+n:null;}catch{return null;}}));
-  return ok.filter(Boolean).map((url,i)=>({id:'steam-'+kind+'-'+i,url,preview:url,author:'Steam',source:'Steam',width:0,height:0}));
+  const hosts=[base,'https://cdn.cloudflare.steamstatic.com/steam/apps/'+Number(appId)+'/'];
+  const checks=urls.flatMap(n=>hosts.map(h=>h+n));
+  const answers=await Promise.all(checks.map(url=>(async()=>{try{const r=await fetch(url,{method:'HEAD',signal:AbortSignal.timeout(2500)});return r.ok?url:null;}catch{return null;}})()));
+  const picked=urls.map((n,i)=>answers[i*hosts.length]||answers[i*hosts.length+1]).filter(Boolean);
+  return picked.map((url,i)=>({id:'steam-'+kind+'-'+i,url,preview:url,author:'Steam',source:'Steam',width:0,height:0}));
  }
  async artwork(game,kind,page=0,{steamAppId=null}={}){
   const endpoints={cover:'grids',wide:'grids',hero:'heroes',logo:'logos',icon:'icons'};if(!endpoints[kind])throw Error('Tipo de arte inválido.');

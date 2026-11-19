@@ -221,7 +221,7 @@ test('Busca de artes responde mesmo se o provedor externo não responde', async 
  await new Promise(r => server.listen(port, '127.0.0.1', r));
  t.after(() => new Promise(r => server.close(r)));
  const start = Date.now();
- const res = await fetch(`http://127.0.0.1:${port}/api/art-list`, {method: 'POST', headers: {Authorization: 'Bearer ' + token, 'Content-Type': 'application/json'}, body: JSON.stringify({id: 'g1', kind: 'cover', page: 0})});
+ const res = await fetch(`http://127.0.0.1:${port}/api/art-list`, {method: 'POST', headers: {Authorization: 'Bearer ' + token, 'Content-Type': 'application/json'}, body: JSON.stringify({id: 'g1', kind: 'cover', page: 0, refresh: true})});
  const data = await res.json();
  assert.ok(Date.now() - start < 3000, 'a rota não pode ficar pendurada');
  assert.match(data.error || '', /demorou muito/);

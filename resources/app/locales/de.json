@@ -1476,5 +1476,6 @@
   "set.pickFiles": "Dateien auswählen…",
   "set.pickFolder": "Ordner auswählen…",
   "inj.autostartLinux": "Steam startet bereits beim Anmelden",
-  "inj.autostartOffLinux": "Steam ist nicht für den Start beim Anmelden konfiguriert."
+  "inj.autostartOffLinux": "Steam ist nicht für den Start beim Anmelden konfiguriert.",
+  "art.refresh": "Erneut suchen"
 }

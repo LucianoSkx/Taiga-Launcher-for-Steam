@@ -1476,5 +1476,6 @@
   "set.pickFiles": "Selecione os arquivos…",
   "set.pickFolder": "Selecione a pasta…",
   "inj.autostartLinux": "A Steam já inicia com o sistema",
-  "inj.autostartOffLinux": "A Steam não está configurada para iniciar com o sistema."
+  "inj.autostartOffLinux": "A Steam não está configurada para iniciar com o sistema.",
+  "art.refresh": "Buscar de novo"
 }

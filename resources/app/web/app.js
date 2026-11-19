@@ -594,7 +594,11 @@ async function achDialog(id){const ticket=++achievementTicket,g=G(id),data=await
 const KINDS=[['cover',T("ui.be00c454b280")],['hero',T("ui.159a83451e2a")],['logo',T("ui.83fce8327410")],['icon',T("ui.5f019bb4f857")],['wide',T("ui.4f57a1ce99e6")]];
 const SLIDE={cover:[250,375,215],hero:[600,200,470],logo:[480,170,380],icon:[200,200,180],wide:[460,215,380]};
 async function openEditor(id){const g=G(id);E={id,kind:'cover',sel:{...g.art},items:{},pages:{},back:UI.modalKey,warning:''};await loadEditorPage(0);}
-async function loadEditorPage(page){const k=E.kind,g=G(E.id);if(page===0&&E.items[k]){renderEditor();return;}if(!E.items[k])E.items[k]=g.art[k]?[{choice:g.art[k],preview:artURL(g.art[k]),author:T("ui.8c71d837807f")}]:[];try{const r=await api('art-list',{id:g.id,kind:k,page});const known=new Set(E.items[k].map(item=>item.url||item.preview));E.items[k].push(...r.items.filter(item=>{const key=item.url||item.preview;if(known.has(key))return false;known.add(key);return true;}));E.pages[k]=page;E.warning=r.items.length?'':T("ui.5a08d230b3de");}catch(e){E.warning=e.message;}if(!E.sel[k]&&E.items[k].length)E.sel[k]=E.items[k][0].choice;renderEditor();}
+async function loadEditorPage(page,refresh=false){const k=E.kind,g=G(E.id);
+ if(refresh)E.items[k]=g.art[k]?[{choice:g.art[k],preview:artURL(g.art[k]),author:T("ui.8c71d837807f")}]:[];
+ if(page===0&&E.items[k]&&!refresh){renderEditor();return;}
+ if(!E.items[k])E.items[k]=g.art[k]?[{choice:g.art[k],preview:artURL(g.art[k]),author:T("ui.8c71d837807f")}]:[];
+ try{const r=await api('art-list',{id:g.id,kind:k,page,refresh});const known=new Set(E.items[k].map(item=>item.url||item.preview));E.items[k].push(...r.items.filter(item=>{const key=item.url||item.preview;if(known.has(key))return false;known.add(key);return true;}));E.pages[k]=page;E.warning=r.items.length?'':T("ui.5a08d230b3de");}catch(e){E.warning=e.message;}if(!E.sel[k]&&E.items[k].length)E.sel[k]=E.items[k][0].choice;renderEditor();}
 function edItems(){return E.items[E.kind].map(a=>a.choice);}
 function edArt(g,k,v){const item=E.items[k]?.find(a=>a.choice===v);return item?`<img src="${esc(item.preview)}" alt="${esc(item.author||T("ui.c6c377f57bac"))}" referrerpolicy="no-referrer">`:("<div class=\"art-empty\">"+T("ui.01c119dc9e1b")+"</div>");}
 async function edSave(){const id=E.id,back=E.back,native=!!G(id).native,selections={};for(const [k] of KINDS)if(E.sel[k]&&E.sel[k]!==G(id).art[k])selections[k]=E.sel[k];await api('art-save',{id,selections});E=null;closeModal(true);await reload();if(native){await loadOwned();nativeDetail(id);toast(T("ui.b5d479955c48"));return;}toast(T("ui.a6febbcc22be"));if(back?.startsWith('detail:'))openDetail(id);}
@@ -624,7 +628,7 @@ function renderEditor(){
       </div>
       <aside class="ed-side"><div class="ed-side-h"><b>${T("ui.73332a9ac591")}</b><span>${items.length} ${label==='ícone'?T("ui.dbc999af1e4c"):label==='logo'?'logos':label==='fundo'?'fundos':'capas'}</span></div>
         <div class="thumbs art-${k}" role="group" aria-label="${T('cli.allOptions',{label})}">${thumbs}</div>
-        <button class="upload" data-act="ed-upload">${I.upload}${T("ui.f0e98365ec9c")}</button><button class="btn btn-ghost btn-sm" data-act="ed-more">${T("ui.8f453e63fe4d")}</button>
+        <button class="upload" data-act="ed-upload">${I.upload}${T("ui.f0e98365ec9c")}</button><button class="btn btn-ghost btn-sm" data-act="ed-refresh">${T("art.refresh")}</button><button class="btn btn-ghost btn-sm" data-act="ed-more">${T("ui.8f453e63fe4d")}</button>
       </aside>
     </div>
     <div class="ed-foot"><span class="src">${T("ui.af8b174e9bcb")}</span><span class="grow"></span>
@@ -866,6 +870,7 @@ case 'ed-pick':E.sel[E.kind]=t.dataset.v;renderEditor();break;
 case 'ed-cancel':edCancel();break;
 case 'ed-reset':E.sel[E.kind]=G(E.id).art[E.kind]||'';renderEditor();break;
 case 'ed-save':task(edSave,T("ui.eef2cc945ba8"));break;
+case 'ed-refresh':task(()=>loadEditorPage(0,true),T("ui.da3ee7b7c1e0"));break;
 case 'ed-more':task(()=>loadEditorPage((E.pages[E.kind]||0)+1),T("ui.da3ee7b7c1e0"));break;
 case 'ed-upload':task(async()=>{const r=await api('pick',{kind:'art'});if(!r.paths[0])return;const result=await api('art-upload',{path:r.paths[0]});E.items[E.kind].push({choice:result.name,preview:artURL(result.name),author:T("ui.7dae4f777326"),width:0,height:0});E.sel[E.kind]=result.name;renderEditor();},T("ui.5559341e2c47"));break;
 }});
