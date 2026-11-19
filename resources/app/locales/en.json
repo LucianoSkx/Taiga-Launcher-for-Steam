@@ -1482,5 +1482,14 @@
   "stor.confirmTitle": "Clean up storage?",
   "stor.confirmText": "Removes old backups, reports and orphaned art. Games, achievements and settings are not affected.",
   "shortcuts.offTitle": "Disable shortcut folder?",
-  "shortcuts.offText": "Taiga stops watching the folder. Shortcuts already added to Steam remain."
+  "shortcuts.offText": "Taiga stops watching the folder. Shortcuts already added to Steam remain.",
+  "stor.wouldFree": "{size} could be freed from {count} file(s).",
+  "shortcuts.repair": "Repair shortcuts",
+  "shortcuts.repairHint": "Find Steam shortcuts that differ from the Taiga catalog and rewrite them.",
+  "shortcuts.repairBtn": "Check shortcuts",
+  "shortcuts.repairTitle": "Divergent shortcuts",
+  "shortcuts.repairText": "{count} game(s) have a missing or unexpected shortcut.",
+  "shortcuts.repairNone": "No divergent shortcuts.",
+  "shortcuts.repairDone": "{count} shortcut(s) rewritten.",
+  "shortcuts.repairScanning": "Checking shortcuts…"
 }

@@ -1482,5 +1482,14 @@
   "stor.confirmTitle": "Nettoyer le stockage ?",
   "stor.confirmText": "Supprime les anciennes sauvegardes, rapports et illustrations orphelines. Jeux, succès et réglages ne sont pas affectés.",
   "shortcuts.offTitle": "Désactiver le dossier de raccourcis ?",
-  "shortcuts.offText": "Taiga arrête de surveiller le dossier. Les raccourcis déjà créés dans Steam restent."
+  "shortcuts.offText": "Taiga arrête de surveiller le dossier. Les raccourcis déjà créés dans Steam restent.",
+  "stor.wouldFree": "{size} pourraient être libérés de {count} fichier(s).",
+  "shortcuts.repair": "Réparer les raccourcis",
+  "shortcuts.repairHint": "Trouve les raccourcis Steam qui diffèrent du catalogue Taiga et permet de les réécrire.",
+  "shortcuts.repairBtn": "Vérifier les raccourcis",
+  "shortcuts.repairTitle": "Raccourcis divergents",
+  "shortcuts.repairText": "{count} jeu(x) ont un raccourci absent ou différent.",
+  "shortcuts.repairNone": "Aucun raccourci divergent.",
+  "shortcuts.repairDone": "{count} raccourci(s) réécrits.",
+  "shortcuts.repairScanning": "Vérification des raccourcis…"
 }

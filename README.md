@@ -194,6 +194,12 @@ The game page and notifications enter Steam through its local debugging port. Th
 **Windows `.exe` games on Linux?**
 Opened through their Steam shortcut; enable Proton for them in Steam. Linux emulators run natively.
 
+**Does playtime count when I start the game from Steam?**
+Yes. Taiga detects the game process and records the session even if you don't use Play inside Taiga.
+
+**How do I sign in to Epic with a token?**
+Accounts → Epic Games → Paste code. The button opens the official Epic page; copy the authorizationCode shown there and paste it into Taiga.
+
 **Where is my data?**
 In `~/.local/share/Taiga Launcher` (XDG). The portable folder keeps its own `Taiga-Launcher/data` next to the app.
 

@@ -1482,5 +1482,14 @@
   "stor.confirmTitle": "Speicher bereinigen?",
   "stor.confirmText": "Entfernt alte Backups, Berichte und verwaiste Bilder. Spiele, Erfolge und Einstellungen bleiben unberührt.",
   "shortcuts.offTitle": "Verknüpfungsordner deaktivieren?",
-  "shortcuts.offText": "Taiga überwacht den Ordner nicht mehr. Bereits in Steam erstellte Verknüpfungen bleiben."
+  "shortcuts.offText": "Taiga überwacht den Ordner nicht mehr. Bereits in Steam erstellte Verknüpfungen bleiben.",
+  "stor.wouldFree": "{size} könnten aus {count} Datei(en) freigegeben werden.",
+  "shortcuts.repair": "Verknüpfungen reparieren",
+  "shortcuts.repairHint": "Findet Steam-Verknüpfungen, die vom Taiga-Katalog abweichen, und schreibt sie neu.",
+  "shortcuts.repairBtn": "Verknüpfungen prüfen",
+  "shortcuts.repairTitle": "Abweichende Verknüpfungen",
+  "shortcuts.repairText": "{count} Spiel(e) haben eine fehlende oder abweichende Verknüpfung.",
+  "shortcuts.repairNone": "Keine abweichenden Verknüpfungen.",
+  "shortcuts.repairDone": "{count} Verknüpfung(en) neu geschrieben.",
+  "shortcuts.repairScanning": "Verknüpfungen werden geprüft…"
 }

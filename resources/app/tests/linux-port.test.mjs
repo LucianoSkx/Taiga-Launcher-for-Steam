@@ -227,6 +227,10 @@ test('Busca de artes responde mesmo se o provedor externo não responde', async 
  assert.match(data.error || '', /demorou muito/);
  const cover = await fetch(`http://127.0.0.1:${port}/api/owned-cover`, {method: 'POST', headers: {Authorization: 'Bearer admin', 'Content-Type': 'application/json'}, body: JSON.stringify({appId: 0})});
  assert.deepEqual(await cover.json(), {url: ''});
+ for (const route of ['shortcut-repair', 'storage-report']) {
+  const r = await fetch(`http://127.0.0.1:${port}/api/${route}`, {method: 'POST', headers: {Authorization: 'Bearer admin', 'Content-Type': 'application/json'}, body: '{}'});
+  assert.equal(r.status, 200, route);
+ }
 });
 
 

@@ -18,9 +18,9 @@ const older = (a, b) => { for (let i = 0; i < 3; i++) if ((a[i] || 0) !== (b[i] 
 const ART_NAME = /[a-f0-9]{16,64}\.(?:png|jpe?g|ico|webp)/gi;
 
 export function createHousekeeping({dataDir, version, games = () => [], extraRefs = () => [], log = () => {}, now = () => Date.now()}) {
- let running = null;
+ let running = null, dry = false;
  const removed = {files: 0, bytes: 0};
- const drop = (f, recursive = false) => { const n = sizeOf(f); try { fs.rmSync(f, {recursive, force: true}); removed.files++; removed.bytes += n; return true; } catch { return false; } };
+ const drop = (f, recursive = false) => { const n = sizeOf(f); if (dry) { removed.files++; removed.bytes += n; return true; } try { fs.rmSync(f, {recursive, force: true}); removed.files++; removed.bytes += n; return true; } catch { return false; } };
 
  // Pacotes de atualização: só o da versão mais nova que a atual pode ainda ser útil.
  function updates() {
@@ -104,10 +104,10 @@ export function createHousekeeping({dataDir, version, games = () => [], extraRef
  }
 
  async function run() {
-  if (running) return running;
+  if (running || dry) return {...removed};
   removed.files = 0; removed.bytes = 0;
   running = (async () => {
-   for (const [name, step] of [['updates', updates], ['backups', backups], ['reports', reports], ['thumbs', thumbs], ['art', art]]) {
+   for (const [name, step] of steps) {
     try { await step(); } catch (e) { log('Limpeza (' + name + '): ' + e.message); }
     await tick();
    }
@@ -122,5 +122,13 @@ export function createHousekeeping({dataDir, version, games = () => [], extraRef
   for (const e of list(dataDir)) parts[e.isDirectory() ? e.name : 'files'] = (parts[e.isDirectory() ? e.name : 'files'] || 0) + sizeOf(path.join(dataDir, e.name));
   return {total: Object.values(parts).reduce((a, b) => a + b, 0), parts};
  }
- return {run, usage};
+ const steps = [['updates', updates], ['backups', backups], ['reports', reports], ['thumbs', thumbs], ['art', art]];
+ async function preview() {
+  if (running || dry) return {...removed};
+  dry = true; removed.files = 0; removed.bytes = 0;
+  try { for (const [name, step] of steps) { try { await step(); } catch (e) { log('Limpeza (' + name + '): ' + e.message); } await tick(); } }
+  finally { dry = false; }
+  return {...removed};
+ }
+ return {run, preview, usage};
 }

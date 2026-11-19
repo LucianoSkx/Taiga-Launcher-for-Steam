@@ -1482,5 +1482,14 @@
   "stor.confirmTitle": "Limpar armazenamento?",
   "stor.confirmText": "Remove backups antigos, relatórios e artes órfãs. Jogos, conquistas e configurações não são afetados.",
   "shortcuts.offTitle": "Desativar pasta de atalhos?",
-  "shortcuts.offText": "O Taiga deixa de monitorar a pasta. Os atalhos já criados na Steam permanecem."
+  "shortcuts.offText": "O Taiga deixa de monitorar a pasta. Os atalhos já criados na Steam permanecem.",
+  "stor.wouldFree": "{size} poderiam ser liberados de {count} arquivo(s).",
+  "shortcuts.repair": "Reparar atalhos",
+  "shortcuts.repairHint": "Confere os atalhos da Steam que divergem do cadastro do Taiga e permite regravá-los.",
+  "shortcuts.repairBtn": "Verificar atalhos",
+  "shortcuts.repairTitle": "Atalhos divergentes",
+  "shortcuts.repairText": "{count} jogo(s) têm atalho ausente ou diferente do esperado.",
+  "shortcuts.repairNone": "Nenhum atalho divergente.",
+  "shortcuts.repairDone": "{count} atalho(s) regravados.",
+  "shortcuts.repairScanning": "Procurando atalhos divergentes…"
 }

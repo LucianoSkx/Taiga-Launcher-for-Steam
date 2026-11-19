@@ -1049,6 +1049,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
      if(body.integration){try{const m=cefMarker();if(m&&fs.existsSync(m))fs.rmSync(m);}catch{}config.injectSteam=false;saveConfig();}
      for(const g of db.games)if(g.liveAdded)delete g.liveAdded[config.account];persist();nglNote('Remover tudo da Steam: '+ids.length+' atalho(s).');return send({removed:ids.length});}
     if(route==='/api/storage'){const u=housekeeping.usage();return send({total:u.total,art:u.parts.art||0,cache:u.parts.cache||0,backups:u.parts.backups||0,updates:u.parts.updates||0});}
+    if(route==='/api/storage-report'){const p=await housekeeping.preview();const u=housekeeping.usage();return send({...p,total:u.total,parts:u.parts});}
     if(route==='/api/storage-clean'){const before=housekeeping.usage().total;await housekeeping.run();config.cleanAt=Date.now();saveConfig();const after=housekeeping.usage().total;return send({freed:Math.max(0,before-after),total:after});}
     if(route==='/api/update-check'){if(!updateRepo)return send({enabled:false,version:VERSION});await checkUpdate();return send({enabled:true,version:VERSION,available:update.available?{version:update.available.version,notes:update.available.notes,page:update.available.page}:null,error:update.error});}
     if(route==='/api/update-apply'){if(!update.available)throw Error('Nenhuma atualização disponível.');if(process.platform!=='win32'||!onApplyUpdate)throw Error('A atualização automática só funciona no programa instalado no Windows.');if(update.downloading)throw Error('A atualização já está sendo baixada.');
@@ -1095,6 +1096,16 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
      return send({message:'Configurações salvas.'});
     }
     // Integração direta com a Steam (injetor próprio).
+    if(route==='/api/shortcut-repair'){
+     readSteamSnapshot();const items=[];
+     for(const g of db.games){
+      if(g.demo||g.hidden)continue;
+      const appId=Number(g.bindings?.[config.account]||0)>>>0;if(!appId)continue;
+      const entry=steamSnapshot.find(e=>e.appId===appId);
+      if(!entry||!matchesLaunch(entry,g))items.push({id:g.id,title:g.title});
+     }
+     return send({items});
+    }
     if(route==='/api/shortcut-folder'){
      const action=String(body.action||'');
      if(action==='create'||action==='set'){let folder=action==='create'?defaultShortcutFolder():String(body.path||'').trim();if(!folder)throw Error('Escolha uma pasta.');fs.mkdirSync(folder,{recursive:true});config.shortcutFolder=folder;saveConfig();watchShortcutFolder();}

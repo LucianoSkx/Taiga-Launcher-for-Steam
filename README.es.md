@@ -194,6 +194,12 @@ La página del juego y las notificaciones entran en Steam por su puerto local de
 **¿Juegos `.exe` de Windows en Linux?**
 Se abren mediante su acceso directo en Steam — activa Proton para ellos en Steam. Los emuladores de Linux funcionan de forma nativa.
 
+**¿El tiempo de juego se cuenta si inicio el juego desde Steam?**
+Sí. Taiga detecta el proceso del juego y registra la sesión aunque no uses el botón Jugar de Taiga.
+
+**¿Cómo inicio sesión en Epic con un token?**
+Cuentas → Epic Games → Pegar código. El botón abre la página oficial de Epic; copia el authorizationCode que aparece y pégalo en Taiga.
+
 **¿Dónde están mis datos?**
 En `~/.local/share/Taiga Launcher` (XDG). La carpeta portátil guarda sus propios datos en `Taiga-Launcher/data`, junto a la app.
 

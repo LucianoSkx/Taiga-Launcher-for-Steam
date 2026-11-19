@@ -1482,5 +1482,14 @@
   "stor.confirmTitle": "¿Limpiar el almacenamiento?",
   "stor.confirmText": "Elimina copias antiguas, informes e imágenes huérfanas. Juegos, logros y ajustes no se afectan.",
   "shortcuts.offTitle": "¿Desactivar la carpeta de accesos?",
-  "shortcuts.offText": "Taiga deja de vigilar la carpeta. Los accesos ya creados en Steam permanecen."
+  "shortcuts.offText": "Taiga deja de vigilar la carpeta. Los accesos ya creados en Steam permanecen.",
+  "stor.wouldFree": "Se podrían liberar {size} de {count} archivo(s).",
+  "shortcuts.repair": "Reparar accesos",
+  "shortcuts.repairHint": "Busca accesos de Steam distintos del registro de Taiga y permite reescribirlos.",
+  "shortcuts.repairBtn": "Comprobar accesos",
+  "shortcuts.repairTitle": "Accesos divergentes",
+  "shortcuts.repairText": "{count} juego(s) tienen un acceso ausente o distinto.",
+  "shortcuts.repairNone": "No hay accesos divergentes.",
+  "shortcuts.repairDone": "{count} acceso(s) reescritos.",
+  "shortcuts.repairScanning": "Comprobando accesos…"
 }
