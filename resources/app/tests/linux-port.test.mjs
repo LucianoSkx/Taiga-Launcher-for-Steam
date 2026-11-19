@@ -13,6 +13,7 @@ import {launchFor,steamGameId} from '../lib/games.mjs';
 import {createApp} from '../server.mjs';
 import * as win from '../lib/windows.mjs';
 import {Providers} from '../lib/providers.mjs';
+import {createHousekeeping} from '../lib/housekeeping.mjs';
 import {LaunchEngine, processSnapshot, processNameFromCmdline} from '../lib/launch-engine.mjs';
 import {EventEmitter} from 'node:events';
 import crypto from 'node:crypto';
@@ -298,4 +299,19 @@ test('Steam: pasta com steam.exe, steam.sh ou steamapps é aceita', t => {
  fs.rmSync(path.join(dir, 'steam.sh'));
  fs.mkdirSync(path.join(dir, 'steamapps'));
  assert.equal(win.steamDirOk(dir), true);
+});
+
+
+test('Faxina de artes ignora art-origins.json como referência', async t => {
+ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lg-art-clean-'));
+ t.after(() => fs.rmSync(dir, {recursive: true, force: true}));
+ const dataDir = path.join(dir, 'data'); fs.mkdirSync(path.join(dataDir, 'art'), {recursive: true});
+ const orphan = 'a'.repeat(32) + '.png';
+ fs.writeFileSync(path.join(dataDir, 'art', orphan), Buffer.from('x'));
+ const old = Date.now() - 10 * 86400000;
+ fs.utimesSync(path.join(dataDir, 'art', orphan), new Date(old), new Date(old));
+ fs.writeFileSync(path.join(dataDir, 'art-origins.json'), JSON.stringify({[orphan]: 'https://example.com/x.png'}));
+ const hk = createHousekeeping({dataDir, version: '3.2.0', games: () => [{id: 'g', art: {cover: 'b'.repeat(32) + '.png'}}]});
+ const result = await hk.preview();
+ assert.ok(result.files >= 1, 'arte órfã citada só por art-origins.json deve aparecer na faxina');
 });

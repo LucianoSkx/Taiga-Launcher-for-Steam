@@ -54,7 +54,7 @@ export function createHousekeeping({dataDir, version, games = () => [], extraRef
    }
    // Arquivos "<tempo>-<nome>": os 15 mais novos de cada tipo.
    const groups = new Map();
-   for (const e of list(dir)) { if (!e.isFile()) continue; const m = e.name.match(/^(\d{10,})-(.+)$/); if (!m) continue; if (!groups.has(m[2])) groups.set(m[2], []); groups.get(m[2]).push(e.name); }
+   for (const e of list(dir)) { const m = e.name.match(/^(\d{10,})-(.+)$/); if (!m) continue; if (!groups.has(m[2])) groups.set(m[2], []); groups.get(m[2]).push(e.name); }
    for (const names of groups.values()) for (const name of names.sort().reverse().slice(15)) drop(path.join(dir, name));
   }
  }
@@ -85,7 +85,7 @@ export function createHousekeeping({dataDir, version, games = () => [], extraRef
    for (const e of list(d)) {
     const f = path.join(d, e.name);
     if (e.isDirectory()) { if (!['art', 'backups', 'updates', 'downloads', 'community-thumbs', 'not-installed'].includes(e.name) && await scan(f) === false) return false; continue; }
-    if (!/\.json$/i.test(e.name)) continue;
+    if (e.name === 'art-origins.json' || !/\.json$/i.test(e.name)) continue;
     const s = stat(f); if (!s || s.size > 64 * 1024 * 1024) { if (s) return false; continue; }
     try { take(fs.readFileSync(f, 'utf8')); } catch { return false; }
     await tick();

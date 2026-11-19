@@ -17,7 +17,7 @@
  // Depois de um recarregamento da Steam o contexto fica pronto antes da interface: espera webpack, React,
  // gerenciador de janelas e lojas da Steam, como o Millennium faz antes de iniciar os plugins.
  const steamReady = () => !!(window.SP_REACT && window.g_PopupManager && window.SteamClient);
- const waitSteam = () => new Promise(resolve => { const tick = () => { if (steamReady()) resolve(); else setTimeout(tick, 200); }; tick(); });
+ const waitSteam = () => new Promise((resolve, reject) => { const start = Date.now(); const tick = () => { if (steamReady()) resolve(); else if (Date.now() - start > 30000) reject(new Error('Interface da Steam indisponível.')); else setTimeout(tick, 200); }; tick(); });
  waitSteam().then(() => entry()).then(plugin => {
   window.__TAIGA_NGL_PLUGIN__ = plugin || {};
   window.__TAIGA_NGL_VERSION__ = window.__TAIGA_NGL_WANT__ || '';

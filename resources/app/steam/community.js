@@ -62,7 +62,7 @@
    // A assinatura vem pronta do Taiga Launcher: sem comparar a lista inteira a cada atualização.
    const changed = !DATA || !d.sig || d.sig !== DATA.sig || DATA.slim; DATA = d; dataAt = Date.now(); setLang(d.language);
    if (changed) { try { localStorage.setItem(CACHE, JSON.stringify({...slim(d), slim: true})); } catch (e) {} schedule(0); }
-   if (d && d.pendingIcons && !STATE.iconRetry) { STATE.iconRetry = setTimeout(() => { STATE.iconRetry = null; refresh().catch(() => {}); }, 2500); }
+   if (d && d.pendingIcons && !STATE.iconRetry && (STATE.iconAttempts || 0) < 20) { STATE.iconAttempts = (STATE.iconAttempts || 0) + 1; STATE.iconRetry = setTimeout(() => { STATE.iconRetry = null; refresh().catch(() => {}); }, 2500); } else if (!d || !d.pendingIcons) STATE.iconAttempts = 0;
    return d;
   }).finally(() => { refreshing = null; });
   return refreshing;
@@ -100,7 +100,7 @@
   if (rest === '/games') return 'games';
   return null;
  }
- const hashUuid = () => { const h = decodeURIComponent(location.hash.slice(1)); return h.startsWith(HASH) ? h.slice(HASH.length) : ''; };
+ const hashUuid = () => { let h; try { h = decodeURIComponent(location.hash.slice(1)); } catch { return ''; } return h.startsWith(HASH) ? h.slice(HASH.length) : ''; };
  const hashHref = uuid => location.pathname + location.search + '#' + HASH + encodeURIComponent(uuid);
  // Jogos que você já tem na própria Steam não aparecem duas vezes.
  // Os AppIDs da página são lidos uma vez (dados da Steam + links), em vez de uma busca no texto inteiro por jogo.

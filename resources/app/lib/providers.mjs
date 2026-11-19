@@ -23,7 +23,7 @@ export class Providers{
  async request(url,options={}){
   if(this.offline)throw Error('Sem conexão (modo offline).');
   const {priority=false,timeout=20000,...fetchOptions}=options;
-  const key=digest(url+JSON.stringify(fetchOptions.headers||{})+String(fetchOptions.body||''));
+  const key=digest((fetchOptions.method||'GET')+':'+url+JSON.stringify(fetchOptions.headers||{})+String(fetchOptions.body||''));
   return this.cached('request:'+key,0,async()=>{
    const host=new URL(url).hostname,lane=this.lanes.get(host)||{last:0,tail:Promise.resolve()};this.lanes.set(host,lane);
    const job=async()=>{for(let i=0;i<3;i++){
@@ -101,9 +101,9 @@ export class Providers{
   return (cached.data||[]).map(g=>({id:g.ID,name:g.Title,hashes:(g.Hashes||[]).map(h=>String(h).toLowerCase())}));}
  // Endereço público (https) de onde veio cada arte salva: usado no perfil público (amigos veem as mesmas capas sem
  // o Taiga Launcher enviar imagens).
- artOrigins(){if(!this._origins){try{this._origins=JSON.parse(fs.readFileSync(path.join(this.dir,'art-origins.json'),'utf8'));}catch{this._origins={};}}return this._origins;}
+ artOrigins(){if(!this._origins){const file=path.join(this.dir,'art-origins.json');try{this._origins=JSON.parse(fs.readFileSync(file,'utf8'));}catch{try{if(fs.existsSync(file))fs.renameSync(file,file+'.corrupt-'+Date.now());}catch{}this._origins={};}}return this._origins;}
  artOrigin(name){return this.artOrigins()[String(name||'')]||'';}
- rememberOrigin(name,url){if(!name||!/^https:\/\//.test(url))return;const o=this.artOrigins();if(o[name]===url)return;o[name]=url;clearTimeout(this._originsTimer);this._originsTimer=setTimeout(()=>{try{fs.mkdirSync(this.dir,{recursive:true});fs.writeFileSync(path.join(this.dir,'art-origins.json'),JSON.stringify(o));}catch{}},500);this._originsTimer.unref?.();}
+ rememberOrigin(name,url){if(!name||!/^https:\/\//.test(url))return;const o=this.artOrigins();if(o[name]===url)return;o[name]=url;clearTimeout(this._originsTimer);this._originsTimer=setTimeout(()=>{try{fs.mkdirSync(this.dir,{recursive:true});atomic(path.join(this.dir,'art-origins.json'),JSON.stringify(o));}catch{}},500);this._originsTimer.unref?.();}
  async image(url){
   if(this.images.has(url))return this.images.get(url);
   const prefix=digest(url).slice(0,24);for(const ext of ['png','jpg','ico']){const name=prefix+'.'+ext,file=path.join(this.dir,'art',name);try{const stat=fs.statSync(file);if(stat.isFile()&&stat.size&&Date.now()-stat.mtimeMs<7*86400000){this.rememberOrigin(name,url);return name;}}catch{}}
