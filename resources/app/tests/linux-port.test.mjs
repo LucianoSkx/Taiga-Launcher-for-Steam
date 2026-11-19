@@ -232,6 +232,10 @@ test('Busca de artes responde mesmo se o provedor externo não responde', async 
   const r = await fetch(`http://127.0.0.1:${port}/api/${route}`, {method: 'POST', headers: {Authorization: 'Bearer admin', 'Content-Type': 'application/json'}, body: '{}'});
   assert.equal(r.status, 200, route);
  }
+ const originalLanguage = JSON.parse(fs.readFileSync(path.join(dataDir, 'config.json'), 'utf8')).language || '';
+ const bad = await fetch(`http://127.0.0.1:${port}/api/settings`, {method: 'POST', headers: {Authorization: 'Bearer admin', 'Content-Type': 'application/json'}, body: JSON.stringify({language: 'es', steamDebugPort: 80})});
+ assert.equal(bad.status, 400);
+ assert.equal(JSON.parse(fs.readFileSync(path.join(dataDir, 'config.json'), 'utf8')).language || '', originalLanguage, 'configuração inválida não pode aplicar mudanças válidas');
 });
 
 
