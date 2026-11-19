@@ -230,7 +230,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
   for(let c=67;c<=90;c++){const letter=String.fromCharCode(c)+':',root=letter+'\\';if(process.platform==='win32'&&!fs.existsSync(root))continue;const info=labels[letter];if(info&&![2,3].includes(info.type))continue;
    let free=0,total=0;try{const st=fs.statfsSync(root);free=Number(st.bavail)*Number(st.bsize);total=Number(st.blocks)*Number(st.bsize);}catch{continue;}
    const dir=letter===defLetter?cfgDir:path.join(root,'Games','Epic Games');out.push({letter,label:info?.label||'',free,total,dir,default:letter===defLetter,enough:!needBytes||free>needBytes});}
-  if(process.platform!=='win32'&&!out.length){try{const target=cfgDir.startsWith('/')?cfgDir:os.homedir(),st=fs.statfsSync(target),free=Number(st.bavail)*Number(st.bsize);out.push({letter:'/',label:'',free,total:Number(st.blocks)*Number(st.bsize),dir:cfgDir,default:true,enough:!needBytes||free>needBytes});}catch{}}
+  if(process.platform!=='win32'&&!out.length){try{let target=cfgDir.startsWith('/')?cfgDir:os.homedir(),st;try{st=fs.statfsSync(target);}catch{st=fs.statfsSync(os.homedir());target=os.homedir();}const free=Number(st.bavail)*Number(st.bsize);out.push({letter:'/',label:'',free,total:Number(st.blocks)*Number(st.bsize),dir:cfgDir,default:true,enough:!needBytes||free>needBytes});}catch{}}
   return out;}
  const sizeJobs=new Map();
  // Tamanho do jogo (Epic): guardado no cadastro; a primeira consulta roda em segundo plano.
