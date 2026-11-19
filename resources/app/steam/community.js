@@ -541,10 +541,14 @@
  // mudar" atrasava o número de jogos até o fim do carregamento. Um pedido já marcado só é antecipado, nunca adiado.
  let dueAt = 0;
  function schedule(ms) { const wait = ms === undefined ? 120 : ms, at = Date.now() + wait; if (timer && dueAt <= at) return; clearTimeout(timer); dueAt = at; timer = setTimeout(() => { timer = null; apply(); }, wait); }
+ let observedNode = null;
+ const domObserver = new MutationObserver(records => { if (records.every(r => r.target.closest && r.target.closest('[data-taiga]'))) return; schedule(); });
+ function observeRoot(node) { const target = node || document.body; if (target === observedNode) return; domObserver.disconnect(); observedNode = target; domObserver.observe(target, {childList: true, subtree: true}); }
  async function apply() {
   if (busy) { again = true; return; } busy = true;
   try {
    const r = route(); if (!r) { closeAchievements(); return; }
+   observeRoot(r === 'games' ? (findList()?.parentElement || document.body) : r === 'profile' ? (document.querySelector('.profile_count_link_total')?.parentElement || document.body) : document.body);
    // Antes do fim do HTML não dá para saber se a página é montada pelo React (SSR); mexer antes da hidratação faria a Steam redesenhar tudo.
    const ssr = !!(document.getElementById('valve-ssr-data') || (window.SSR && !window.SSR.hydrated));
    // Perfil (página clássica, sem React): o número de jogos é trocado assim que aparece, mesmo com a página ainda carregando.
@@ -562,7 +566,7 @@
    }
   } catch (e) {} finally { busy = false; if (again) { again = false; schedule(150); } }
  }
- new MutationObserver(records => { if (records.every(r => r.target.closest && r.target.closest('[data-taiga]'))) return; schedule(); }).observe(document, {childList: true, subtree: true});
+
  let lastHref = location.href;
  setInterval(() => { if (location.href !== lastHref) { lastHref = location.href; STATE.loader = null; STATE.lpMap = null; schedule(30); } }, 250);
  // A Steam reordena os cartões só trocando a posição deles (sem criar elementos): confere a ordem a cada 300 ms.

@@ -146,8 +146,11 @@ export function createSteamWeb({virtual = null, log = () => {}} = {}) {
   const feed = async (lang, filter, pages) => { for (let p = 1; p <= pages; p++) { const r = await httpGet('https://steamcommunity.com/app/' + appid + '/homecontent/?l=' + urlEncode(lang) + (filter ? '&filterLanguage=' + urlEncode(filter) : '') + '&browsefilter=trend&numperpage=30&p=' + p + '&appid=' + appid + '&forceanon=1', {headers: headersFor(lang), timeout: 10}); if (r && r.status === 200 && r.body) { ok++; parseHubCards(r.body, null, items, safe); } if (items.length >= 50) break; } };
   const sub = async (lang, filter, section, fallback) => { const r = await httpGet('https://steamcommunity.com/app/' + appid + '/homecontent/?l=' + urlEncode(lang) + (filter ? '&requiredtags[0]=' + urlEncode(filter) : '') + '&browsefilter=trend&numperpage=20&p=1&appid=' + appid + '&appHubSubSection=' + section + '&forceanon=1', {headers: headersFor(lang), timeout: 10}); if (r && r.status === 200 && r.body) { ok++; parseHubCards(r.body, fallback, items, safe); } };
   const family = ['spanish', 'latam'].includes(safe) ? ['spanish', 'latam'] : ['portuguese', 'brazilian'].includes(safe) ? ['brazilian', 'portuguese'] : ['schinese', 'tchinese'].includes(safe) ? ['schinese', 'tchinese'] : [safe];
-  if (family[0] !== 'english') for (const lang of family) { await feed(lang, lang, 2); await sub(lang, lang, 9, 'guide'); await sub(lang, lang, 3, 'video'); await sub(lang, lang, 4, 'artwork'); if (items.length >= 50) break; }
-  if (items.length < 24) { await feed('english', null, 2); await sub('english', null, 3, 'video'); await sub('english', null, 9, 'guide'); await sub('english', null, 4, 'artwork'); }
+  const jobs = [];
+  if (family[0] !== 'english') for (const lang of family) { jobs.push(() => feed(lang, lang, 2), () => sub(lang, lang, 9, 'guide'), () => sub(lang, lang, 3, 'video'), () => sub(lang, lang, 4, 'artwork')); }
+  jobs.push(async () => { if (items.length < 24) await feed('english', null, 2); }, async () => { if (items.length < 24) await sub('english', null, 3, 'video'); }, async () => { if (items.length < 24) await sub('english', null, 9, 'guide'); }, async () => { if (items.length < 24) await sub('english', null, 4, 'artwork'); });
+  let next = 0;
+  await Promise.all(Array.from({length: Math.min(4, jobs.length)}, async () => { while (next < jobs.length) { const job = jobs[next++]; try { await job(); } catch {} if (items.length >= 50) next = jobs.length; } }));
   const out = JSON.stringify({items, available: items.length > 0, transient_error: ok === 0, source: 'steam_community_app_hub'});
   if (ok) communityCache.set(key, out);
   return out;
