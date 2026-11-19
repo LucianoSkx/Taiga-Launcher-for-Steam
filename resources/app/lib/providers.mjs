@@ -132,7 +132,8 @@ export class Providers{
  // Opções oficiais da Steam para jogos que existem lá (só as que respondem).
  async steamArtwork(appId,kind){
   if(!appId||this.offline)return [];const base='https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/'+Number(appId)+'/';
-  const urls={cover:['library_600x900_2x.jpg','library_600x900.jpg'],hero:['library_hero.jpg'],logo:['logo.png'],wide:['header.jpg','capsule_616x353.jpg']}[kind]||[];
+  // Steam publica vários tamanhos no CDN; o SteamGridDB complementa o que falta (principalmente ícones).
+  const urls={cover:['library_600x900_2x.jpg','library_600x900.jpg'],hero:['library_hero.jpg','library_hero_2x.jpg'],logo:['logo.png','logo_2x.png'],wide:['header.jpg','capsule_616x353.jpg','capsule_231x87.jpg'],icon:[]}[kind]||[];
   const ok=await Promise.all(urls.map(async n=>{try{const r=await fetch(base+n,{method:'HEAD',signal:AbortSignal.timeout(2500)});return r.ok?base+n:null;}catch{return null;}}));
   return ok.filter(Boolean).map((url,i)=>({id:'steam-'+kind+'-'+i,url,preview:url,author:'Steam',source:'Steam',width:0,height:0}));
  }
