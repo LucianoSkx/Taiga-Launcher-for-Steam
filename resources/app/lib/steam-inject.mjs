@@ -204,7 +204,9 @@ export class SteamInjector {
   const expression = `window.__taiga_ffi_resolve__&&window.__taiga_ffi_resolve__(${id},${ok},${JSON.stringify(typeof payload === 'string' ? payload : JSON.stringify(payload ?? null))})`;
   // Estatística por pedido (vai no relatório): quantas vezes, tempo e tamanho, para achar o que pesa na Steam.
   try { const m = String(req.method || '').slice(0, 60), row = (this.callStats ||= new Map()).get(m) || {n: 0, ms: 0, kb: 0, max: 0}; const ms = Date.now() - t0; row.n++; row.ms += ms; row.kb += expression.length / 1024; row.max = Math.max(row.max, ms); this.callStats.set(m, row); if (this.callStats.size > 200) this.callStats.clear(); } catch {}
-  await this.send('Runtime.evaluate', {expression, ...(params.executionContextId ? {contextId: params.executionContextId} : {})}, sessionId).catch(() => {});
+  const options = {expression, ...(params.executionContextId ? {contextId: params.executionContextId} : {})};
+  let sent = await this.send('Runtime.evaluate', options, sessionId).catch(() => null);
+  if (!sent && options.contextId) await this.send('Runtime.evaluate', {expression}, sessionId).catch(() => {});
  }
  // Notificação nativa da Steam (toast de conquista) pelo contexto compartilhado; desktop/Big Picture como reserva.
  async notify(payload) {
