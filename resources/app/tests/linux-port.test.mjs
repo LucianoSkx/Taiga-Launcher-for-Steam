@@ -11,6 +11,7 @@ import {resolveDownload, extractArchive} from '../lib/emulator-download.mjs';
 import {execFileSync,spawn} from 'node:child_process';
 import {launchFor,steamGameId} from '../lib/games.mjs';
 import {createApp} from '../server.mjs';
+import * as win from '../lib/windows.mjs';
 import {Providers} from '../lib/providers.mjs';
 import {LaunchEngine, processSnapshot, processNameFromCmdline} from '../lib/launch-engine.mjs';
 import {EventEmitter} from 'node:events';
@@ -278,4 +279,19 @@ test('Configurações: cache de contas é invalidado quando loginusers.vdf muda'
  assert.equal((await state()).accounts.length, 1);
  fs.writeFileSync(file, '"users" { "76561197960265729" { "PersonaName" "Um" "MostRecent" "1" } "76561197960265730" { "PersonaName" "Dois" } }');
  assert.equal((await state()).accounts.length, 2, 'deve reler o VDF quando o arquivo muda');
+});
+
+
+test('Steam: pasta com steam.exe, steam.sh ou steamapps é aceita', t => {
+ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lg-steamdir-'));
+ t.after(() => fs.rmSync(dir, {recursive: true, force: true}));
+ assert.equal(win.steamDirOk(dir), false);
+ fs.writeFileSync(path.join(dir, 'steam.exe'), '');
+ assert.equal(win.steamDirOk(dir), true);
+ fs.rmSync(path.join(dir, 'steam.exe'));
+ fs.writeFileSync(path.join(dir, 'steam.sh'), '');
+ assert.equal(win.steamDirOk(dir), true);
+ fs.rmSync(path.join(dir, 'steam.sh'));
+ fs.mkdirSync(path.join(dir, 'steamapps'));
+ assert.equal(win.steamDirOk(dir), true);
 });

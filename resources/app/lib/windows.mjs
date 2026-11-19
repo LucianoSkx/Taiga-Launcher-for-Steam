@@ -10,8 +10,15 @@ const TEST=!!process.env.NODE_TEST_CONTEXT;
 // Executável e nome do processo auxiliar variam por plataforma; o resto da Steam é igual.
 const STEAM_EXE=()=>LINUX?'steam.sh':'steam.exe',HELPER_PROC=()=>LINUX?'steamwebhelper':'steamwebhelper.exe';
 export async function ps(code){if(process.platform!=='win32')throw Error('Esta operação requer Windows.');const {stdout}=await run('powershell.exe',['-NoProfile','-NonInteractive','-EncodedCommand',Buffer.from(code,'utf16le').toString('base64')],{windowsHide:true,maxBuffer:4*1024*1024});return stdout.trim();}
+export function isFlatpakSteam(dir){return LINUX&&String(dir||'').includes('.var/app/com.valvesoftware.Steam');}
+export function steamDirOk(dir){
+ if(!dir)return false;
+ for(const name of ['steam.sh','steam.exe'])try{if(fs.statSync(path.join(dir,name)).isFile())return true;}catch{}
+ try{return fs.statSync(path.join(dir,'steamapps')).isDirectory();}catch{return false;}
+}
 export async function detectSteam(){
- if(LINUX){for(const dir of [path.join(os.homedir(),'.local/share/Steam'),path.join(os.homedir(),'.steam/steam'),path.join(os.homedir(),'.var/app/com.valvesoftware.Steam/data/Steam')])if(fs.existsSync(path.join(dir,'steam.sh')))return dir;return '';}
+ if(LINUX){const flat=path.join(os.homedir(),'.var/app/com.valvesoftware.Steam');
+ for(const dir of [path.join(os.homedir(),'.local/share/Steam'),path.join(os.homedir(),'.steam/steam'),path.join(flat,'data/Steam'),path.join(flat,'.local/share/Steam'),path.join(flat,'.steam/steam')])if(steamDirOk(dir))return dir;return '';}
  try{return await ps("(Get-ItemProperty 'HKCU:\\Software\\Valve\\Steam').SteamPath");}catch{return '';}}
 export async function steamLocation(selected){let target=selected;if(!LINUX&&path.extname(selected).toLowerCase()==='.lnk'){const literal=selected.replaceAll("'","''");target=await ps("(New-Object -ComObject WScript.Shell).CreateShortcut('"+literal+"').TargetPath");}if(fs.existsSync(target)&&fs.statSync(target).isDirectory())return target;if(path.basename(target).toLowerCase()!==STEAM_EXE())throw Error(LINUX?'Selecione a pasta da Steam ou o arquivo steam.sh.':'Selecione a pasta da Steam, steam.exe ou um atalho para steam.exe.');return path.dirname(target);}
 // Steam aberta? Pelo tasklist (leve) em vez de um PowerShell inteiro; a resposta vale 3 s e pedidos juntos dividem a
@@ -25,7 +32,7 @@ export async function processRunning(image){if(TEST||(!LINUX&&process.platform!=
 export async function running({fresh=false}={}){if(TEST||(!LINUX&&process.platform!=='win32'))return false;if(!fresh&&Date.now()-runCache.at<3000)return runCache.value;if(runPending)return runPending;runPending=processRunning(STEAM_EXE()).then(v=>{runCache={at:Date.now(),value:v};return v;}).finally(()=>{runPending=null;});return runPending;}
 export async function stopSteam(dir){
  if(!await running({fresh:true}))return;
- await run(path.join(dir,STEAM_EXE()),['-shutdown'],{windowsHide:true,timeout:15000}).catch(()=>{});
+ await (isFlatpakSteam(dir)?run('flatpak',['run','com.valvesoftware.Steam','-shutdown'],{windowsHide:true,timeout:15000}):run(path.join(dir,STEAM_EXE()),['-shutdown'],{windowsHide:true,timeout:15000})).catch(()=>{});
  const deadline=Date.now()+45000;while(Date.now()<deadline){if(!await running({fresh:true})){
   // A porta de depuração pertence ao steamwebhelper: espera ele fechar também, senão a Steam nova não consegue abri-la.
   const helperDeadline=Date.now()+12000;while(Date.now()<helperDeadline&&await processRunning(HELPER_PROC()))await new Promise(r=>setTimeout(r,500));
@@ -35,7 +42,7 @@ export async function stopSteam(dir){
 // A Steam é aberta com a depuração do CEF para o injetor do Taiga Launcher (mesmos argumentos do SFP).
 export function startSteam(dir,port=8080){const args=['-cef-enable-debugging','-devtools-port',String(port)];let exe=path.join(dir,STEAM_EXE()),argv=args;
  // Steam flatpak: o steam.sh roda dentro da sandbox; na máquina anfitriã quem inicia é o flatpak.
- if(LINUX&&dir.includes(path.join('.var/app/com.valvesoftware.Steam'))){exe='flatpak';argv=['run','com.valvesoftware.Steam',...args];}
+ if(isFlatpakSteam(dir)){exe='flatpak';argv=['run','com.valvesoftware.Steam',...args];}
  const p=spawn(exe,argv,{detached:true,stdio:'ignore',windowsHide:true});p.on('error',()=>{});p.unref();}
 // Linha de comando da Steam em execução (para saber se já está com a integração ativa).
 export async function steamCommandLine(){if(LINUX){try{let first='',wrapper='';for(const name of fs.readdirSync('/proc')){if(!/^\d+$/.test(name))continue;let raw='';try{raw=fs.readFileSync('/proc/'+name+'/cmdline','utf8');}catch{continue;}const parts=raw.split('\0').filter(Boolean);if(!parts.some(a=>path.basename(a)==='steam'||a==='steam.sh'||a.endsWith('/steam.sh')||a.includes('com.valvesoftware.Steam')))continue;const line=parts.join(' ');if(/-cef-enable-debugging/i.test(line))return line;if(parts.some(a=>a==='steam.sh'||a.endsWith('/steam.sh')))wrapper||=line;else first||=line;}return first||wrapper;}catch{return null;}}

@@ -603,7 +603,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
  }
  function configView(){
   const accounts=cachedAccounts(config.steamDir);
-  const steamReady=isFile(path.join(config.steamDir,'steam.exe'))||isFile(path.join(config.steamDir,'steam.sh'));
+  const steamReady=win.steamDirOk(config.steamDir);
   const emuReady=isFile(config.emulator)&&(process.platform==='win32'?/^PPSSPPWindows(?:64)?\.exe$/i.test(path.basename(config.emulator)):true);
   const readiness={emulator:emuReady,steam:steamReady,account:accounts.some(a=>a.id===config.account),integration:false};
   const target=scriptTarget();
@@ -615,7 +615,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
  }
  function validatePaths(requireEmulator=true){
   if(requireEmulator&&(!isFile(config.emulator)||process.platform==='win32'&&!/^PPSSPPWindows(?:64)?\.exe$/i.test(path.basename(config.emulator))))throw Error('Selecione PPSSPPWindows64.exe ou PPSSPPWindows.exe nas configurações.');
-  if(!isFile(path.join(config.steamDir,'steam.exe'))&&!isFile(path.join(config.steamDir,'steam.sh')))throw Error('Selecione a pasta da Steam.');
+  if(!win.steamDirOk(config.steamDir))throw Error('Selecione a pasta da Steam.');
   if(!win.accounts(config.steamDir).some(a=>a.id===config.account))throw Error('Selecione uma conta Steam válida.');
  }
  function scriptBytes(){const shared=fs.readFileSync(path.join(ROOT,'web/achievement-view.cjs'),'utf8')+'\n;globalThis.TaigaAchievementView.css='+JSON.stringify(fs.readFileSync(path.join(ROOT,'web/achievement-view.css'),'utf8'))+';\n';const catalog=db.games.filter(g=>g.bindings?.[config.account]).map(publicGame);const snapshot=JSON.stringify(catalog).replaceAll('<','\\u003c').replaceAll('>','\\u003e');return fs.readFileSync(path.join(ROOT,'locales/catalog.cjs'),'utf8')+'\n'+fs.readFileSync(path.join(ROOT,'locales/runtime.cjs'),'utf8')+'\n'+shared+fs.readFileSync(path.join(ROOT,'steam/libraryroot.custom.js'),'utf8').replace('__TAIGA_LANGUAGE__',config.language||sysLang).replace('__TAIGA_READ_TOKEN__',config.readToken).replace('__TAIGA_STATUS_TOKEN__',statusToken).replace('/*__TAIGA_CATALOG__*/[]',snapshot);}
@@ -1048,7 +1048,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
     // Pacote do programa para outro PC (com as chaves de API deste PC; sem jogos, contas nem logins).
     // "Testar integração": confere cada peça e manda uma notificação de teste com som.
     if(route==='/api/integration-test'){const checks=[],add=(key,ok,extra={})=>checks.push({key,ok:!!ok,...extra});
-     const steamOk=!!config.steamDir&&(isFile(path.join(config.steamDir,'steam.exe'))||isFile(path.join(config.steamDir,'steam.sh')));add('steamDir',steamOk,{value:config.steamDir||''});
+     const steamOk=win.steamDirOk(config.steamDir);add('steamDir',steamOk,{value:config.steamDir||''});
      const accounts=steamOk?win.accounts(config.steamDir):[],acc=accounts.find(a=>a.id===config.account);add('account',!!acc,{value:acc?.name||''});
      const running=await win.running().catch(()=>false);add('steamRunning',running);
      let active=null;if(running)try{active=await win.activeAccount(config.steamDir);}catch{}if(running&&active)add('sameAccount',active===config.account);
@@ -1346,7 +1346,7 @@ if(route==='/api/epic-login'||route==='/api/epic-login-token'){const code=String
  // de depuração local (127.0.0.1:8080) mesmo quando é aberta pelo atalho normal, pela inicialização do Windows ou
  // depois de se atualizar sozinha. Sem ele, a Steam precisa receber -cef-enable-debugging (o Taiga Launcher passa ao abrir).
  const cefMarker=()=>config.steamDir?path.join(config.steamDir,'.cef-enable-remote-debugging'):'';
- function ensureCefMarker(){const f=cefMarker();if(!f||!isFile(path.join(config.steamDir,'steam.exe'))&&!isFile(path.join(config.steamDir,'steam.sh')))return false;try{if(config.injectSteam!==false){if(!fs.existsSync(f)){fs.writeFileSync(f,'');config.cefMarkerCreated=true;saveConfig();}return true;}if(config.cefMarkerCreated&&fs.existsSync(f)){fs.rmSync(f,{force:true});config.cefMarkerCreated=false;saveConfig();}}catch(e){nglNote('Marcador CEF: '+e.message);}return false;}
+ function ensureCefMarker(){const f=cefMarker();if(!f||!win.steamDirOk(config.steamDir))return false;try{if(config.injectSteam!==false){if(!fs.existsSync(f)){fs.writeFileSync(f,'');config.cefMarkerCreated=true;saveConfig();}return true;}if(config.cefMarkerCreated&&fs.existsSync(f)){fs.rmSync(f,{force:true});config.cefMarkerCreated=false;saveConfig();}}catch(e){nglNote('Marcador CEF: '+e.message);}return false;}
  ensureCefMarker();
  // O script antigo do painel (modo SFP) desenhava a página velha por cima da página nova. Com a integração própria
  // ligada, o arquivo instalado pelo Taiga Launcher volta a ser o que o usuário tinha antes (ou um arquivo vazio).
