@@ -28,7 +28,7 @@ export function createHousekeeping({dataDir, version, games = () => [], extraRef
   for (const e of list(dir)) {
    const f = path.join(dir, e.name), st = stat(f); if (!st) continue;
    if (/\.part$/i.test(e.name) && now() - st.mtimeMs > DAY) drop(f);
-   else if (/\.zip$/i.test(e.name) && !older(cur, versionOf(e.name))) drop(f);
+   else if (/\.zip$/i.test(e.name)) { const v = versionOf(e.name); if (v.length && !older(cur, v)) drop(f); }
    else if (/\.ps1$/i.test(e.name) && now() - st.mtimeMs > DAY) drop(f);
   }
  }

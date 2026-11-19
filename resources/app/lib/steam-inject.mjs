@@ -79,6 +79,7 @@ export class SteamInjector {
   const ws = this.ws; this.ws = null;
   for (const {reject} of this.pending.values()) reject(Error('Conexão com a Steam encerrada.'));
   this.pending.clear(); this.sessions.clear(); this.kinds.clear(); this.injected.clear();
+  for (const t of this.checks?.values() || []) clearTimeout(t); this.checks?.clear(); this.failedAt?.clear(); this.attaching?.clear();
   try { ws?.close(); } catch {}
  }
  send(method, params = {}, sessionId) {

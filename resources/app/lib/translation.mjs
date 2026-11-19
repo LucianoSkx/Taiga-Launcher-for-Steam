@@ -79,7 +79,7 @@ export async function translateText(text,dir,request,target='pt-BR',source='en')
   const result=[];for(const q of translationChunks(text)){const r=await request('https://api.mymemory.translated.net/get?'+new URLSearchParams({q,langpair:source+'|'+target}));const t=r?.responseData?.translatedText;if(Number(r.responseStatus)!==200||!t||/MYMEMORY WARNING|QUERY LENGTH LIMIT|INVALID LANGUAGE PAIR/i.test(t)){pending.add(file);throw Error('Tradução indisponível ou limite gratuito atingido. Tente novamente mais tarde.');}result.push(t.replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>'));}
   translated=result.join(' ');
  }
- save(file,{text:translated});return translated;
+ pending.delete(file);save(file,{text:translated});return translated;
 }
 // Vários textos curtos de uma vez (listas de conquistas): uma linha por texto, poucas consultas em vez de uma por
 // texto. Cada texto continua no mesmo cache de translateText. Se a resposta não vier com o mesmo número de linhas,
@@ -89,11 +89,11 @@ export async function translateMany(texts,dir,request,target='pt-BR',source='en'
  const fileOf=text=>path.join(dir,'cache',(target==='pt-BR'&&source==='en'?'pt-':'translation-'+source+'-'+target+'-')+digest(text)+'.json');
  const todo=[];out.forEach((t,i)=>{if(!t.trim())return;const c=json(fileOf(t),null);if(c?.text)out[i]=c.text;else todo.push(i);});
  if(!todo.length)return out;
- if(msEnabled())try{const r=await microsoftTranslate(todo.map(i=>out[i]),target,source);const done=[];todo.forEach((i,k)=>{if(r[k]){save(fileOf(texts[i]),{text:r[k]});out[i]=r[k];done.push(i);}});if(done.length===todo.length)return out;todo.splice(0,todo.length,...todo.filter(i=>!done.includes(i)));}catch{}
+ if(msEnabled())try{const r=await microsoftTranslate(todo.map(i=>out[i]),target,source);const done=[];todo.forEach((i,k)=>{if(r[k]){pending.delete(fileOf(texts[i]));save(fileOf(texts[i]),{text:r[k]});out[i]=r[k];done.push(i);}});if(done.length===todo.length)return out;todo.splice(0,todo.length,...todo.filter(i=>!done.includes(i)));}catch{}
  const groups=[];let cur=[],size=0;for(const i of todo){const line=out[i].replace(/\s*\n\s*/g,' ');const b=Buffer.byteLength(line)+1;if(cur.length&&(size+b>1500||cur.length>=40)){groups.push(cur);cur=[];size=0;}cur.push(i);size+=b;}if(cur.length)groups.push(cur);
  for(const g of groups){let lines=null;
   if(googleEnabled())try{const r=await googleTranslate(g.map(i=>out[i].replace(/\s*\n\s*/g,' ')).join('\n'),target,source);const parts=r.split(/\n/).map(s=>s.trim());if(parts.length===g.length&&parts.every(Boolean))lines=parts;}catch{}
-  if(lines){g.forEach((i,k)=>{save(fileOf(texts[i]),{text:lines[k]});out[i]=lines[k];});continue;}
+  if(lines){g.forEach((i,k)=>{pending.delete(fileOf(texts[i]));save(fileOf(texts[i]),{text:lines[k]});out[i]=lines[k];});continue;}
   for(const i of g){try{out[i]=await translateText(texts[i],dir,request,target,source);}catch{out.failed=(out.failed||0)+1;}}
  }
  return out;

@@ -24,7 +24,7 @@ export function upsert(root,game,exe,startDir,icon=''){
  let node=list.find(n=>n.type===0&&(game.launchOptions!==undefined?value(n.value,'LaunchOptions')===args:windowsPath(launchGamePath(value(n.value,'LaunchOptions')))===windowsPath(game.path))&&windowsPath(value(n.value,'exe'))===windowsPath(exe));
  if(!node&&game.appId)node=list.find(n=>n.type===0&&Buffer.isBuffer(value(n.value,'appid'))&&value(n.value,'appid').readUInt32LE(0)===game.appId);
  const occupied=new Set(list.map(n=>{const b=value(n.value,'appid');return Buffer.isBuffer(b)?b.readUInt32LE(0):0;}));
- let id=node?value(node.value,'appid').readUInt32LE(0):shortcutId(quoted,game.title);
+ const ownAppId=value(node?.value||[],'appid');let id=node&&Buffer.isBuffer(ownAppId)?ownAppId.readUInt32LE(0):shortcutId(quoted,game.title);
  if(!node){while(occupied.has(id))id=((id+1)|0x80000000)>>>0;node={type:0,key:String(list.length),value:[]};list.push(node);}
  const ns=node.value;
  for(const [k,t,v] of [['appid',2,uint(id)],['AppName',1,game.title],['exe',1,quoted],['StartDir',1,'"'+startDir+'"'],['LaunchOptions',1,args]])set(ns,k,t,v);

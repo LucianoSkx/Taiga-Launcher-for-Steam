@@ -14,12 +14,13 @@
 
  // ── ponte com o Taiga Launcher (binding do DevTools, só leitura) ──
  const pending = new Map(); let nextId = 1;
- window.__taiga_ffi_resolve__ = function (id, ok, payload) { const p = pending.get(id); if (!p) return; pending.delete(id); ok ? p.resolve(payload) : p.reject(new Error(String(payload || 'erro'))); };
+ window.__taiga_ffi_resolve__ = function (id, ok, payload) { const p = pending.get(id); if (!p) return; pending.delete(id); clearTimeout(p.timer); ok ? p.resolve(payload) : p.reject(new Error(String(payload || 'erro'))); };
  function call(method, args) {
   return new Promise((resolve, reject) => {
    if (typeof window.__taiga_ffi__ !== 'function') { reject(new Error('bridge')); return; }
-   const id = nextId++; pending.set(id, {resolve, reject});
-   setTimeout(() => { if (pending.delete(id)) reject(new Error('timeout')); }, 60000);
+   const id = nextId++, entry = {resolve, reject};
+   pending.set(id, entry);
+   entry.timer = setTimeout(() => { if (pending.delete(id)) reject(new Error('timeout')); }, 60000);
    try { window.__taiga_ffi__(JSON.stringify({id, method, args: args || {}})); } catch (e) { pending.delete(id); reject(e); }
   }).then(text => JSON.parse(text));
  }
@@ -566,7 +567,7 @@
  setInterval(() => { if (location.href !== lastHref) { lastHref = location.href; STATE.loader = null; STATE.lpMap = null; schedule(30); } }, 250);
  // A Steam reordena os cartões só trocando a posição deles (sem criar elementos): confere a ordem a cada 300 ms.
  setInterval(() => {
-  if (route() !== 'games' || hashUuid()) return; const list = findList(); if (!list) return;
+  if (document.visibilityState !== 'visible' || route() !== 'games' || hashUuid()) return; const list = findList(); if (!list) return;
   const sig = [...list.children].filter(w => !w.hasAttribute('data-taiga-row')).map(w => w.style.top + '|' + ((w.querySelector('a[href*="/app/"]') || {}).href || '')).join(',') + '|' + list.style.height;
   if (sig !== STATE.orderSig) { STATE.orderSig = sig; schedule(0); }
  }, 300);

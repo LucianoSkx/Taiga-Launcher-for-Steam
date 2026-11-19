@@ -49,7 +49,11 @@ export function createPublicProfile({dir, config, build, fetchImpl = (...a) => f
    if (busy) return null; busy = true;
    try {
     const profile = await build(); if (!profile.steamId) return null;
-    const body = JSON.stringify(profile); if (body.length > MAX) return null;
+    const trim = (perGame, maxGames) => { for (const g of profile.games || []) if (Array.isArray(g.achievementList)) g.achievementList = g.achievementList.slice(0, perGame); if (profile.games?.length > maxGames) profile.games = profile.games.slice(0, maxGames); return JSON.stringify(profile); };
+    let body = JSON.stringify(profile);
+    if (Buffer.byteLength(body) > MAX) body = trim(40, 200);
+    if (Buffer.byteLength(body) > MAX) body = trim(8, 80);
+    if (Buffer.byteLength(body) > MAX) return null;
     const hash = crypto.createHash('sha1').update(body.replace(/"updatedAt":"[^"]*"/, '')).digest('hex');
     if (hash === lastHash && !force) return {changed: false};
     fs.mkdirSync(dir, {recursive: true}); fs.writeFileSync(file, body);

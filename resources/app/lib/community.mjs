@@ -36,6 +36,7 @@ export function createCommunity({language = () => 'pt-BR', artOrigin = () => '',
   if (/^https:\/\//i.test(u)) return u;
   const m = u.match(/^(?:https?:\/\/(?:127\.0\.0\.1|localhost):\d+)?\/art\/([a-f0-9]+\.(?:png|jpg|jpeg|ico|webp))$/i); if (!m) return '';
   const file = path.join(artDir, m[1]), hit = thumbs.get(file + '|' + width); if (hit) return hit;
+  if (!fs.existsSync(file)) return '';
   iconQueue.set(file + '|' + width, {file, width});
   if (!iconWorker) iconWorker = (async () => { while (iconQueue.size) { const [k, job] = iconQueue.entries().next().value; iconQueue.delete(k); try { await dataUrl(job.file, job.width); } catch {} await new Promise(r => setImmediate(r)); } listCache = null; })().finally(() => { iconWorker = null; });
   return '';
@@ -108,9 +109,8 @@ export function createCommunity({language = () => 'pt-BR', artOrigin = () => '',
    let data = null; try { data = await achievementsOf(g); } catch { data = cachedAchievementsOf(g); }
    // Textos ainda sendo traduzidos para o idioma do Taiga Launcher: espera um pouco pela tradução (até 10 s).
    for (let i = 0; i < 20 && data?.translationStatus === 'pending'; i++) { await new Promise(r => setTimeout(r, 500)); data = cachedAchievementsOf(g) || data; }
-   const items = [];
-   for (const a of data?.achievements || []) items.push({id: String(a.id), title: a.title || String(a.id), description: a.description || '', hidden: !!a.hidden, unlocked: !!a.unlocked, date: a.unlocked && a.date ? a.date : null,
-    icon: await portable(a.icon, 128), lockedIcon: await portable(a.lockedIcon || a.icon, 128), globalPercent: Number.isFinite(Number(a.globalPercent)) && a.globalPercent !== null ? Number(a.globalPercent) : null});
+   const items = await Promise.all((data?.achievements || []).map(async a => ({id: String(a.id), title: a.title || String(a.id), description: a.description || '', hidden: !!a.hidden, unlocked: !!a.unlocked, date: a.unlocked && a.date ? a.date : null,
+    icon: await portable(a.icon, 128), lockedIcon: await portable(a.lockedIcon || a.icon, 128), globalPercent: Number.isFinite(Number(a.globalPercent)) && a.globalPercent !== null ? Number(a.globalPercent) : null})));
    return {...base(g), source: data?.source || '', achievements: items, hero: await image(g, 'hero'), cover: await image(g, 'cover')};
   },
   ours,

@@ -46,7 +46,8 @@
  async function api(route,signal,method='GET',data){const r=await fetch(BASE+route,{method,headers:{Authorization:'Bearer '+TOKEN,...(data?{'Content-Type':'application/json'}:{})},body:data?JSON.stringify(data):undefined,signal:signal||AbortSignal.timeout(10000)});if(!r.ok)throw Error(T("ui.860635e9b62e"));return r.json();}
  function routeId(){const direct=location.href.match(/\/library\/app\/(\d+)/);if(direct)return direct[1];for(const el of document.querySelectorAll(H('.MZPxEZcxAGtPDf1NYtouS'))){const m=el.textContent.match(/\/library\/app\/(\d+)/);if(m)return m[1];}return null;}
  function title(){for(const sel of ['span._3rpUkswF6xc_ste4Ros_xM','div._3gofIRJCg1EDHUFbiOdy9X','.apphub_AppName','[data-game-title]']){const el=document.querySelector(sel);const t=el?.getAttribute('data-game-title')||el?.textContent?.trim();if(t)return t;}return '';}
- function findNotice(){const known=document.querySelector(H('._5uvIN6jXDXzzck59F-nhv._1TGl52GwsFQg3CXUYvThP-'));if(known)return known;const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let node;while(node=walker.nextNode()){if(/algumas informações detalhadas|some detailed information/i.test(node.textContent)&&/não steam|non-steam/i.test(node.textContent))return node.parentElement;}return null;}
+ let noticeCache=null,noticeCacheRoute='';
+ function findNotice(){const here=location.href;if(noticeCache?.isConnected&&noticeCacheRoute===here)return noticeCache;const known=document.querySelector(H('._5uvIN6jXDXzzck59F-nhv._1TGl52GwsFQg3CXUYvThP-'));if(known){noticeCache=known;noticeCacheRoute=here;return known;}const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let node;while(node=walker.nextNode()){if(/algumas informações detalhadas|some detailed information/i.test(node.textContent)&&/não steam|non-steam/i.test(node.textContent)){noticeCache=node.parentElement;noticeCacheRoute=here;return noticeCache;}}return null;}
  function matchedGame(){const id=routeId(),byId=games.find(g=>String(g.appId)===id);if(byId)return byId;const raw=title(),n=norm(raw);if(!n||!findNotice())return null;const candidates=games.filter(g=>[g.title,...(g.aliases||[])].some(t=>norm(t)===n));return candidates.length===1?candidates[0]:null;}
  function restoreNotice(){if(notice?.isConnected)notice.style.display=noticeDisplay;notice=null;}
  function closeModal(){achievementView?.destroy();achievementView=null;clearTimeout(achievementTimer);modalRequest++;modal?.remove();modal=null;returnFocus?.isConnected&&returnFocus.focus();}
@@ -86,7 +87,7 @@
 
  function ensureHome(g){
   const notes=[...document.querySelectorAll(H('div._2r4TK4BAuU-J4FuF_O7v_5[role="region"]'))].find(n=>!n.closest('[data-taiga-achievements]')&&/^(Anotações|Notes|Notas|Notizen)$/i.test(n.querySelector('h2')?.textContent?.trim()||''));
-  const data=achievementData||g.cachedAchievements,a=achievementState(g),all=data?.achievements||[],key=JSON.stringify([g.id,a,all.map(x=>[x.id,x.unlocked,x.icon]),data?.status,data?.progressKnown]);
+  const data=achievementData||g.cachedAchievements,a=achievementState(g),all=data?.achievements||[],key=JSON.stringify([g.id,a,data?.at||'',data?.total,data?.unlocked,all.length,data?.status,data?.progressKnown]);
   if(notes){if(!achievementSection||!achievementSection.isConnected||key!==achievementKey){achievementSection?.remove();achievementKey=key;
    achievementSection=element(`<div data-taiga-achievements role="region" class="_2r4TK4BAuU-J4FuF_O7v_5 Panel tp-la-section">${nativeHeading(T("ui.fe4111435168"),notes)}<div class="tp-la-content">${achievementSidebarHTML(g,data,a)}</div></div>`);
    for(const button of achievementSection.querySelectorAll('[data-ach-open],[data-ach-more]'))activate(button,()=>openAchievements(g,button));

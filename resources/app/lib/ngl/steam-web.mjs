@@ -81,13 +81,13 @@ export function createSteamWeb({virtual = null, log = () => {}} = {}) {
  }
  const partnerUnavailable = new TtlCache(64);
  async function scrapePartnerEvents(appid, lang, max = 10) {
-  if (partnerUnavailable.get(appid) !== undefined) return [[], true, false];
+  if (partnerUnavailable.get(appid, 86400) !== undefined) return [[], true, false];
   const res = await fetchText('https://store.steampowered.com/news/app/' + appid + '?l=' + lang, 'text/html,*/*', 8);
   if (!res || res.status !== 200 || !res.body) { if (res && (res.status === 404 || res.status === 410)) { partnerUnavailable.set(appid, 1); return [[], true, false]; } return [[], false, true]; }
   const m = res.body.match(/data-initialEvents="([^"]*)"/i);
-  if (!m) { partnerUnavailable.set(appid, 1); return [[], true, false]; }
+  if (!m) return [[], false, true];
   let body; try { body = JSON.parse(htmlUnescape(m[1])); } catch {}
-  if (!body || !Array.isArray(body.events)) { partnerUnavailable.set(appid, 1); return [[], true, false]; }
+  if (!body || !Array.isArray(body.events)) return [[], false, true];
   const items = []; for (const ev of body.events) { const it = eventToNewsItem(ev); if (it) items.push(it); if (items.length >= max) break; }
   return [items, false, false];
  }
@@ -195,14 +195,13 @@ export function createSteamWeb({virtual = null, log = () => {}} = {}) {
  // ── social.lua ──
  const previewCache = new TtlCache(96), reviewCache = new TtlCache(64), personaCache = new TtlCache(128), activityCache = new TtlCache(32);
  M.fetch_published_file_previews = async ({file_ids_csv} = {}) => {
-  const out = [];
-  for (const id of String(file_ids_csv || '').match(/\d+/g) || []) {
-   if (out.length >= 12) break;
-   const hit = previewCache.get(id); if (hit) { out.push(hit); continue; }
+  const ids = (String(file_ids_csv || '').match(/\d+/g) || []).slice(0, 12);
+  const out = await Promise.all(ids.map(async id => {
+   const hit = previewCache.get(id, 300); if (hit) return hit;
    const r = await httpGet('https://steamcommunity.com/sharedfiles/filedetails/?id=' + id, {headers: {Accept: 'text/html,*/*'}, timeout: 10});
-   const entry = {id, image: ''}; const img = r?.status === 200 ? r.body.match(/<meta\s+property="og:image"\s+content="([^"]+)"/)?.[1] : null; if (img) entry.image = img.replace(/&amp;/g, '&');
-   previewCache.set(id, entry); out.push(entry);
-  }
+   const entry = {id, image: ''}; const img = r?.status === 200 ? r.body.match(/<meta\s+property="og:image"\s+content="([^"]+)"/)?.[1] : null; if (img) { entry.image = img.replace(/&amp;/g, '&'); previewCache.set(id, entry); }
+   return entry;
+  }));
   return JSON.stringify(out);
  };
  const strip = s => htmlUnescape(String(s || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')).trim();
