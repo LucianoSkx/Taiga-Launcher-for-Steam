@@ -84,7 +84,8 @@ export class RetroAchievements {
  credentials() {
   const c = this.config();
   if (c.raUser && c.raToken) return {user: c.raUser, token: c.raToken, source: 'taiga'};
-  const emu = this.emulatorAccounts().find(a => !c.raUser || a.user.toLowerCase() === c.raUser.toLowerCase()) || this.emulatorAccounts()[0];
+  const accounts = this.emulatorAccounts();
+  const emu = c.raUser ? accounts.find(a => a.user.toLowerCase() === c.raUser.toLowerCase()) : accounts[0];
   if (emu) return {user: emu.user, token: emu.token, source: 'emulator', emulator: emu.emulator};
   if (c.raUser && c.raKey) return {user: c.raUser, key: c.raKey, source: 'webapi'};
   return null;

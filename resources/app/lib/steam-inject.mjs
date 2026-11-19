@@ -88,7 +88,8 @@ export class SteamInjector {
   return new Promise((resolve, reject) => {
    const timer = setTimeout(() => { this.pending.delete(id); reject(Error('A Steam não respondeu a ' + method + '.')); }, 15000);
    this.pending.set(id, {resolve: v => { clearTimeout(timer); resolve(v); }, reject: e => { clearTimeout(timer); reject(e); }});
-   ws.send(JSON.stringify({id, method, params, ...(sessionId ? {sessionId} : {})}));
+   try { ws.send(JSON.stringify({id, method, params, ...(sessionId ? {sessionId} : {})})); }
+   catch (e) { this.pending.delete(id); clearTimeout(timer); reject(e); }
   });
  }
  onMessage(raw) {
@@ -96,7 +97,7 @@ export class SteamInjector {
   if (msg.id && this.pending.has(msg.id)) { const p = this.pending.get(msg.id); this.pending.delete(msg.id); msg.error ? p.reject(Error(msg.error.message || 'Erro da Steam.')) : p.resolve(msg.result || {}); return; }
   const info = msg.params?.targetInfo;
   if (msg.method === 'Target.targetCreated' || msg.method === 'Target.targetInfoChanged') this.handleTarget(info).catch(() => {});
-  else if (msg.method === 'Target.targetDestroyed' || msg.method === 'Target.detachedFromTarget') { const id = msg.params?.targetId || [...this.sessions].find(([, s]) => s === msg.params?.sessionId)?.[0]; if (id) { this.sessions.delete(id); this.kinds.delete(id); this.injected.delete(id); } }
+  else if (msg.method === 'Target.targetDestroyed' || msg.method === 'Target.detachedFromTarget') { const id = msg.params?.targetId || [...this.sessions].find(([, s]) => s === msg.params?.sessionId)?.[0]; if (id) { this.sessions.delete(id); this.kinds.delete(id); this.injected.delete(id); this.failures.delete(id); this.failedAt?.delete(id); } }
   else if (msg.method === 'Runtime.bindingCalled' && msg.params?.name === '__taiga_ffi__' && msg.sessionId) this.handleCall(msg.sessionId, msg.params).catch(() => {});
   else if (msg.method === 'Runtime.executionContextsCleared' && msg.sessionId) { const id = [...this.sessions].find(([, s]) => s === msg.sessionId)?.[0]; if (id) { this.injected.delete(id); this.schedule(id, this.kinds.get(id) === 'community' ? 60 : 700); } }
  }

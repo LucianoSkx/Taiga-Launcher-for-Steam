@@ -10,6 +10,7 @@ import {createHash} from 'node:crypto';
 import {httpGet, decodeRequest, safeLanguage, readJson, writeJsonAtomic, TtlCache, trim, steamLanguageFor} from './core.mjs';
 import {createSteamWeb, isVirtualAppId, VIRTUAL_MIN, VIRTUAL_MAX} from './steam-web.mjs';
 import {parseVDF, shortcutInfo, value as vdfValue} from '../vdf.mjs';
+import {atomic} from '../files.mjs';
 import {detectLanguage} from '../translation.mjs';
 
 export {isVirtualAppId};
@@ -28,8 +29,12 @@ const genreName = (name, lang) => { const i = {'pt-BR': 0, es: 1, fr: 2, de: 3}[
 // Resumo curto sem cortar no meio da frase.
 const clipSentence = (text, max) => { text = String(text || ''); if (text.length <= max) return text; const cut = text.slice(0, max), end = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? ')); return end > max * 0.4 ? cut.slice(0, end + 1) : cut.slice(0, cut.lastIndexOf(' ')).replace(/[,;:\s]+$/, '') + '…'; };
 // Guardado em memória: é chamado para cada jogo em vários pedidos da página da Steam.
-const vidCache = new Map();
-export const virtualAppIdFor = uuid => { const k = String(uuid); let v = vidCache.get(k); if (v === undefined) { v = VIRTUAL_MIN + (parseInt(createHash('sha1').update(k).digest('hex').slice(0, 8), 16) % (VIRTUAL_MAX - VIRTUAL_MIN)); if (vidCache.size > 20000) vidCache.clear(); vidCache.set(k, v); } return v; };
+const vidCache = new Map(), usedVirtual = new Set();
+export const virtualAppIdFor = uuid => { const k = String(uuid); let v = vidCache.get(k); if (v === undefined) {
+ const span = VIRTUAL_MAX - VIRTUAL_MIN;
+ v = VIRTUAL_MIN + (parseInt(createHash('sha1').update(k).digest('hex').slice(0, 8), 16) % span);
+ while (usedVirtual.has(v)) { v++; if (v >= VIRTUAL_MAX) v = VIRTUAL_MIN; }
+ usedVirtual.add(v);if (vidCache.size > 20000) vidCache.clear();vidCache.set(k, v); } return v; };
 const UNSUPPORTED = JSON.stringify({ok: false, error: 'unsupported_in_taigasteam'});
 const imageMime = b => b && b.length > 100 ? (b[0] === 137 && b.toString('latin1', 1, 4) === 'PNG' ? 'image/png' : b[0] === 255 && b[1] === 216 ? 'image/jpeg' : b.toString('latin1', 0, 4) === 'RIFF' && b.toString('latin1', 8, 12) === 'WEBP' ? 'image/webp' : null) : null;
 const trustedImageHost = url => /^https:\/\/([a-z0-9-]+\.)*(steamgriddb\.com|steamstatic\.com|steampowered\.com)(\/|$)/i.test(String(url || ''));
@@ -118,7 +123,7 @@ export function createNglBackend(host) {
  function shortcutsListCached() {
   let st = null; try { st = fs.statSync(path.join(steamDir(), 'userdata', account(), 'config', 'shortcuts.vdf')); } catch {}
   const games = host.games();
-  const key = [steamDir(), account(), st ? st.mtimeMs + ':' + st.size : '-', host.dataVersion?.() ?? '', games.length].join('|');
+  const key = [steamDir(), account(), st ? st.mtimeMs + ':' + st.size : '-', host.dataVersion?.() ?? '', games.map(g=>[g.id,g.title,g.bindings?.[account()]||''].join(':')).join(';')].join('|');
   if (shortcutsMemo?.key === key) return shortcutsMemo.value;
   const value = shortcutsList(); shortcutsMemo = {key, value}; return value;
  }
@@ -274,7 +279,7 @@ export function createNglBackend(host) {
  }
  // Gravação na pasta grid da Steam (artwork.lua / artwork_icon.lua).
  const validImage = (b, ext) => { if (!b || b.length <= 100) return false; ext = ext === 'jpeg' ? 'jpg' : ext; if (ext === 'png') return b[0] === 137 && b[1] === 80 && b[2] === 78 && b[3] === 71; if (ext === 'jpg') return b[0] === 255 && b[1] === 216; if (ext === 'webp') return b.toString('latin1', 0, 4) === 'RIFF' && b.toString('latin1', 8, 12) === 'WEBP'; if (ext === 'ico') return b[0] === 0 && b[1] === 0 && b[2] === 1 && b[3] === 0 && b[4] > 0; if (ext === 'tga') { const t = b[2], w = b[12] + b[13] * 256, h = b[14] + b[15] * 256; return [1, 2, 3, 9, 10, 11].includes(t) && w > 0 && h > 0 && w <= 4096 && h <= 4096; } return false; };
- const writeAtomic = (target, body) => { const tmp = target + '.tmp'; fs.mkdirSync(path.dirname(target), {recursive: true}); fs.writeFileSync(tmp, body); try { fs.rmSync(target, {force: true}); } catch {} fs.renameSync(tmp, target); };
+ const writeAtomic = (target, body) => { fs.mkdirSync(path.dirname(target), {recursive: true}); atomic(target, body); };
  // Só os jogos de emulador (AppID virtual) têm as artes protegidas; jogos da Steam seguem o NativeGameLink.
  const isOurShortcut = id => { const g = host.shortcutGame(unsignedId(id)); return !!g && !host.steamAppIdOf(g); };
  async function saveShortcutArtwork(req) {
