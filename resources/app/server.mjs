@@ -248,7 +248,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
  async function installInfo(g,{wait=false}={}){
   if(!g?.notInstalled)return {state:'installed'};const st=installState(g);
   let size=g.store?.diskBytes||0;if(!size&&g.store?.name==='epic'){const p=epicSize(g);if(wait)size=await Promise.race([p,new Promise(r=>setTimeout(()=>r(0),45000))]);}
-  let header='';const art=g.art?.wide||g.art?.hero||g.art?.cover;if(art)try{const f=path.join(dataDir,'art',path.basename(art)),b=fs.readFileSync(f);if(b.length<4000000)header='data:image/'+(imageType(b)==='png'?'png':'jpeg')+';base64,'+b.toString('base64');}catch{}
+  let header='';const art=g.art?.wide||g.art?.hero||g.art?.cover,name=path.basename(String(art||''));if(/^[a-f0-9]+\.(png|jpe?g|ico)$/.test(name)&&isFile(path.join(dataDir,'art',name)))header=artUrl(name);
   return {...st,title:g.title,sizeBytes:size,header,drives:g.store?.name==='epic'?await installDrives(size):[]};}
  // Atalhos como os da Steam: abrem o jogo pela Steam (steam://rungameid), com o ícone do jogo.
  let desktopDir=null;

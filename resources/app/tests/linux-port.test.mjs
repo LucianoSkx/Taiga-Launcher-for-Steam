@@ -382,7 +382,9 @@ test('Linux: espaço necessário de um jogo Epic é calculado na página da Stea
   adminToken: 'admin', steamDir: path.join(dir, 'Steam'), account: '1', roots: [], launchers: {}, profiles: {}, preferences: {showUninstalled: true},
   epicAuth: {accessToken: 'token', accountId: 'abc123', refreshToken: 'r', expiresAt: Date.now() + 3600000}
  }));
- fs.writeFileSync(path.join(dataDir, 'games.json'), JSON.stringify({version: 1, games: [{id: 'g1', uuid: crypto.randomUUID(), title: 'Ender Lilies', notInstalled: true, store: {name: 'epic', appName: 'Ender'}}]}));
+ fs.mkdirSync(path.join(dataDir, 'art'));
+ const artName = 'a'.repeat(32) + '.jpg'; fs.writeFileSync(path.join(dataDir, 'art', artName), Buffer.alloc(2 * 1024 * 1024, 3));
+ fs.writeFileSync(path.join(dataDir, 'games.json'), JSON.stringify({version: 1, games: [{id: 'g1', uuid: crypto.randomUUID(), title: 'Ender Lilies', notInstalled: true, art: {wide: artName}, store: {name: 'epic', appName: 'Ender'}}]}));
  const port = 48993;
  const {server} = createApp({dataDir, port});
  await new Promise(r => server.listen(port, '127.0.0.1', r));
@@ -391,4 +393,6 @@ test('Linux: espaço necessário de um jogo Epic é calculado na página da Stea
  const data = await res.json();
  assert.equal(res.status, 200, JSON.stringify(data));
  assert.equal(data.sizeBytes, 123456789, 'o tamanho deve vir do Legendary no Linux também');
+ assert.match(data.header, /^http:\/\/127\.0\.0\.1:\d+\/art\//, 'a imagem da janela deve ser URL, não baseado em base64');
+ assert.ok(JSON.stringify(data).length < 100000, 'resposta precisa caber no canal CDP da Steam');
 });
