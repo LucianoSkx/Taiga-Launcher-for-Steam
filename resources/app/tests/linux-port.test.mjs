@@ -407,7 +407,7 @@ test('Linux: cancelar instalação da Epic encerra o Legendary', async t => {
  fs.writeFileSync(fake, `#!/bin/sh
 if [ "$1" = info ]; then echo '{"manifest":{"disk_size":123,"download_size":100}}'; exit 0; fi
 if [ "$1" = auth ]; then exit 0; fi
-if [ "$1" = install ]; then echo $$ > '${pidFile}'; echo '= Progress: 10.0% (1/10) ETA: 00:01:00'; sleep 120; fi
+if [ "$1" = install ]; then echo $$ > '${pidFile}'; sleep 120 & echo $! > '${dir}/desc.pid'; echo '= Progress: 10.0% (1/10) ETA: 00:01:00'; wait; fi
 `);
  fs.chmodSync(fake, 0o755);
  const lgdConfig = path.join(dir, 'legendary-config'); fs.mkdirSync(lgdConfig);
@@ -428,12 +428,14 @@ if [ "$1" = install ]; then echo $$ > '${pidFile}'; echo '= Progress: 10.0% (1/1
  assert.equal(started.state, 'installing', JSON.stringify(started));
  await new Promise(r => setTimeout(r, 200));
  const pid = Number(fs.readFileSync(pidFile, 'utf8').trim());
- const alive = () => { try { process.kill(pid, 0); return true; } catch { return false; } };
- assert.ok(alive(), 'processo de instalação precisa estar rodando');
+ const desc = Number(fs.readFileSync(path.join(dir, 'desc.pid'), 'utf8').trim());
+ const alive = p => { try { process.kill(p, 0); return true; } catch { return false; } };
+ assert.ok(alive(pid) && alive(desc), 'processo de instalação e filho precisam estar rodando');
  const cancelled = await call('store-install-cancel', {id: 'g1'});
  assert.equal(cancelled.state, 'none', JSON.stringify(cancelled));
  await new Promise(r => setTimeout(r, 200));
- assert.equal(alive(), false, 'cancelar deve encerrar o processo do Legendary');
+ assert.equal(alive(pid), false, 'cancelar deve encerrar o processo do Legendary');
+ assert.equal(alive(desc), false, 'cancelar deve encerrar também os processos filhos');
  const state = await call('store-install-state', {id: 'g1'});
  assert.equal(state.state, 'none');
 });

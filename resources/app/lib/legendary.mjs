@@ -154,7 +154,7 @@ export class Legendary {
     if (job.cancelled) throw Error('cancelled');
     fs.mkdirSync(baseDir, {recursive: true});
     const before = new Set(fs.readdirSync(baseDir).map(n => n.toLowerCase()));
-    const child = spawn(this.exe, ['install', appName, '--base-path', baseDir, '--platform', 'Windows', '--skip-sdl', '--skip-dlcs', '-y'], {windowsHide: true, env: {...this.env, PYTHONIOENCODING: 'utf-8', PYTHONUNBUFFERED: '1'}});
+    const child = spawn(this.exe, ['install', appName, '--base-path', baseDir, '--platform', 'Windows', '--skip-sdl', '--skip-dlcs', '-y'], {windowsHide: true, detached: this.platform !== 'win32', env: {...this.env, PYTHONIOENCODING: 'utf-8', PYTHONUNBUFFERED: '1'}});
     job.child = child;
     let buf = '';
     const feed = d => { buf += String(d); const lines = buf.split(/\r?\n|\r/); buf = lines.pop(); for (const l of lines) parseProgress(l, job.state); };
@@ -186,7 +186,10 @@ export class Legendary {
  }
  async kill(job) {
   const pid = job.child?.pid;
-  if (pid) { if (this.platform === 'win32') await new Promise(r => execFile('taskkill', ['/PID', String(pid), '/T', '/F'], {windowsHide: true}, () => r())); else { try { job.child.kill('SIGKILL'); } catch {} } }
+  if (pid) {
+   if (this.platform === 'win32') await new Promise(r => execFile('taskkill', ['/PID', String(pid), '/T', '/F'], {windowsHide: true}, () => r()));
+   else { try { process.kill(-pid, 'SIGKILL'); } catch { try { job.child.kill('SIGKILL'); } catch {} } }
+  }
  }
  // Cancela: encerra o Legendary (e os processos dele) e apaga a pasta criada por esta instalação.
  async cancel(appName) {
@@ -195,7 +198,10 @@ export class Legendary {
   job.cancelled = true;
   job.state.phase = 'cancelled';
   const pid = job.child?.pid;
-  if (pid) { if (this.platform === 'win32') await new Promise(r => execFile('taskkill', ['/PID', String(pid), '/T', '/F'], {windowsHide: true}, () => r())); else { try { job.child.kill('SIGKILL'); } catch {} } }
+  if (pid) {
+   if (this.platform === 'win32') await new Promise(r => execFile('taskkill', ['/PID', String(pid), '/T', '/F'], {windowsHide: true}, () => r()));
+   else { try { process.kill(-pid, 'SIGKILL'); } catch { try { job.child.kill('SIGKILL'); } catch {} } }
+  }
   return true;
  }
  active() { return [...this.jobs.entries()].filter(([, j]) => ['tool', 'preparing', 'downloading', 'finishing'].includes(j.state.phase)).map(([k]) => k); }
