@@ -993,7 +993,7 @@
   "emu.noFolderShort": "Noch keine",
   "emu.scanHint": "Sucht auf dem PC nur {platforms}-Spiele",
   "emu.addFile": "Programm oder Verknüpfung",
-  "emu.addFileHint": "Die .exe des Emulators oder eine Verknüpfung.",
+  "emu.addFileHint": "Die ausführbare Datei des Emulators oder eine Verknüpfung.",
   "emu.addFolderHint": "Der Ordner, in dem der Emulator installiert ist.",
   "emu.discoverHint": "Sucht installierte Emulatoren auf dem PC.",
   "bg.art": "Grafiken und Daten: {current} von {total}",

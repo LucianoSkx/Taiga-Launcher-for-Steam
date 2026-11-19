@@ -993,7 +993,7 @@
   "emu.noFolderShort": "None yet",
   "emu.scanHint": "Searches your PC for {platforms} games only",
   "emu.addFile": "Program or shortcut",
-  "emu.addFileHint": "The emulator’s .exe or a shortcut to it.",
+  "emu.addFileHint": "The emulator executable or a shortcut to it.",
   "emu.addFolderHint": "The folder where the emulator is installed.",
   "emu.discoverHint": "Looks for emulators installed on your PC.",
   "bg.art": "Artwork and details: {current} of {total}",

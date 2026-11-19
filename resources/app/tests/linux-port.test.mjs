@@ -311,3 +311,23 @@ test('Linux: jogos instalados pela Epic são lidos do XDG_DATA_HOME', async () =
  assert.match(found[0].url, /action=launch/);
  fs.rmSync(dir, {recursive: true, force: true});
 });
+
+test('Linux: /emu-icon usa o ícone do tema quando o executável não tem recursos', async t => {
+ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lg-emu-icon-'));
+ t.after(() => fs.rmSync(dir, {recursive: true, force: true}));
+ const dataDir = path.join(dir, 'data'); fs.mkdirSync(dataDir);
+ const exe = path.join(dir, 'DuckStation'); fs.writeFileSync(exe, '#!/bin/sh\n');
+ const xdg = path.join(dir, 'xdg'), iconDir = path.join(xdg, 'flatpak', 'exports', 'share', 'icons', 'hicolor', '64x64', 'apps');
+ fs.mkdirSync(iconDir, {recursive: true});
+ fs.writeFileSync(path.join(iconDir, 'duckstation.png'), Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==', 'base64'));
+ const oldEnv = process.env.XDG_DATA_HOME; process.env.XDG_DATA_HOME = xdg;
+ t.after(() => { if (oldEnv === undefined) delete process.env.XDG_DATA_HOME; else process.env.XDG_DATA_HOME = oldEnv; });
+ fs.writeFileSync(path.join(dataDir, 'config.json'), JSON.stringify({adminToken: 'admin', launchers: {psp: {exe}}, steamDir: path.join(dir, 'Steam'), account: '1', roots: [], profiles: {}, preferences: {}}));
+ const port = 48995;
+ const {server} = createApp({dataDir, port});
+ await new Promise(r => server.listen(port, '127.0.0.1', r));
+ t.after(() => new Promise(r => server.close(r)));
+ const res = await fetch(`http://127.0.0.1:${port}/emu-icon/psp`);
+ assert.equal(res.status, 200, 'o card do emulador precisa encontrar o ícone do tema');
+ assert.match(res.headers.get('content-type') || '', /image\/png/);
+});

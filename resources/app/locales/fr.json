@@ -993,7 +993,7 @@
   "emu.noFolderShort": "Aucun",
   "emu.scanHint": "Cherche sur le PC uniquement des jeux {platforms}",
   "emu.addFile": "Programme ou raccourci",
-  "emu.addFileHint": "Le .exe de l’émulateur ou un raccourci.",
+  "emu.addFileHint": "L’exécutable de l’émulateur ou un raccourci.",
   "emu.addFolderHint": "Le dossier où l’émulateur est installé.",
   "emu.discoverHint": "Cherche les émulateurs installés sur le PC.",
   "bg.art": "Visuels et infos : {current} sur {total}",

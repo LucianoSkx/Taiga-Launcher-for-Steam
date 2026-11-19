@@ -1813,18 +1813,18 @@
   "Steam hat die Live-Aktualisierung abgelehnt: {0}, Speichern mit Neustart."
  ],
  [
-  "Selecione o arquivo .exe do emulador.",
-  "Select the emulator's .exe file.",
-  "Selecciona el archivo .exe del emulador.",
-  "Sélectionnez le fichier .exe de l'émulateur.",
-  "Wähle die .exe-Datei des Emulators."
+  "Selecione o executável ou um atalho do emulador.",
+  "Select the emulator executable or a shortcut to it.",
+  "Seleccione el ejecutable del emulador o un acceso directo.",
+  "Sélectionnez l’exécutable de l’émulateur ou un raccourci.",
+  "Wählen Sie die ausführbare Datei des Emulators oder eine Verknüpfung."
  ],
  [
-  "Não reconhecemos este emulador. Escolha o .exe de um emulador da lista (PPSSPP, PCSX2, DuckStation, Dolphin, RetroArch...).",
-  "We don't recognize this emulator. Choose the .exe of a supported emulator (PPSSPP, PCSX2, DuckStation, Dolphin, RetroArch...).",
-  "No reconocemos este emulador. Elige el .exe de un emulador compatible (PPSSPP, PCSX2, DuckStation, Dolphin, RetroArch...).",
-  "Nous ne reconnaissons pas cet émulateur. Choisissez le .exe d'un émulateur pris en charge (PPSSPP, PCSX2, DuckStation, Dolphin, RetroArch...).",
-  "Wir erkennen diesen Emulator nicht. Wähle die .exe eines unterstützten Emulators (PPSSPP, PCSX2, DuckStation, Dolphin, RetroArch...)."
+  "Não reconhecemos este emulador. Escolha um executável da lista (PPSSPP, PCSX2, DuckStation, Dolphin, RetroArch...).",
+  "We do not recognize this emulator. Choose an executable from the list (PPSSPP, PCSX2, DuckStation, Dolphin, RetroArch...).",
+  "No reconocemos este emulador. Elija un ejecutable de la lista (PPSSPP, PCSX2, DuckStation, Dolphin, RetroArch...).",
+  "Nous ne reconnaissons pas cet émulateur. Choisissez un exécutable de la liste (PPSSPP, PCSX2, DuckStation, Dolphin, RetroArch...).",
+  "Wir erkennen diesen Emulator nicht. Wählen Sie eine ausführbare Datei aus der Liste (PPSSPP, PCSX2, DuckStation, Dolphin, RetroArch...)."
  ],
  [
   "{0} configurado.",
@@ -1876,11 +1876,11 @@
   "Diese Verknüpfung konnte nicht gelesen werden. Wähle das Programm des Emulators."
  ],
  [
-  "Não encontramos um emulador conhecido nesta pasta. Escolha o programa (.exe) do emulador.",
-  "We couldn't find a known emulator in this folder. Choose the emulator program (.exe).",
-  "No encontramos un emulador conocido en esta carpeta. Elige el programa (.exe) del emulador.",
-  "Aucun émulateur connu dans ce dossier. Choisissez le programme (.exe) de l'émulateur.",
-  "In diesem Ordner wurde kein bekannter Emulator gefunden. Wähle das Programm (.exe) des Emulators."
+  "Não encontramos um emulador conhecido nesta pasta. Escolha o executável do emulador.",
+  "We did not find a known emulator in this folder. Choose the emulator executable.",
+  "No encontramos un emulador conocido en esta carpeta. Elija el ejecutable del emulador.",
+  "Nous n’avons pas trouvé d’émulateur connu dans ce dossier. Choisissez l’exécutable de l’émulateur.",
+  "Wir haben keinen bekannten Emulator in diesem Ordner gefunden. Wählen Sie die ausführbare Datei des Emulators."
  ],
  [
   "O login da Microsoft só está disponível no aplicativo do Taiga Launcher.",

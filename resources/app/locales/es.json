@@ -993,7 +993,7 @@
   "emu.noFolderShort": "Ninguna aún",
   "emu.scanHint": "Busca en el PC solo juegos de {platforms}",
   "emu.addFile": "Programa o acceso directo",
-  "emu.addFileHint": "El .exe del emulador o un acceso directo.",
+  "emu.addFileHint": "El ejecutable del emulador o un acceso directo.",
   "emu.addFolderHint": "La carpeta donde está instalado el emulador.",
   "emu.discoverHint": "Busca emuladores instalados en el PC.",
   "bg.art": "Portadas y datos: {current} de {total}",
