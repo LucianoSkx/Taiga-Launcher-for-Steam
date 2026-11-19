@@ -1491,5 +1491,9 @@
   "shortcuts.repairText": "{count} game(s) have a missing or unexpected shortcut.",
   "shortcuts.repairNone": "No divergent shortcuts.",
   "shortcuts.repairDone": "{count} shortcut(s) rewritten.",
-  "shortcuts.repairScanning": "Checking shortcuts…"
+  "shortcuts.repairScanning": "Checking shortcuts…",
+  "ui.7f1ba693b779": "Tool for Epic",
+  "ui.ed4b5e5a56e4": "Installs the program used to download and install Epic games. To play, Steam opens the game with Proton or the native version.",
+  "ui.a9d7882f6ff2": "Install tool",
+  "ui.5604601f440f": "Installing Epic tool..."
 }

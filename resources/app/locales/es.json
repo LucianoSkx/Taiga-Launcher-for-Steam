@@ -1491,5 +1491,9 @@
   "shortcuts.repairText": "{count} juego(s) tienen un acceso ausente o distinto.",
   "shortcuts.repairNone": "No hay accesos divergentes.",
   "shortcuts.repairDone": "{count} acceso(s) reescritos.",
-  "shortcuts.repairScanning": "Comprobando accesos…"
+  "shortcuts.repairScanning": "Comprobando accesos…",
+  "ui.7f1ba693b779": "Herramienta de Epic",
+  "ui.ed4b5e5a56e4": "Instala el programa usado para descargar e instalar juegos de Epic. Para jugar, Steam abre el juego con Proton o la versión nativa.",
+  "ui.a9d7882f6ff2": "Instalar herramienta",
+  "ui.5604601f440f": "Instalando herramienta de Epic..."
 }

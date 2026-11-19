@@ -1491,5 +1491,9 @@
   "shortcuts.repairText": "{count} Spiel(e) haben eine fehlende oder abweichende Verknüpfung.",
   "shortcuts.repairNone": "Keine abweichenden Verknüpfungen.",
   "shortcuts.repairDone": "{count} Verknüpfung(en) neu geschrieben.",
-  "shortcuts.repairScanning": "Verknüpfungen werden geprüft…"
+  "shortcuts.repairScanning": "Verknüpfungen werden geprüft…",
+  "ui.7f1ba693b779": "Epic-Werkzeug",
+  "ui.ed4b5e5a56e4": "Installiert das Programm zum Herunterladen und Installieren von Epic-Spielen. Zum Spielen öffnet Steam das Spiel mit Proton oder der nativen Version.",
+  "ui.a9d7882f6ff2": "Werkzeug installieren",
+  "ui.5604601f440f": "Epic-Werkzeug wird installiert..."
 }

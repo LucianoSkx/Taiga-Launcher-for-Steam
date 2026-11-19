@@ -1491,5 +1491,9 @@
   "shortcuts.repairText": "{count} jeu(x) ont un raccourci absent ou différent.",
   "shortcuts.repairNone": "Aucun raccourci divergent.",
   "shortcuts.repairDone": "{count} raccourci(s) réécrits.",
-  "shortcuts.repairScanning": "Vérification des raccourcis…"
+  "shortcuts.repairScanning": "Vérification des raccourcis…",
+  "ui.7f1ba693b779": "Outil Epic",
+  "ui.ed4b5e5a56e4": "Installe le programme utilisé pour télécharger et installer les jeux Epic. Pour jouer, Steam ouvre le jeu avec Proton ou la version native.",
+  "ui.a9d7882f6ff2": "Installer l’outil",
+  "ui.5604601f440f": "Installation de l’outil Epic..."
 }

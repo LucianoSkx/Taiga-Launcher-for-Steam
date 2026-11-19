@@ -123,10 +123,10 @@ test('Legendary no Linux: binário do sistema no PATH é usado; sem ele, o erro 
  assert.equal(lg.exe, exe);
  assert.ok(lg.installed());
  assert.equal(await lg.ensure(), exe);
- const none = new Legendary({platform: 'linux', env: {PATH: path.join(dir, 'vazio')}, dataDir: dir});
+ const none = new Legendary({platform: 'linux', env: {PATH: path.join(dir, 'vazio')}, dataDir: dir, fetchImpl: async () => { throw Error('offline'); }});
  assert.equal(none.exe, '');
  assert.ok(!none.installed());
- await assert.rejects(() => none.ensure(), /Legendary/);
+ await assert.rejects(() => none.ensure(), /offline/);
  none.env.PATH = dir;
  assert.equal(none.exe, exe, 'legendary instalado durante a sessão deve ser encontrado');
  assert.ok(none.installed());
@@ -314,4 +314,54 @@ test('Faxina de artes ignora art-origins.json como referência', async t => {
  const hk = createHousekeeping({dataDir, version: '3.2.0', games: () => [{id: 'g', art: {cover: 'b'.repeat(32) + '.png'}}]});
  const result = await hk.preview();
  assert.ok(result.files >= 1, 'arte órfã citada só por art-origins.json deve aparecer na faxina');
+});
+
+test('Linux: Legendary é baixado e verificado quando não está no PATH', async t => {
+ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lg-legendary-'));
+ t.after(() => fs.rmSync(dir, {recursive: true, force: true}));
+ const elf = Buffer.concat([Buffer.from([0x7f, 0x45, 0x4c, 0x46]), Buffer.alloc(3 * 1024 * 1024, 7)]);
+ const sum = crypto.createHash('sha256').update(elf).digest('hex');
+ let downloads = 0;
+ const fakeFetch = async (url) => {
+  if (String(url).includes('api.github.com')) return {json: async () => ({assets: [{name: 'legendary_linux_x64', digest: 'sha256:' + sum}]})};
+  if (String(url).includes('legendary_linux_x64')) { downloads++; return {ok: true, arrayBuffer: async () => elf.buffer.slice(elf.byteOffset, elf.byteOffset + elf.byteLength)}; }
+  throw Error('URL inesperada: ' + url);
+ };
+ const legendary = new Legendary({dataDir: dir, platform: 'linux', env: {PATH: ''}, fetchImpl: fakeFetch});
+ assert.equal(legendary.installed(), false);
+ const exe = await legendary.ensure();
+ assert.equal(exe, path.join(dir, 'tools', 'legendary', 'legendary'));
+ assert.equal(downloads, 1);
+ assert.equal(fs.statSync(exe).mode & 0o111, 0o111, 'binário precisa ser executável');
+ assert.equal(legendary.installed(), true);
+ assert.equal(await legendary.ensure(), exe, 'segunda chamada não baixa de novo');
+ assert.equal(downloads, 1);
+});
+
+test('POST /api/epic-setup instala a ferramenta da Epic no Linux', async t => {
+ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lg-epic-setup-'));
+ t.after(() => fs.rmSync(dir, {recursive: true, force: true}));
+ const dataDir = path.join(dir, 'data'); fs.mkdirSync(dataDir);
+ fs.writeFileSync(path.join(dataDir, 'config.json'), JSON.stringify({adminToken: 'admin', steamDir: path.join(dir, 'Steam'), account: '1', roots: [], launchers: {}, profiles: {}, preferences: {}}));
+ const elf = Buffer.concat([Buffer.from([0x7f, 0x45, 0x4c, 0x46]), Buffer.alloc(3 * 1024 * 1024, 9)]);
+ const sum = crypto.createHash('sha256').update(elf).digest('hex');
+ const realFetch = globalThis.fetch;
+ globalThis.fetch = async (url, opts) => {
+  if (String(url).includes('api.github.com')) return {json: async () => ({assets: [{name: 'legendary_linux_x64', digest: 'sha256:' + sum}]})};
+  if (String(url).includes('legendary_linux_x64')) return {ok: true, arrayBuffer: async () => elf.buffer.slice(elf.byteOffset, elf.byteOffset + elf.byteLength)};
+  return realFetch(url, opts);
+ };
+ t.after(() => { globalThis.fetch = realFetch; });
+ const port = 48991;
+ const {server} = createApp({dataDir, port});
+ await new Promise(r => server.listen(port, '127.0.0.1', r));
+ t.after(() => new Promise(r => server.close(r)));
+ const res = await fetch(`http://127.0.0.1:${port}/api/epic-setup`, {method: 'POST', headers: {Authorization: 'Bearer admin', 'Content-Type': 'application/json'}, body: '{}'});
+ const data = await res.json();
+ assert.equal(res.status, 200, JSON.stringify(data));
+ assert.equal(data.installed, true);
+ assert.match(data.message, /Ferramenta da Epic instalada/);
+ assert.ok(fs.existsSync(path.join(dataDir, 'tools', 'legendary', 'legendary')));
+ const state = await (await fetch(`http://127.0.0.1:${port}/api/state`, {headers: {Authorization: 'Bearer admin'}})).json();
+ assert.equal(state.epicTool.installed, true);
 });

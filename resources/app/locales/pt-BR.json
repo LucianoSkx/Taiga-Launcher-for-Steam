@@ -1491,5 +1491,9 @@
   "shortcuts.repairText": "{count} jogo(s) têm atalho ausente ou diferente do esperado.",
   "shortcuts.repairNone": "Nenhum atalho divergente.",
   "shortcuts.repairDone": "{count} atalho(s) regravados.",
-  "shortcuts.repairScanning": "Procurando atalhos divergentes…"
+  "shortcuts.repairScanning": "Procurando atalhos divergentes…",
+  "ui.7f1ba693b779": "Ferramenta da Epic",
+  "ui.ed4b5e5a56e4": "Instala o programa usado para baixar e instalar jogos da Epic. Para jogar, a Steam abre o jogo com Proton ou a versão nativa.",
+  "ui.a9d7882f6ff2": "Instalar ferramenta",
+  "ui.5604601f440f": "Instalando ferramenta da Epic..."
 }

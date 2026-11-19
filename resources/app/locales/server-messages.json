@@ -2343,5 +2343,19 @@
   "Token de estado no válido.",
   "Jeton de statut invalide.",
   "Ungültiges Status-Token."
+ ],
+ [
+  "Ferramenta da Epic instalada. Os jogos continuam sendo abertos pela Steam.",
+  "Epic tool installed. Games are still opened by Steam.",
+  "Herramienta de Epic instalada. Los juegos siguen abriéndose con Steam.",
+  "Outil Epic installé. Les jeux sont toujours ouverts par Steam.",
+  "Epic-Werkzeug installiert. Die Spiele werden weiterhin von Steam geöffnet."
+ ],
+ [
+  "O Legendary não foi encontrado no sistema.",
+  "Legendary was not found on the system.",
+  "Legendary no se encontró en el sistema.",
+  "Legendary est introuvable sur le système.",
+  "Legendary wurde auf dem System nicht gefunden."
  ]
 ]

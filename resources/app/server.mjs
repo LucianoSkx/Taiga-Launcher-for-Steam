@@ -922,7 +922,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
    if(req.method==='GET'&&route==='/api/playtime')return send(sessions.forGame(getGame(url.searchParams.get('id')).uuid,config.account));
    if(req.method==='GET'&&route==='/api/library-status')return send({scanStatus,steamNeedsRestart:integration.needsRestart&&config.injectSteam!==false,dataVersion,busy:queue.jobs.filter(j=>['queued','running'].includes(j.status)).length,update:update.available?{version:update.available.version,downloading:update.downloading,progress:Math.round(update.progress*100)}:null});
    if(req.method==='GET'&&route==='/api/jobs')return send({jobs:queue.summary(),scanStatus});
-   if(req.method==='GET'&&route==='/api/state'){readSteamSnapshot();return send({settings:configView(),games:db.games.filter(g=>!g.hidden).map(privateGame),hiddenGames:db.games.filter(g=>g.hidden).map(privateGame),busy,lastSync:json(path.join(dataDir,'last-sync.json'),null)});}
+   if(req.method==='GET'&&route==='/api/state'){readSteamSnapshot();return send({settings:configView(),epicTool:{installed:legendary.installed(),path:legendary.exe},games:db.games.filter(g=>!g.hidden).map(privateGame),hiddenGames:db.games.filter(g=>g.hidden).map(privateGame),busy,lastSync:json(path.join(dataDir,'last-sync.json'),null)});}
    if(req.method!=='POST')return send({error:'Rota não encontrada'},404);
    let text='';for await(const chunk of req){text+=chunk;if(text.length>1024*1024)throw Error('Requisição muito grande');}const body=JSON.parse(text||'{}');
    if(route==='/api/owned-cover'){
@@ -990,6 +990,13 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
      // Qualquer .exe vale (versões renomeadas ou portáteis); sem perfil, o Taiga Launcher descobre qual emulador é.
      const exe=String(body.exe||''),profile=String(body.profile||'')||guessProfile(exe)||'';if(!isFile(exe)||!/\.exe$/i.test(exe)&&process.platform==='win32')throw Error('Selecione o arquivo .exe do emulador.');if(!profile||!REGISTRY_PROFILES[profile]?.files){const pf=portMainExe(exe);if(pf){const g=await addPortGame(pf);return send({message:'Este é um port para PC, não um emulador: {0} foi adicionado como jogo.'.replace('{0}',g.title),port:true,gameId:g.id});}}if(!profile||!REGISTRY_PROFILES[profile]?.files)throw Error('Não reconhecemos este emulador. Escolha o .exe de um emulador da lista (PPSSPP, PCSX2, DuckStation, Dolphin, RetroArch...).');
      const old=config.launchers?.[profile]||{};config.launchers||={};config.launchers[profile]=launcherSettings(old,profile,exe);if(profile==='psp')config.emulator=exe;config.emulatorIgnore=(config.emulatorIgnore||[]).filter(k=>k!==profile);saveConfig();clearRetroArchCache();await reassignProfiles();return send({message:'{0} configurado.'.replace('{0}',emulatorDisplayName(profile,exe)),profile});
+    }
+    if(route==='/api/epic-setup'){
+     if(process.platform==='win32')throw Error('Esta ferramenta já vem instalada no Windows.');
+     const exe=await legendary.ensure();
+     setLegendaryExe(exe);
+     nglNote('[epic] Ferramenta de instalação pronta: '+exe);
+     return send({message:'Ferramenta da Epic instalada. Os jogos continuam sendo abertos pela Steam.',installed:true,path:exe});
     }
     if(route==='/api/store-library'){const r=await syncStoreLibrary();return send(r);}
     if(route==='/api/store-install'){const g=getGame(body.id);return send(await startInstall(g,{via:['launcher','legendary'].includes(body.via)?body.via:'',dir:typeof body.dir==='string'?body.dir:'',shortcuts:body.shortcuts||null}));}

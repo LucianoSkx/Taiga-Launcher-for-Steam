@@ -13,8 +13,10 @@ import {createHash} from 'node:crypto';
 
 export const LEGENDARY_VERSION = '0.21.1';
 const REPO = 'legendary-gl/legendary', ASSET = 'legendary_windows_x64.exe';
+const linuxAsset = () => process.arch === 'arm64' ? 'legendary_linux_arm64' : 'legendary_linux_x64';
 const RELEASE_API = 'https://api.github.com/repos/' + REPO + '/releases/tags/' + LEGENDARY_VERSION;
-const DOWNLOAD = 'https://github.com/' + REPO + '/releases/download/' + LEGENDARY_VERSION + '/' + ASSET;
+const DOWNLOAD = asset => 'https://github.com/' + REPO + '/releases/download/' + LEGENDARY_VERSION + '/' + asset;
+const managedExe = (dir, platform = process.platform) => path.join(dir, 'tools', 'legendary', platform === 'win32' ? 'legendary.exe' : 'legendary');
 const EXCHANGE = 'https://account-public-service-prod03.ol.epicgames.com/account/api/oauth/exchange';
 
 // Pasta de configuração padrão do Legendary no Windows (~/.config/legendary).
@@ -75,30 +77,42 @@ export class Legendary {
   this.jobs = new Map(); // appName → estado da instalação
  }
  get exe() {
-  if (this.platform === 'win32') return path.join(this.dataDir, 'tools', 'legendary', 'legendary.exe');
-  // Linux: Legendary do sistema (pacote ou export do flatpak), procurado no PATH; nada é baixado.
-  return this._exe || (this._exe = linuxLegendary(this.env));
+  if (this.platform === 'win32') return managedExe(this.dataDir, this.platform);
+  if (this._exe) return this._exe;
+  if (this.platform === 'linux') {
+   const managed = managedExe(this.dataDir, this.platform);
+   try { fs.accessSync(managed, fs.constants.X_OK); return this._exe = managed; } catch {}
+  }
+  return this._exe = linuxLegendary(this.env);
  }
  installed() { if (this.platform !== 'win32') return !!this.exe; try { return fs.statSync(this.exe).size > 1000000; } catch { return false; } }
 
  // Baixa o Legendary (uma vez) e confere o SHA-256 publicado pelo GitHub para esse arquivo.
  async ensure(onState = () => {}) {
   if (this.installed()) return this.exe;
-  if (this.platform !== 'win32') throw Error('O Legendary não foi encontrado no sistema. Instale-o para instalar jogos da Epic (ex.: sudo pacman -S legendary, apt install legendary ou flatpak install --user com.github.derrod.legendary).');
+  const linux = this.platform === 'linux';
+  if (!linux && this.platform !== 'win32') throw Error('O Legendary não foi encontrado no sistema.');
   onState({phase: 'tool'});
+  const asset = linux ? linuxAsset() : ASSET, exe = managedExe(this.dataDir, this.platform);
   let digest = '';
-  try { const rel = await (await this.fetchImpl(RELEASE_API, {headers: {Accept: 'application/vnd.github+json', 'User-Agent': 'TaigaLauncher'}, signal: AbortSignal.timeout(20000)})).json(); digest = String((rel?.assets || []).find(a => a?.name === ASSET)?.digest || '').replace(/^sha256:/i, '').toLowerCase(); } catch {}
-  const res = await this.fetchImpl(DOWNLOAD, {headers: {'User-Agent': 'TaigaLauncher'}, redirect: 'follow', signal: AbortSignal.timeout(300000)});
+  try { const rel = await (await this.fetchImpl(RELEASE_API, {headers: {Accept: 'application/vnd.github+json', 'User-Agent': 'TaigaLauncher'}, signal: AbortSignal.timeout(20000)})).json(); digest = String((rel?.assets || []).find(a => a?.name === asset)?.digest || '').replace(/^sha256:/i, '').toLowerCase(); } catch {}
+  const res = await this.fetchImpl(DOWNLOAD(asset), {headers: {'User-Agent': 'TaigaLauncher'}, redirect: 'follow', signal: AbortSignal.timeout(300000)});
   if (!res.ok) throw Error('Não foi possível baixar o Legendary (HTTP ' + res.status + ').');
   const bytes = Buffer.from(await res.arrayBuffer());
-  if (bytes.length < 1000000 || bytes.readUInt16LE(0) !== 0x5a4d) throw Error('O arquivo do Legendary baixado não é válido.');
+  const elf = bytes.length > 4 && bytes.subarray(0, 4).equals(Buffer.from([0x7f, 0x45, 0x4c, 0x46]));
+  const script = bytes.length > 2 && bytes[0] === 0x23 && bytes[1] === 0x21;
+  if (bytes.length < 1000000 || bytes.length > 50 * 1024 * 1024 || (linux ? !(elf || script) : bytes.readUInt16LE(0) !== 0x5a4d)) throw Error('O arquivo do Legendary baixado não é válido.');
   const sum = createHash('sha256').update(bytes).digest('hex');
   if (digest && sum !== digest) throw Error('O Legendary baixado não confere com o publicado no GitHub. Nada foi instalado.');
-  fs.mkdirSync(path.dirname(this.exe), {recursive: true});
-  fs.writeFileSync(this.exe + '.tmp', bytes); fs.renameSync(this.exe + '.tmp', this.exe);
-  fs.writeFileSync(path.join(path.dirname(this.exe), 'VERSION.txt'), LEGENDARY_VERSION + '\nsha256 ' + sum + '\nGPL-3.0: https://github.com/' + REPO + '\n');
+  fs.mkdirSync(path.dirname(exe), {recursive: true});
+  fs.writeFileSync(exe + '.tmp', bytes);
+  if (linux) fs.chmodSync(exe + '.tmp', 0o755);
+  fs.renameSync(exe + '.tmp', exe);
+  if (linux) fs.chmodSync(exe, 0o755);
+  fs.writeFileSync(path.join(path.dirname(exe), 'VERSION.txt'), LEGENDARY_VERSION + '\nsha256 ' + sum + '\nGPL-3.0: https://github.com/' + REPO + '\n');
+  this._exe = exe;
   this.log('Legendary ' + LEGENDARY_VERSION + ' baixado (' + sum + ')');
-  return this.exe;
+  return exe;
  }
  run(args, {timeout = 120000} = {}) {
   return new Promise((resolve, reject) => execFile(this.exe, args, {windowsHide: true, timeout, maxBuffer: 32 * 1024 * 1024, env: {...this.env, PYTHONIOENCODING: 'utf-8'}}, (e, stdout, stderr) => e ? reject(Object.assign(Error(String(stderr || e.message).trim().split(/\r?\n/).filter(Boolean).pop() || e.message), {stdout, stderr})) : resolve({stdout: String(stdout), stderr: String(stderr)})));
