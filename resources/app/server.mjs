@@ -240,14 +240,14 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
  // Tamanhos calculados antes, em segundo plano e devagar (um jogo por vez, com pausa), para a página já abrir com o
  // "Espaço necessário". Para enquanto houver jogo aberto, para não pesar.
  let sizePrefetch=null;
- function prefetchSizes(){if(sizePrefetch||closed||process.platform!=='win32'||!config.preferences.showUninstalled||!config.epicAuth)return;sizePrefetch=(async()=>{
-  const todo=notInstalledGames().filter(g=>g.store?.name==='epic'&&!g.store.diskBytes&&!g.hidden&&!(g.store.sizeTriedAt&&Date.now()-g.store.sizeTriedAt<86400000));
+ function prefetchSizes(){if(sizePrefetch||closed||!config.preferences.showUninstalled||!config.epicAuth)return;sizePrefetch=(async()=>{
+  const todo=notInstalledGames().filter(g=>g.store?.name==='epic'&&!g.store.diskBytes&&!g.hidden&&(process.platform==='win32'||legendary.installed())&&!(g.store.sizeTriedAt&&Date.now()-g.store.sizeTriedAt<86400000));
   for(const g of todo){if(closed||!config.preferences.showUninstalled)break;if(db.games.some(x=>x.uuid&&sessions.forGame(x.uuid,config.account)?.running))break;if(legendary.active().length)break;
    g.store.sizeTriedAt=Date.now();try{await epicSize(g);}catch{}await new Promise(r=>setTimeout(r,2500));}
   persist();})().finally(()=>{sizePrefetch=null;});}
  async function installInfo(g,{wait=false}={}){
   if(!g?.notInstalled)return {state:'installed'};const st=installState(g);
-  let size=g.store?.diskBytes||0;if(!size&&g.store?.name==='epic'&&process.platform==='win32'){const p=epicSize(g);if(wait)size=await Promise.race([p,new Promise(r=>setTimeout(()=>r(0),45000))]);}
+  let size=g.store?.diskBytes||0;if(!size&&g.store?.name==='epic'){const p=epicSize(g);if(wait)size=await Promise.race([p,new Promise(r=>setTimeout(()=>r(0),45000))]);}
   let header='';const art=g.art?.wide||g.art?.hero||g.art?.cover;if(art)try{const f=path.join(dataDir,'art',path.basename(art)),b=fs.readFileSync(f);if(b.length<4000000)header='data:image/'+(imageType(b)==='png'?'png':'jpeg')+';base64,'+b.toString('base64');}catch{}
   return {...st,title:g.title,sizeBytes:size,header,drives:g.store?.name==='epic'?await installDrives(size):[]};}
  // Atalhos como os da Steam: abrem o jogo pela Steam (steam://rungameid), com o ícone do jogo.

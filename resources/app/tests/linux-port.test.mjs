@@ -365,3 +365,30 @@ test('POST /api/epic-setup instala a ferramenta da Epic no Linux', async t => {
  const state = await (await fetch(`http://127.0.0.1:${port}/api/state`, {headers: {Authorization: 'Bearer admin'}})).json();
  assert.equal(state.epicTool.installed, true);
 });
+
+test('Linux: espaço necessário de um jogo Epic é calculado na página da Steam', async t => {
+ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lg-epic-size-'));
+ t.after(() => fs.rmSync(dir, {recursive: true, force: true}));
+ const dataDir = path.join(dir, 'data'), tool = path.join(dataDir, 'tools', 'legendary');
+ fs.mkdirSync(tool, {recursive: true});
+ const fake = path.join(tool, 'legendary');
+ fs.writeFileSync(fake, '#!/bin/sh\nif [ "$1" = info ]; then echo \'{"manifest":{"disk_size":123456789,"download_size":100000000}}\'; exit 0; fi\nexit 1\n');
+ fs.chmodSync(fake, 0o755);
+ const lgdConfig = path.join(dir, 'legendary-config'); fs.mkdirSync(lgdConfig);
+ fs.writeFileSync(path.join(lgdConfig, 'user.json'), JSON.stringify({account_id: 'abc123', refresh_token: 'r'}));
+ const oldEnv = process.env.LEGENDARY_CONFIG_PATH; process.env.LEGENDARY_CONFIG_PATH = lgdConfig;
+ t.after(() => { if (oldEnv === undefined) delete process.env.LEGENDARY_CONFIG_PATH; else process.env.LEGENDARY_CONFIG_PATH = oldEnv; });
+ fs.writeFileSync(path.join(dataDir, 'config.json'), JSON.stringify({
+  adminToken: 'admin', steamDir: path.join(dir, 'Steam'), account: '1', roots: [], launchers: {}, profiles: {}, preferences: {showUninstalled: true},
+  epicAuth: {accessToken: 'token', accountId: 'abc123', refreshToken: 'r', expiresAt: Date.now() + 3600000}
+ }));
+ fs.writeFileSync(path.join(dataDir, 'games.json'), JSON.stringify({version: 1, games: [{id: 'g1', uuid: crypto.randomUUID(), title: 'Ender Lilies', notInstalled: true, store: {name: 'epic', appName: 'Ender'}}]}));
+ const port = 48993;
+ const {server} = createApp({dataDir, port});
+ await new Promise(r => server.listen(port, '127.0.0.1', r));
+ t.after(() => new Promise(r => server.close(r)));
+ const res = await fetch(`http://127.0.0.1:${port}/api/store-install-info`, {method: 'POST', headers: {Authorization: 'Bearer admin', 'Content-Type': 'application/json'}, body: JSON.stringify({id: 'g1', wait: true})});
+ const data = await res.json();
+ assert.equal(res.status, 200, JSON.stringify(data));
+ assert.equal(data.sizeBytes, 123456789, 'o tamanho deve vir do Legendary no Linux também');
+});
