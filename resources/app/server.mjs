@@ -81,6 +81,21 @@ import {discoverGameFolders,sweepRoots,emulatorSearchRoots,emulatorGameFolders,c
 import {lnkTarget} from './lib/lnk.mjs';
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
 export const VERSION=(()=>{try{return String(JSON.parse(fs.readFileSync(path.join(ROOT,'package.json'),'utf8')).version||'').trim()||'0.0.0';}catch{return '0.0.0';}})();
+const TAIGA_DISCORD=(()=>{try{return String(JSON.parse(fs.readFileSync(path.join(ROOT,'package.json'),'utf8')).taigaDiscord||'');}catch{return '';}})();
+// configView() e chamado pelo polling da interface; ler VDF/INI e package.json toda vez e desperdicio.
+const viewCache={accounts:{key:'',value:[]},cores:{key:'',at:0,value:null}};
+function cachedAccounts(dir){
+ const file=dir?path.join(dir,'config/loginusers.vdf'):'';
+ let key=file+':-';try{const st=fs.statSync(file);key=file+':'+st.mtimeMs+':'+st.size;}catch{}
+ if(viewCache.accounts.key===key)return viewCache.accounts.value;
+ const value=dir?win.accounts(dir):[];viewCache.accounts={key,value};return value;
+}
+function cachedRetroCores(exe){
+ if(!exe)return null;
+ const now=Date.now();if(viewCache.cores.key===exe&&now-viewCache.cores.at<10000)return viewCache.cores.value;
+ let value=null;try{value=retroArchPlatforms(exe);}catch{value=[];}
+ viewCache.cores={key:exe,at:now,value};return value;
+}
 export function pickSystemLanguage(list){const first=(Array.isArray(list)?list:[list]).map(x=>String(x||'').trim().toLowerCase()).find(Boolean);if(!first)return 'pt-BR';const base=first.split(/[-_]/)[0];return base==='pt'?'pt-BR':['es','fr','de','en'].includes(base)?base:'en';}
 export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,launcherExecutable=null,onLanguageChange=null,onStartupChange=null,systemLanguages=null,brandFetch=null,xboxLogin=null,readShortcut=null,fileIcon=null,installedRegQuery=null,onAchievementUnlocked=null,onOpenManager=null,startInjector=false,injectorOptions={},onSteamNeedsIntegration=null,epicLogin=null,pageFetch=null,secretBox=null,psnLogin=null,onApplyUpdate=null,imageThumb=null,imageCompress=null,heroFromCover=null,iconResize=null,imageValidate=null,imageConvert=null,demoExecutable=process.execPath,providersFactory=(cfg,dir)=>new Providers(cfg,dir,{convertImage:imageConvert,compressImage:imageCompress,heroFromCover,defaultServer:(()=>{try{return String(JSON.parse(fs.readFileSync(path.join(ROOT,'package.json'),'utf8')).taigaServer||'');}catch{return '';}})()}),snapshotProcess=processSnapshot}={}){
  fs.mkdirSync(dataDir,{recursive:true});
@@ -587,7 +602,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
   const warnings=await providers.enrich(g,selected);if(providers.completeMissing)warnings.push(...await providers.completeMissing(g));g.lookup={at:new Date().toISOString(),warnings:[...found.errors,...warnings],automatic:Object.keys(selected).filter(k=>k!=='missingOnly')};persist();return {...found,automatic:Object.keys(selected).filter(k=>k!=='missingOnly'),warnings};
  }
  function configView(){
-  const accounts=config.steamDir?win.accounts(config.steamDir):[];
+  const accounts=cachedAccounts(config.steamDir);
   const steamReady=isFile(path.join(config.steamDir,'steam.exe'))||isFile(path.join(config.steamDir,'steam.sh'));
   const emuReady=isFile(config.emulator)&&(process.platform==='win32'?/^PPSSPPWindows(?:64)?\.exe$/i.test(path.basename(config.emulator)):true);
   const readiness={emulator:emuReady,steam:steamReady,account:accounts.some(a=>a.id===config.account),integration:false};
@@ -595,7 +610,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
   if(process.platform!=='win32')readiness.integration=config.injectSteam!==false&&!!(cefMarker()&&fs.existsSync(cefMarker()))&&(!steamRunningCache||!!injector?.status().connected);
   else if(config.steamDir&&isFile(target))try{readiness.integration=fs.readFileSync(target,'utf8').includes('Taiga Steam PSP 1.2')&&fs.readFileSync(target,'utf8').includes(config.readToken);}catch{}
   let raStatus=null;try{raStatus=providers.retro?.status()||null;}catch{}
-  let raCores=null;if(isFile(config.launchers?.retroarch?.exe))try{raCores=retroArchPlatforms(config.launchers.retroarch.exe);}catch{raCores=[];}
+  const raCores=cachedRetroCores(isFile(config.launchers?.retroarch?.exe)?config.launchers.retroarch.exe:'');
   return {platform:process.platform,version:VERSION,setupDone:!!config.setupDone,seenVersion:config.seenVersion||'',supportHideUntil:Number(config.supportHideUntil)||0,supportLinks:config.supportLinks||{},retroarchAsked:!!config.retroarchAsked,emuCollectionName:config.emuCollectionName||'',retroarchPlatforms:raCores,epicInstallDir:config.epicInstallDir||'',epicInstallDefault:defaultEpicDir(),storeLogins:{epic:!!config.epicAuth,xbox:!!config.xboxAuth},notInstalledCount:db.games.filter(g=>g.notInstalled&&!g.hidden).length,githubRepo:updateRepo,discoveredAt:config.discoveredAt||null,profileServer:config.profileServer||'',discordClientId:config.discordClientId||'',discordReady:/^\d{17,20}$/.test(discordAppId()),shortcutFolder:config.shortcutFolder||'',publicProfileFile:path.join(dataDir,'public-profile.json'),epicAccount:config.epicAccount||'',epicLogin:config.epicAuth?.accountId?{name:config.epicAuth.displayName||'',id:config.epicAuth.accountId}:null,epicLoginAvailable:!!epicLogin,xboxLogin:config.xboxAuth?.msa?{name:config.xboxAuth.gamertag||''}:null,xboxLoginAvailable:!!xboxLogin,psnLoginAvailable:!!psnLogin,psnLogin:config.psnAuth?.access?{name:config.psnAuth.name||''}:null,epicDetected:achievementManager.epicAccount()&&!config.epicAccount&&!config.epicAuth?.accountId?{id:achievementManager.epicAccount(),source:achievementManager.epicSource()}:null,gogUser:config.gogUser||'',injectSteam:config.injectSteam!==false,autoRestartSteam:config.autoRestartSteam===true,steamNeedsRestart:integration.needsRestart&&config.injectSteam!==false,steamDebugPort:Number(config.steamDebugPort)||DEFAULT_DEBUG_PORT,platforms:platformList(),ra:raStatus,vita3kRoot:config.vita3kRoot||'',shadps4Root:config.shadps4Root||'',ps4TrophyKey:config.ps4TrophyKey||'',raUseEmulatorAccounts:config.raUseEmulatorAccounts!==false,launcherReady:!!launcherExecutable,emulatorNames:[...new Set([...(isFile(config.emulator)?['PPSSPP']:[]),...Object.entries(config.launchers||{}).filter(([,l])=>isFile(l.exe)).map(([p])=>PROFILES[p]?.name).filter(Boolean)])],emulatorDiscovery:discoveryResult,scanStatus,language:config.language||sysLang,languageChosen:!!config.language,achievementRoot:config.achievementRoot||'',rpcs3Root:config.rpcs3Root||'',rpcs3User:config.rpcs3User||'00000001',profiles:PROFILES,launchers:config.launchers||{},emulator:config.emulator,steamDir:config.steamDir,scriptDir:config.scriptDir||'',scriptFile:scriptTarget(),account:config.account,roots:config.roots,raUser:config.raUser,preferences:config.preferences,credentials:Object.fromEntries(['sgdbKey','igdbId','igdbSecret','raKey','steamKey','raToken'].map(k=>[k,!!config[k]])),accounts,readiness,integrationStatus};
  }
  function validatePaths(requireEmulator=true){
@@ -797,7 +812,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
  let closed=false,steamRunningCache=false;const logFile=path.join(dataDir,'diagnostics.json');const log=(type,message)=>{try{const entries=json(logFile,[]);entries.push({at:new Date().toISOString(),type,message:String(message).slice(0,500)});save(logFile,entries.slice(-200));}catch{}};
  let waiting=0;
  // Discord: o jogo aberto aparece no perfil como um jogo da Steam (nome, capa, plataforma e tempo de sessão).
- const discordAppId=()=>String(config.discordClientId||(()=>{try{return JSON.parse(fs.readFileSync(path.join(ROOT,'package.json'),'utf8')).taigaDiscord||'';}catch{return '';}})());
+ const discordAppId=()=>String(config.discordClientId||TAIGA_DISCORD);
  let presence=null;
  const presenceCover=g=>{const sid=steamAppIdFor(g);if(sid)return 'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/'+sid+'/library_600x900.jpg';try{return providers.artOrigin?.(g.art?.cover)||'';}catch{return '';}};
  const presencePlatform=g=>{const plat=String(g.platformName||'').replace(/^PC \(Microsoft Windows\)$/,'PC');const emu=g.profile&&!['pc','custom','store'].includes(g.profile)?(PROFILES[g.profile]?.name||''):'';return [plat,emu].filter(Boolean).join(' · ');};

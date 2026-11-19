@@ -261,3 +261,21 @@ test('Status da integração exige token efêmero, não o token de leitura', asy
  assert.equal((await send('reader')).status, 403, 'token de leitura não pode falsificar status');
  assert.equal((await send(app.statusToken)).status, 200);
 });
+
+test('Configurações: cache de contas é invalidado quando loginusers.vdf muda', async t => {
+ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lg-config-cache-'));
+ t.after(() => fs.rmSync(dir, {recursive: true, force: true}));
+ const steam = path.join(dir, 'steam'); fs.mkdirSync(path.join(steam, 'config'), {recursive: true});
+ const dataDir = path.join(dir, 'data'); fs.mkdirSync(dataDir);
+ const file = path.join(steam, 'config/loginusers.vdf');
+ fs.writeFileSync(file, '"users" { "76561197960265729" { "PersonaName" "Um" "MostRecent" "1" } }');
+ fs.writeFileSync(path.join(dataDir, 'config.json'), JSON.stringify({steamDir: steam, account: '76561197960265729', adminToken: 'admin', readToken: 'reader'}));
+ const port = 48774;
+ const app = createApp({dataDir, port});
+ await new Promise(r => app.server.listen(port, '127.0.0.1', r));
+ t.after(() => new Promise(r => app.server.close(r)));
+ const state = async () => (await (await fetch(`http://127.0.0.1:${port}/api/state`, {headers: {Authorization: 'Bearer admin'}})).json()).settings;
+ assert.equal((await state()).accounts.length, 1);
+ fs.writeFileSync(file, '"users" { "76561197960265729" { "PersonaName" "Um" "MostRecent" "1" } "76561197960265730" { "PersonaName" "Dois" } }');
+ assert.equal((await state()).accounts.length, 2, 'deve reler o VDF quando o arquivo muda');
+});
