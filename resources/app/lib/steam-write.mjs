@@ -9,7 +9,7 @@ export function obsoleteArtwork(grid,destinations){
 }
 export function commitSteamFiles(writes,deletes,backupDir,{write=atomic}={}){
  const destinations=new Set(writes.map(([file])=>file));deletes=[...new Set(deletes)].filter(file=>!destinations.has(file));
- const changes=writes.filter(([file,bytes])=>!fs.existsSync(file)||!fs.readFileSync(file).equals(bytes));
+ const changes=[...new Map(writes.map(([file,bytes])=>[file,bytes])).entries()].filter(([file,bytes])=>!fs.existsSync(file)||!fs.readFileSync(file).equals(bytes));
  const files=[...new Set([...changes.map(([file])=>file),...deletes])],entries=[];if(!files.length)return {changed:0,removed:0};
  fs.mkdirSync(backupDir,{recursive:true});
  for(const [i,file] of files.entries()){const backup=path.join(backupDir,String(i)+'.bak'),exists=fs.existsSync(file);if(exists)fs.copyFileSync(file,backup);entries.push({file,backup:exists?backup:null});}

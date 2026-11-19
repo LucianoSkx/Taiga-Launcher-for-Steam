@@ -30,7 +30,7 @@
 
  // ── módulos webpack da Steam ──
  const modules = new Map();
- let webpackReq = null, seenModules = -1;
+ let webpackReq = null, seenModules = -1, chunkPushed = false;
  // Normalmente "webpackChunksteamui"; o nome pode mudar entre versões da Steam.
  function webpackChunk() {
   const ok = c => c && typeof c.push === 'function' && Array.isArray(c);
@@ -41,7 +41,7 @@
  function loadModules() {
   // A Steam carrega partes da interface depois (ex.: Biblioteca): módulos novos entram na lista quando aparecem.
   try {
-   if (!webpackReq) { const chunk = webpackChunk(); if (!chunk) return modules; chunk.push([[Symbol('taigasteam')], {}, r => { webpackReq = r; }]); }
+   if (!webpackReq && !chunkPushed) { const chunk = webpackChunk(); if (!chunk) return modules; chunkPushed = true; chunk.push([[Symbol('taigasteam')], {}, r => { webpackReq = r; }]); }
    const all = webpackReq && webpackReq.m; if (!all) return modules;
    const ids = Object.keys(all); if (ids.length === seenModules) return modules; seenModules = ids.length;
    for (const id of ids) { if (modules.has(id)) continue; try { const m = webpackReq(id); if (m) modules.set(id, m); } catch (e) {} }

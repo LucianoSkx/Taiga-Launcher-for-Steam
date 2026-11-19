@@ -348,7 +348,9 @@
   clearOurs(keep);
   let box = block;
   if (!box) { box = document.createElement('div'); box.id = 'taiga-community-games'; box.setAttribute('data-taiga', 'list'); }
-  ours.forEach(o => { const w = ourRow(o.g, mode, ''); w.style.top = ''; if (w.parentNode !== box || box.lastElementChild !== w) box.appendChild(w); });
+  const firstOur = [...box.children].findIndex(w => w.hasAttribute && w.hasAttribute('data-taiga-row'));
+  const base = firstOur < 0 ? box.children.length : firstOur;
+  ours.forEach((o, i) => { const w = ourRow(o.g, mode, ''); w.style.top = ''; const at = box.children[base + i]; if (at !== w) box.insertBefore(w, at || null); });
   const bar = (() => { const input = [...document.querySelectorAll('input')].find(i => !i.closest('[data-taiga]')), ul = sortMode().bar; let a = input; while (a && ul && !a.contains(ul)) a = a.parentElement; return a && a !== document.body ? a : null; })();
   if (list) { if (box.nextElementSibling !== list) list.parentNode.insertBefore(box, list); } else if (bar) { if (box.previousElementSibling !== bar) bar.after(box); } else if (box.previousElementSibling !== anchor) anchor.after(box);
  }
