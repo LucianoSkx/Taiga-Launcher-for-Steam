@@ -1477,5 +1477,10 @@
   "set.pickFolder": "Sélectionnez le dossier…",
   "inj.autostartLinux": "Steam démarre déjà à la connexion",
   "inj.autostartOffLinux": "Steam n'est pas configurée pour démarrer à la connexion.",
-  "art.refresh": "Rechercher à nouveau"
+  "art.refresh": "Rechercher à nouveau",
+  "common.confirm": "Confirmer",
+  "stor.confirmTitle": "Nettoyer le stockage ?",
+  "stor.confirmText": "Supprime les anciennes sauvegardes, rapports et illustrations orphelines. Jeux, succès et réglages ne sont pas affectés.",
+  "shortcuts.offTitle": "Désactiver le dossier de raccourcis ?",
+  "shortcuts.offText": "Taiga arrête de surveiller le dossier. Les raccourcis déjà créés dans Steam restent."
 }

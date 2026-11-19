@@ -1477,5 +1477,10 @@
   "set.pickFolder": "Selecione a pasta…",
   "inj.autostartLinux": "A Steam já inicia com o sistema",
   "inj.autostartOffLinux": "A Steam não está configurada para iniciar com o sistema.",
-  "art.refresh": "Buscar de novo"
+  "art.refresh": "Buscar de novo",
+  "common.confirm": "Confirmar",
+  "stor.confirmTitle": "Limpar armazenamento?",
+  "stor.confirmText": "Remove backups antigos, relatórios e artes órfãs. Jogos, conquistas e configurações não são afetados.",
+  "shortcuts.offTitle": "Desativar pasta de atalhos?",
+  "shortcuts.offText": "O Taiga deixa de monitorar a pasta. Os atalhos já criados na Steam permanecem."
 }

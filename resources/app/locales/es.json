@@ -1477,5 +1477,10 @@
   "set.pickFolder": "Selecciona la carpeta…",
   "inj.autostartLinux": "Steam ya inicia al entrar",
   "inj.autostartOffLinux": "Steam no está configurada para iniciar al entrar.",
-  "art.refresh": "Buscar de nuevo"
+  "art.refresh": "Buscar de nuevo",
+  "common.confirm": "Confirmar",
+  "stor.confirmTitle": "¿Limpiar el almacenamiento?",
+  "stor.confirmText": "Elimina copias antiguas, informes e imágenes huérfanas. Juegos, logros y ajustes no se afectan.",
+  "shortcuts.offTitle": "¿Desactivar la carpeta de accesos?",
+  "shortcuts.offText": "Taiga deja de vigilar la carpeta. Los accesos ya creados en Steam permanecen."
 }

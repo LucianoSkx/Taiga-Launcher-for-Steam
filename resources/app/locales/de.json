@@ -1477,5 +1477,10 @@
   "set.pickFolder": "Ordner auswählen…",
   "inj.autostartLinux": "Steam startet bereits beim Anmelden",
   "inj.autostartOffLinux": "Steam ist nicht für den Start beim Anmelden konfiguriert.",
-  "art.refresh": "Erneut suchen"
+  "art.refresh": "Erneut suchen",
+  "common.confirm": "Bestätigen",
+  "stor.confirmTitle": "Speicher bereinigen?",
+  "stor.confirmText": "Entfernt alte Backups, Berichte und verwaiste Bilder. Spiele, Erfolge und Einstellungen bleiben unberührt.",
+  "shortcuts.offTitle": "Verknüpfungsordner deaktivieren?",
+  "shortcuts.offText": "Taiga überwacht den Ordner nicht mehr. Bereits in Steam erstellte Verknüpfungen bleiben."
 }

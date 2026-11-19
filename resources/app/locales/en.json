@@ -1477,5 +1477,10 @@
   "set.pickFolder": "Select the folder…",
   "inj.autostartLinux": "Steam already starts at login",
   "inj.autostartOffLinux": "Steam is not set to start at login.",
-  "art.refresh": "Search again"
+  "art.refresh": "Search again",
+  "common.confirm": "Confirm",
+  "stor.confirmTitle": "Clean up storage?",
+  "stor.confirmText": "Removes old backups, reports and orphaned art. Games, achievements and settings are not affected.",
+  "shortcuts.offTitle": "Disable shortcut folder?",
+  "shortcuts.offText": "Taiga stops watching the folder. Shortcuts already added to Steam remain."
 }
