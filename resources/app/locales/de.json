@@ -1501,5 +1501,7 @@
   "consoles.title": "Konsolen",
   "consoles.lead": "Spiele von Emulatoren mit bereits konfiguriertem ROM-Ordner.",
   "consoles.empty": "Kein Emulator mit konfiguriertem ROM-Ordner. Richte einen Emulator ein, um seine Spiele hier zu sehen.",
-  "consoles.emptyGames": "Noch keine Spiele dieses Emulators in der Sammlung."
+  "consoles.emptyGames": "Noch keine Spiele dieses Emulators in der Sammlung.",
+  "consoles.add": "Zur Sammlung hinzufügen",
+  "consoles.inCollection": "In der Sammlung"
 }
