@@ -376,7 +376,7 @@ function storesView(){
  };
  const tab=UI.storeTab||'epic',counts={epic:all.filter(g=>g.storeLabel==='Epic Games'||g.storeName==='Epic Games').length,gog:all.filter(g=>g.storeLabel==='GOG'||g.storeName==='GOG').length};
  const tabs=`<nav class="ltabs" role="tablist" aria-label="${T('stores.title')}">${[['epic',T('stores.epic')],['gog',T('stores.gog')]].map(([k,l])=>`<button role="tab" aria-selected="${tab===k}" class="${tab===k?'on':''}" data-act="store-tab" data-t="${k}">${l}<em>${counts[k]}</em></button>`).join('')}</nav>`;
- return `<main class="page"><div class="page-h"><div><h1>${T('stores.title')}</h1><p>${T('stores.lead')}</p></div></div>${tabs}${tab==='gog'?group('gog',T('stores.gog'),!!st.gogUser,false):group('epic',T('stores.epic'),!!logins.epic,true)}</main>`;
+ return `<main class="page"><div class="page-h"><div><h1>${T('stores.title')}</h1><p>${T('stores.lead')}</p></div></div>${tabs}${tab==='gog'?group('gog',T('stores.gog'),!!st.gogLogin,true):group('epic',T('stores.epic'),!!logins.epic,true)}</main>`;
 }
 function libraryView(){
   const games=collection(),filtering=!!(UI.q.trim()||(UI.plats&&UI.plats.length)||UI.onlyAux||UI.selectMode||UI.emu);
