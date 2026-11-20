@@ -2308,5 +2308,47 @@
   "Token de estado no válido.",
   "Jeton de statut invalide.",
   "Ungültiges Status-Token."
+ ],
+ [
+  "Não foi possível ler a sessão da GOG. Tente de novo.",
+  "Could not read the GOG session. Please try again.",
+  "No se pudo leer la sesión de GOG. Inténtalo de nuevo.",
+  "Impossible de lire la session GOG. Réessayez.",
+  "Die GOG-Sitzung konnte nicht gelesen werden. Bitte erneut versuchen."
+ ],
+ [
+  "A sessão da GOG não tem cookies válidos. Tente de novo.",
+  "The GOG session has no valid cookies. Please try again.",
+  "La sesión de GOG no tiene cookies válidas. Inténtalo de nuevo.",
+  "La session GOG ne contient pas de cookies valides. Réessayez.",
+  "Die GOG-Sitzung enthält keine gültigen Cookies. Bitte erneut versuchen."
+ ],
+ [
+  "Conta GOG conectada.",
+  "GOG account connected.",
+  "Cuenta GOG conectada.",
+  "Compte GOG connecté.",
+  "GOG-Konto verbunden."
+ ],
+ [
+  "Conta GOG desconectada.",
+  "GOG account disconnected.",
+  "Cuenta GOG desconectada.",
+  "Compte GOG déconnecté.",
+  "GOG-Konto getrennt."
+ ],
+ [
+  "Entre com a sua conta GOG em Contas.",
+  "Sign in with your GOG account in Accounts.",
+  "Inicia sesión con tu cuenta GOG en Cuentas.",
+  "Connectez-vous avec votre compte GOG dans Comptes.",
+  "Melde dich in Konten mit deinem GOG-Konto an."
+ ],
+ [
+  "A sessão da GOG expirou. Entre de novo em Contas.",
+  "The GOG session expired. Sign in again in Accounts.",
+  "La sesión de GOG ha caducado. Inicia sesión de nuevo en Cuentas.",
+  "La session GOG a expiré. Reconnectez-vous dans Comptes.",
+  "Die GOG-Sitzung ist abgelaufen. Melde dich erneut in Konten an."
  ]
 ]

@@ -13,6 +13,7 @@ import {launchFor,steamGameId} from '../lib/games.mjs';
 import {createApp} from '../server.mjs';
 import * as win from '../lib/windows.mjs';
 import {Providers} from '../lib/providers.mjs';
+import {gogLibrary} from '../lib/gog-library.mjs';
 import {createHousekeeping} from '../lib/housekeeping.mjs';
 import {LaunchEngine, processSnapshot, processNameFromCmdline} from '../lib/launch-engine.mjs';
 import {EventEmitter} from 'node:events';
@@ -339,4 +340,22 @@ test('Linux: /emu-icon usa o ícone do tema quando o executável não tem recurs
  const builtin = await fetch(`http://127.0.0.1:${port}/emu-icon/cemu`);
  assert.equal(builtin.status, 200, 'emulador sem executável nem tema deve usar o ícone do banco local');
  assert.match(builtin.headers.get('content-type') || '', /image\/svg\+xml/);
+});
+
+
+test('GOG: biblioteca da conta é lida com os cookies da sessão', async () => {
+ const seen = [];
+ const fake = async (url, opts) => {
+  seen.push({url, opts});
+  const page = Number(String(url).match(/page=(\d+)/)?.[1] || 1);
+  return {ok: true, json: async () => page === 1
+   ? {page: 1, pages: 2, _embedded: {items: [{game: {id: '1', title: 'Jogo Um', image: '//cdn/um.jpg'}}]}}
+   : {page: 2, pages: 2, _embedded: {items: [{game: {id: '2', title: 'Jogo Dois', image: 'https://cdn/dois.jpg'}}]}}};
+ };
+ const games = await gogLibrary({username: 'luciano', cookies: [{name: 'gog_session', value: 'abc', domain: '.gog.com'}]}, {fetchImpl: fake});
+ assert.deepEqual(games.map(g => g.title), ['Jogo Um', 'Jogo Dois']);
+ assert.equal(games[0].store, 'gog');
+ assert.equal(games[0].images.cover, 'https://cdn/um.jpg');
+ assert.match(seen[0].opts.headers.Cookie, /gog_session=abc/);
+ assert.ok(seen.every(x => String(x.url).includes('/u/luciano/games/stats')));
 });
