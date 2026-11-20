@@ -13,3 +13,14 @@ test('Reference model filters combine platforms, retain searchable choices, and 
  vm.runInContext("S.games[0].inSteam=true;S.games[0].syncNeeded=true;UI.steamQ='';selection.clear()",c);html=vm.runInContext('steamView()',c);assert.ok(html.includes('Atualização pendente'));assert.ok(!html.includes('class="batch-bar"'));vm.runInContext("selection.add('1')",c);assert.ok(vm.runInContext('steamView()',c).includes('class="batch-bar"'));
  vm.runInContext('addGameDialog()',c);assert.ok(elements.get('#layer').innerHTML.includes('data-act="shortcut-guide"'));assert.ok(elements.get('#layer').innerHTML.includes('data-act="import-files"'));assert.ok(elements.get('#layer').innerHTML.includes('data-act="import-folder"'));
 });
+
+test('Consoles tab only shows emulators that have a ROM folder', async () => {
+ const elements=new Map(),el=()=>({innerHTML:'',style:{},hidden:false,classList:{add(){},remove(){},toggle(){}},focus(){},setAttribute(){},querySelector(){return null},querySelectorAll(){return []}});for(const id of ['#app','#layer','#operation','#operation-text','#toasts'])elements.set(id,el());
+ const document={querySelector:s=>s==='meta[name=taiga-token]'?{content:'token'}:elements.get(s)||null,querySelectorAll:()=>[],body:el(),activeElement:el(),addEventListener(){},documentElement:{dataset:{},removeAttribute(){}}};
+ const state={games:[],hiddenGames:[],settings:{languageChosen:true,roots:[],accounts:[],preferences:{scanOnStart:false},readiness:{steam:true,account:true},profiles:{}}};
+ const c=vm.createContext({document,window:{scrollY:0,scrollTo(){},addEventListener(){}},fetch:async()=>({ok:true,json:async()=>state}),structuredClone,setTimeout,clearTimeout,console});vm.runInContext(clientSource(),c);await new Promise(r=>setTimeout(r,0));
+ vm.runInContext("S.games=[{id:'psp1',title:'PSP Game',profile:'psp',platformName:'PlayStation Portable',inSteam:false,metadata:{},art:{},bytes:1},{id:'ps2',title:'PS2 Game',profile:'ps2',platformName:'PlayStation 2',inSteam:false,metadata:{},art:{},bytes:1}];UI.emuList=[{profile:'psp',name:'PPSSPP',found:true,folders:['/roms/psp'],platforms:['PlayStation Portable']},{profile:'ps2',name:'PCSX2',found:true,folders:[],platforms:['PlayStation 2']}];UI.consoleTab='psp'",c);
+ const html=vm.runInContext('consolesView()',c);
+ assert.match(html,/PSP Game/);
+ assert.doesNotMatch(html,/PCSX2/,'emulador sem pasta de ROMs não ganha aba');
+});

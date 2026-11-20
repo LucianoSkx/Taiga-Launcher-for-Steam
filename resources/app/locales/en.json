@@ -1496,5 +1496,10 @@
   "stores.refresh": "Refresh library",
   "stores.empty": "No games from this store in the collection yet.",
   "stores.openAccounts": "Connect account",
-  "stores.count": "{count} game(s)"
+  "stores.count": "{count} game(s)",
+  "consoles.tab": "Consoles",
+  "consoles.title": "Consoles",
+  "consoles.lead": "Games from emulators that already have a configured ROM folder.",
+  "consoles.empty": "No emulator with a configured ROM folder. Set up an emulator to see its games here.",
+  "consoles.emptyGames": "No games from this emulator in the collection yet."
 }

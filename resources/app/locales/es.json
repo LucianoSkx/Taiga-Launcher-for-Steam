@@ -1496,5 +1496,10 @@
   "stores.refresh": "Actualizar biblioteca",
   "stores.empty": "Aún no hay juegos de esta tienda en la colección.",
   "stores.openAccounts": "Conectar cuenta",
-  "stores.count": "{count} juego(s)"
+  "stores.count": "{count} juego(s)",
+  "consoles.tab": "Consolas",
+  "consoles.title": "Consolas",
+  "consoles.lead": "Juegos de emuladores que ya tienen una carpeta de ROMs configurada.",
+  "consoles.empty": "Ningún emulador con carpeta de ROMs configurada. Configura un emulador para ver sus juegos aquí.",
+  "consoles.emptyGames": "Aún no hay juegos de este emulador en la colección."
 }

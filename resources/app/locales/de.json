@@ -1496,5 +1496,10 @@
   "stores.refresh": "Bibliothek aktualisieren",
   "stores.empty": "Noch keine Spiele dieses Shops in der Sammlung.",
   "stores.openAccounts": "Konto verbinden",
-  "stores.count": "{count} Spiel(e)"
+  "stores.count": "{count} Spiel(e)",
+  "consoles.tab": "Konsolen",
+  "consoles.title": "Konsolen",
+  "consoles.lead": "Spiele von Emulatoren mit bereits konfiguriertem ROM-Ordner.",
+  "consoles.empty": "Kein Emulator mit konfiguriertem ROM-Ordner. Richte einen Emulator ein, um seine Spiele hier zu sehen.",
+  "consoles.emptyGames": "Noch keine Spiele dieses Emulators in der Sammlung."
 }

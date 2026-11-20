@@ -1496,5 +1496,10 @@
   "stores.refresh": "Actualiser la bibliothèque",
   "stores.empty": "Aucun jeu de cette boutique dans la collection pour l’instant.",
   "stores.openAccounts": "Connecter le compte",
-  "stores.count": "{count} jeu(x)"
+  "stores.count": "{count} jeu(x)",
+  "consoles.tab": "Consoles",
+  "consoles.title": "Consoles",
+  "consoles.lead": "Jeux des émulateurs qui ont déjà un dossier de ROMs configuré.",
+  "consoles.empty": "Aucun émulateur avec un dossier de ROMs configuré. Configurez un émulateur pour voir ses jeux ici.",
+  "consoles.emptyGames": "Aucun jeu de cet émulateur dans la collection pour l’instant."
 }
