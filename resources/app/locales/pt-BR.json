@@ -1485,5 +1485,16 @@
   "shortcuts.repairText": "{count} jogo(s) têm atalho ausente ou diferente do esperado.",
   "shortcuts.repairNone": "Nenhum atalho divergente.",
   "shortcuts.repairDone": "{count} atalho(s) regravados.",
-  "shortcuts.repairScanning": "Procurando atalhos divergentes…"
+  "shortcuts.repairScanning": "Procurando atalhos divergentes…",
+  "stores.tab": "Lojas",
+  "stores.title": "Lojas conectadas",
+  "stores.lead": "Jogos das suas contas Epic Games e GOG, listados por loja.",
+  "stores.epic": "Epic Games",
+  "stores.gog": "GOG",
+  "stores.connected": "Conectada",
+  "stores.notConnected": "Não conectada",
+  "stores.refresh": "Atualizar biblioteca",
+  "stores.empty": "Nenhum jogo desta loja na coleção ainda.",
+  "stores.openAccounts": "Conectar conta",
+  "stores.count": "{count} jogo(s)"
 }

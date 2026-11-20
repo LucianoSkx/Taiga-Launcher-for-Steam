@@ -82,10 +82,12 @@ test('1.8.0: Accounts as cards with official logos; toggles not all white; texts
   assert.match(app, /function accountCard\(kind\)/);
   assert.match(css, /\.sw input:checked \+ span::after\{background:var\(--bg\)/);
   assert.match(app, /function emulatorsView\(\)/);
+  assert.match(app, /function storesView\(\)/);
+  assert.match(app, /data-v="stores"/);
   assert.match(app, /it\('emulators'/);
   for (const l of LANGS) {
     const d = JSON.parse(fs.readFileSync(new URL(`../locales/${l}.json`, import.meta.url), 'utf8'));
-    for (const k of ['card.pickCover', 'card.needAccount', 'sort.label', 'sort.played', 'lib.played', 'drop.hint', 'drop.none', 'emu.lead', 'emu.scan', 'emu.viewGames', 'emu.addFolder', 'emu.tip', 'emu.open', 'acc.auto', 'acc.waiting']) assert.ok(d[k], `${l}:${k}`);
+    for (const k of ['card.pickCover', 'card.needAccount', 'sort.label', 'sort.played', 'lib.played', 'drop.hint', 'drop.none', 'emu.lead', 'emu.scan', 'emu.viewGames', 'emu.addFolder', 'emu.tip', 'emu.open', 'stores.tab', 'stores.title', 'stores.refresh', 'acc.auto', 'acc.waiting']) assert.ok(d[k], `${l}:${k}`);
   }
 });
 

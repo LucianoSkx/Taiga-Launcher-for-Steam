@@ -1485,5 +1485,16 @@
   "shortcuts.repairText": "{count} juego(s) tienen un acceso ausente o distinto.",
   "shortcuts.repairNone": "No hay accesos divergentes.",
   "shortcuts.repairDone": "{count} acceso(s) reescritos.",
-  "shortcuts.repairScanning": "Comprobando accesos…"
+  "shortcuts.repairScanning": "Comprobando accesos…",
+  "stores.tab": "Tiendas",
+  "stores.title": "Tiendas conectadas",
+  "stores.lead": "Juegos de tus cuentas de Epic Games y GOG, listados por tienda.",
+  "stores.epic": "Epic Games",
+  "stores.gog": "GOG",
+  "stores.connected": "Conectada",
+  "stores.notConnected": "No conectada",
+  "stores.refresh": "Actualizar biblioteca",
+  "stores.empty": "Aún no hay juegos de esta tienda en la colección.",
+  "stores.openAccounts": "Conectar cuenta",
+  "stores.count": "{count} juego(s)"
 }

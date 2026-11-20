@@ -1485,5 +1485,16 @@
   "shortcuts.repairText": "{count} game(s) have a missing or unexpected shortcut.",
   "shortcuts.repairNone": "No divergent shortcuts.",
   "shortcuts.repairDone": "{count} shortcut(s) rewritten.",
-  "shortcuts.repairScanning": "Checking shortcuts…"
+  "shortcuts.repairScanning": "Checking shortcuts…",
+  "stores.tab": "Stores",
+  "stores.title": "Connected stores",
+  "stores.lead": "Games from your Epic Games and GOG accounts, listed by store.",
+  "stores.epic": "Epic Games",
+  "stores.gog": "GOG",
+  "stores.connected": "Connected",
+  "stores.notConnected": "Not connected",
+  "stores.refresh": "Refresh library",
+  "stores.empty": "No games from this store in the collection yet.",
+  "stores.openAccounts": "Connect account",
+  "stores.count": "{count} game(s)"
 }

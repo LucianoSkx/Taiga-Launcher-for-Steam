@@ -1485,5 +1485,16 @@
   "shortcuts.repairText": "{count} jeu(x) ont un raccourci absent ou différent.",
   "shortcuts.repairNone": "Aucun raccourci divergent.",
   "shortcuts.repairDone": "{count} raccourci(s) réécrits.",
-  "shortcuts.repairScanning": "Vérification des raccourcis…"
+  "shortcuts.repairScanning": "Vérification des raccourcis…",
+  "stores.tab": "Boutiques",
+  "stores.title": "Boutiques connectées",
+  "stores.lead": "Jeux de vos comptes Epic Games et GOG, classés par boutique.",
+  "stores.epic": "Epic Games",
+  "stores.gog": "GOG",
+  "stores.connected": "Connectée",
+  "stores.notConnected": "Non connectée",
+  "stores.refresh": "Actualiser la bibliothèque",
+  "stores.empty": "Aucun jeu de cette boutique dans la collection pour l’instant.",
+  "stores.openAccounts": "Connecter le compte",
+  "stores.count": "{count} jeu(x)"
 }
