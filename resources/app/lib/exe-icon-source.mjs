@@ -68,6 +68,24 @@ export function themeIcon(exe, extra = '', env = process.env) {
  return '';
 }
 
+// Ícones de temas de usuário (Papirus, Numix...), que ficam fora do hicolor e podem ser SVG.
+export function themeIconFile(exe, env = process.env) {
+ const raw = path.basename(exe).replace(/\.(appimage|exe)$/i, '').toLowerCase();
+ const stem = raw.replace(/[-_.]v?\d+.*$/, '');
+ const stems = [...new Set([raw, stem, stem.replace(/(?:[-_]?(?:sdl|qt|gtk))$/, ''), stem.replace(/-emu$/, ''), raw.replace(/(?:[-_]?(?:sdl|qt|gtk))$/, '')])].filter(Boolean);
+ if (!stems.length) return '';
+ const root = path.join(env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share'), 'icons');
+ let themes = []; try { themes = fs.readdirSync(root, {withFileTypes: true}).filter(e => e.isDirectory()).map(e => e.name); } catch { return ''; }
+ const sizes = ['256x256', '128x128', '64x64', '48x48', '32x32', 'scalable'];
+ for (const theme of themes) {
+  for (const size of ['', ...sizes.map(s => path.join(s, 'apps'))]) {
+   const base = path.join(root, theme, size);
+   for (const name of stems) for (const ext of ['png', 'svg']) { const f = path.join(base, name + '.' + ext); if (isFile(f)) return f; }
+  }
+ }
+ return '';
+}
+
 export function iconSourceFor(exe, root = '', env = process.env) {
  const dirs = [...new Set([path.dirname(exe), root, path.dirname(path.dirname(exe))].filter(Boolean))];
  for (const d of dirs) { const logo = packageLogo(d); if (logo) return {png: logo}; }

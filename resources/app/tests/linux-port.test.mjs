@@ -320,9 +320,12 @@ test('Linux: /emu-icon usa o ícone do tema quando o executável não tem recurs
  const xdg = path.join(dir, 'xdg'), iconDir = path.join(xdg, 'flatpak', 'exports', 'share', 'icons', 'hicolor', '64x64', 'apps');
  fs.mkdirSync(iconDir, {recursive: true});
  fs.writeFileSync(path.join(iconDir, 'duckstation.png'), Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==', 'base64'));
+ const pcsx = path.join(dir, 'pcsx2-qt'); fs.writeFileSync(pcsx, '#!/bin/sh\n');
+ const themeDir = path.join(xdg, 'icons', 'Custom', '64x64', 'apps'); fs.mkdirSync(themeDir, {recursive: true});
+ fs.writeFileSync(path.join(themeDir, 'pcsx2.svg'), '<svg xmlns="http://www.w3.org/2000/svg"/>');
  const oldEnv = process.env.XDG_DATA_HOME; process.env.XDG_DATA_HOME = xdg;
  t.after(() => { if (oldEnv === undefined) delete process.env.XDG_DATA_HOME; else process.env.XDG_DATA_HOME = oldEnv; });
- fs.writeFileSync(path.join(dataDir, 'config.json'), JSON.stringify({adminToken: 'admin', launchers: {psp: {exe}}, steamDir: path.join(dir, 'Steam'), account: '1', roots: [], profiles: {}, preferences: {}}));
+ fs.writeFileSync(path.join(dataDir, 'config.json'), JSON.stringify({adminToken: 'admin', launchers: {psp: {exe}, ps2: {exe: pcsx}}, steamDir: path.join(dir, 'Steam'), account: '1', roots: [], profiles: {}, preferences: {}}));
  const port = 48995;
  const {server} = createApp({dataDir, port});
  await new Promise(r => server.listen(port, '127.0.0.1', r));
@@ -330,4 +333,7 @@ test('Linux: /emu-icon usa o ícone do tema quando o executável não tem recurs
  const res = await fetch(`http://127.0.0.1:${port}/emu-icon/psp`);
  assert.equal(res.status, 200, 'o card do emulador precisa encontrar o ícone do tema');
  assert.match(res.headers.get('content-type') || '', /image\/png/);
+ const svg = await fetch(`http://127.0.0.1:${port}/emu-icon/ps2`);
+ assert.equal(svg.status, 200, 'temas de usuário com ícones SVG também devem funcionar');
+ assert.match(svg.headers.get('content-type') || '', /image\/svg\+xml/);
 });
