@@ -336,4 +336,7 @@ test('Linux: /emu-icon usa o ícone do tema quando o executável não tem recurs
  const svg = await fetch(`http://127.0.0.1:${port}/emu-icon/ps2`);
  assert.equal(svg.status, 200, 'temas de usuário com ícones SVG também devem funcionar');
  assert.match(svg.headers.get('content-type') || '', /image\/svg\+xml/);
+ const builtin = await fetch(`http://127.0.0.1:${port}/emu-icon/cemu`);
+ assert.equal(builtin.status, 200, 'emulador sem executável nem tema deve usar o ícone do banco local');
+ assert.match(builtin.headers.get('content-type') || '', /image\/svg\+xml/);
 });
