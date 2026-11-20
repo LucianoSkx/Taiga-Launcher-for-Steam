@@ -376,7 +376,9 @@ function storesView(){
   const head=`<div class="page-h"><div><h2>${label}</h2><p>${connected?T('stores.connected'):T('stores.notConnected')}${games.length?` · ${T('stores.count',{count:games.length})}`:''}</p></div><div class="root-actions">${refresh?`<button class="btn btn-ghost btn-sm" data-act="store-library">${I.search}${T('stores.refresh')}</button>`:''}<button class="btn btn-ghost btn-sm" data-act="go" data-v="accounts">${T('stores.openAccounts')}</button></div></div>`;
   return `<section class="set-card">${head}${games.length?`<div class="grid">${games.map(card).join('')}</div>`:`<p class="muted">${T('stores.empty')}</p>`}</section>`;
  };
- return `<main class="page"><div class="page-h"><div><h1>${T('stores.title')}</h1><p>${T('stores.lead')}</p></div></div>${group('epic',T('stores.epic'),!!logins.epic,true)}${group('gog',T('stores.gog'),!!st.gogUser,false)}</main>`;
+ const tab=UI.storeTab||'epic',counts={epic:all.filter(g=>g.storeLabel==='Epic Games'||g.storeName==='Epic Games').length,gog:all.filter(g=>g.storeLabel==='GOG'||g.storeName==='GOG').length};
+ const tabs=`<nav class="ltabs" role="tablist" aria-label="${T('stores.title')}">${[['epic',T('stores.epic')],['gog',T('stores.gog')]].map(([k,l])=>`<button role="tab" aria-selected="${tab===k}" class="${tab===k?'on':''}" data-act="store-tab" data-t="${k}">${l}<em>${counts[k]}</em></button>`).join('')}</nav>`;
+ return `<main class="page"><div class="page-h"><div><h1>${T('stores.title')}</h1><p>${T('stores.lead')}</p></div></div>${tabs}${tab==='gog'?group('gog',T('stores.gog'),!!st.gogUser,false):group('epic',T('stores.epic'),!!logins.epic,true)}</main>`;
 }
 function libraryView(){
   const games=collection(),filtering=!!(UI.q.trim()||(UI.plats&&UI.plats.length)||UI.onlyAux||UI.selectMode||UI.emu);
@@ -751,6 +753,7 @@ case 'emu-scan':{const profile=t.dataset.profile;bgSearch({stores:false,profile}
 case 'emu-games':UI.emu=t.dataset.profile;UI.view='library';UI.libTab='all';window.scrollTo(0,0);render();break;
 case 'emu-clear':UI.emu=null;render();break;
 case 'lib-tab':UI.libTab=t.dataset.t;render();break;
+case 'store-tab':UI.storeTab=t.dataset.t;render();break;
 case 'promo':showPromo(Number(t.dataset.i));break;
 case 'theme-toggle':if(dirty){toast(T("ui.20b6464335cb"),true);break;}task(async()=>{const b=structuredClone(state.settings);b.preferences={...b.preferences,theme:isDark()?'light':'dark'};await api('settings',b);await reload();},T('top.theme'));break;
 case 'scroll':t.parentElement.querySelector('.track').scrollBy({left:+t.dataset.d*t.parentElement.clientWidth*.8,behavior:'smooth'});break;

@@ -84,6 +84,7 @@ test('1.8.0: Accounts as cards with official logos; toggles not all white; texts
   assert.match(app, /function emulatorsView\(\)/);
   assert.match(app, /function storesView\(\)/);
   assert.match(app, /data-v="stores"/);
+  assert.match(app, /data-act="store-tab"/);
   assert.match(app, /it\('emulators'/);
   for (const l of LANGS) {
     const d = JSON.parse(fs.readFileSync(new URL(`../locales/${l}.json`, import.meta.url), 'utf8'));
