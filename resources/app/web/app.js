@@ -214,11 +214,11 @@ function watchInstall(id){if(installPoll)return;installPoll=setInterval(async()=
  if(st.state==='installed'){clearInterval(installPoll);installPoll=null;toast(T('sinst.done'));await reload();if($('#inst-box'))openDetail(id);return;}
  const g=G(id);if(g){g.install=st;box.innerHTML=installBox(g,st);}if(!['installing','external'].includes(st.state)){clearInterval(installPoll);installPoll=null;}},1500);}
 function cardIssue(g){const list=(g.problems||[]).filter(p=>['FILE_MISSING','EMULATOR_MISSING','NEEDS_REVIEW','NOT_INSTALLED'].includes(p)).map(p=>T('status.'+p));if(g.accountNeed)list.push(T('card.needAccount',{name:ACC_NAMES?.[g.accountNeed]||g.accountNeed}));return list;}
-function card(g){const on=g.inSteam&&!g.syncNeeded,issues=cardIssue(g);
+function card(g,opts=null){const on=g.inSteam&&!g.syncNeeded,issues=cardIssue(g),steamAction=!!opts?.steamAction;
   return `<div class="card ${UI.selectMode?'selectable':''} ${selection.has(g.id)?'selected':''}" role="button" tabindex="0" data-act="open" data-id="${g.id}" aria-label="${esc(g.title)}">
     <div class="cover">${art(g,'cover')}${issues.length?`<span class="cv-issue" title="${esc(issues.join(' · '))}" aria-label="${esc(issues.join(' · '))}"></span>`:''}
       ${UI.selectMode?`<span class="selection-mark ${selection.has(g.id)?'on':''}" aria-hidden="true">${selection.has(g.id)?I.check:''}</span>`:''}
-      ${on?'':`<button class="qa" data-act="toggle-steam" data-id="${g.id}" aria-label="${T('cli.addNamed',{title:esc(g.title)})}" title="${T("ui.e04fb2ae829a")}">${I.plus}</button>`}
+      ${on&&!steamAction?'':`<button class="qa" data-act="toggle-steam" data-id="${g.id}" aria-label="${T('cli.addNamed',{title:esc(g.title)})}" title="${T("ui.e04fb2ae829a")}">${I.plus}</button>`}
       <button class="pen" data-act="edit" data-id="${g.id}" aria-label="${T("ui.ea1c35769b70")}" title="${T("ui.ea1c35769b70")}">${I.pen}</button>
     </div>
     <div class="card-t">${esc(g.title)}</div>
@@ -375,7 +375,7 @@ function consolesView(){
  const counts=Object.fromEntries(list.map(e=>[e.profile,S.games.filter(g=>(g.profile||'psp')===e.profile).length]));
  const tabs=list.length?`<nav class="ltabs" role="tablist" aria-label="${T('consoles.title')}">${list.map(e=>`<button role="tab" aria-selected="${sel?.profile===e.profile}" class="${sel?.profile===e.profile?'on':''}" data-act="console-tab" data-t="${esc(e.profile)}">${esc(e.name)}<em>${counts[e.profile]||0}</em></button>`).join('')}</nav>`:'';
  const games=sel?S.games.filter(g=>(g.profile||'psp')===sel.profile):[];
- return `<main class="page"><div class="page-h"><div><h1>${T('consoles.title')}</h1><p>${T('consoles.lead')}</p></div></div>${tabs}${list.length?(games.length?`<div class="grid">${games.map(card).join('')}</div>`:`<div class="empty"><b>${T('consoles.emptyGames')}</b></div>`):`<div class="empty"><b>${T('consoles.empty')}</b><p><button class="btn btn-primary" data-act="go" data-v="emulators">${T('emulators.title')}</button></p></div>`}</main>`;
+ return `<main class="page"><div class="page-h"><div><h1>${T('consoles.title')}</h1><p>${T('consoles.lead')}</p></div></div>${tabs}${list.length?(games.length?`<div class="grid">${games.map(g=>card(g,{steamAction:true})).join('')}</div>`:`<div class="empty"><b>${T('consoles.emptyGames')}</b></div>`):`<div class="empty"><b>${T('consoles.empty')}</b><p><button class="btn btn-primary" data-act="go" data-v="emulators">${T('emulators.title')}</button></p></div>`}</main>`;
 }
 function storesView(){
  const st=state.settings||{},logins=st.storeLogins||{},all=S.games;
