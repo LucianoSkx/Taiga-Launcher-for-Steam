@@ -873,7 +873,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
    // 2.2.3: uma tarefa em segundo plano (artes, busca na Steam, conquistas) ou outro pedido em andamento não recusa
    // mais o clique: o pedido espera a vez (a fila não começa outra tarefa enquanto houver pedido esperando).
    // Login de contas e escolha de arquivo/pasta não mexem na coleção: abrem na hora, sem esperar outra tarefa.
-   const free=/^\/api\/((epic|xbox|psn|ra)-(login|logout)|pick|bug-report)$/.test(route);
+   const free=/^\/api\/((epic|xbox|psn|ra)-(login|logout)|pick|bug-report|emulators|emulator-downloads)$/.test(route);
    if(!free&&(busy||queue.running)){waiting++;try{const until=Date.now()+180000;while((busy||queue.running)&&Date.now()<until&&!closed)await new Promise(r=>setTimeout(r,120));}finally{waiting--;}}
    if(!free&&(busy||queue.running))return send({error:'Uma operação já está em andamento. Aguarde.'},409);if(!free)busy=true;
    try{
@@ -888,7 +888,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
      const items=Object.entries(launchers).filter(([k,l])=>l?.exe&&REGISTRY_PROFILES[k]?.files).map(([k,l])=>{const name=emulatorDisplayName(k,l.exe),n=name.toLowerCase(),games=db.games.filter(g=>!g.demo&&!g.hidden&&(g.profile||'psp')===k);
       const fromCfg=cfgFolders.filter(f=>{const src=String(f.source||'').toLowerCase();return src&&(n.includes(src)||src.includes(n));}).map(f=>f.path);
       const fromGames=games.map(g=>path.dirname(g.gameRoot&&isFile(g.path)?g.path:g.path)).filter(Boolean);
-      let folders=[];try{folders=collapseFolders([...fromCfg,...fromGames].filter(d=>{try{return fs.statSync(d).isDirectory();}catch{return false;}}).map(p=>({path:p,source:''}))).map(f=>f.path);}catch{folders=[...new Set(fromCfg)];}
+      let folders=[];try{folders=collapseFolders([...new Set([...fromCfg,...fromGames])].filter(d=>{try{return fs.statSync(d).isDirectory();}catch{return false;}}).map(p=>({path:p,source:''}))).map(f=>f.path);}catch{folders=[...new Set(fromCfg)];}
       let platforms=REGISTRY_PROFILES[k].platforms?.length?REGISTRY_PROFILES[k].platforms:[REGISTRY_PROFILES[k].platform].filter(p=>p&&p!=='Não informada');if(k==='retroarch'){try{platforms=retroArchPlatforms(l.exe);}catch{platforms=[];}}
       return {profile:k,name,exe:l.exe,found:isFile(l.exe),platforms,games:games.length,folders:folders.slice(0,6),removable:true};}).sort((a,b)=>b.games-a.games||a.name.localeCompare(b.name));
      return send({items});
@@ -910,7 +910,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
     // Tirar um emulador da lista: os jogos dele passam para outro emulador pronto para a plataforma (se houver).
     if(route==='/api/emulator-remove'){
      const profile=String(body.profile||'');if(!REGISTRY_PROFILES[profile]?.files||!config.launchers?.[profile]&&!(profile==='psp'&&config.emulator))throw Error('Emulador não encontrado.');
-     const name=emulatorDisplayName(profile,config.launchers?.[profile]?.exe||'');delete config.launchers[profile];if(profile==='psp')config.emulator='';
+     const name=emulatorDisplayName(profile,config.launchers?.[profile]?.exe||'');config.launchers||={};delete config.launchers[profile];if(profile==='psp')config.emulator='';
      config.emulatorIgnore=[...new Set([...(config.emulatorIgnore||[]),profile])];saveConfig();clearRetroArchCache();
      const r=await reassignProfiles();return send({message:'{0} removido.'.replace('{0}',name||profile),moved:r.changed});
     }
@@ -1088,7 +1088,7 @@ if(route==='/api/gog-login'){
     if(route==='/api/steam-integration/restart'){validatePaths(false);ensureCefMarker();integration.needsRestart=false;integration.since=0;await win.stopSteam(config.steamDir);win.startSteam(config.steamDir,Number(config.steamDebugPort)||DEFAULT_DEBUG_PORT);injector.disconnect();setTimeout(()=>injector.tick(),4000);return send({message:'Steam reiniciada com a integração do Taiga Launcher. O painel aparece em alguns segundos.'});}
     if(route==='/api/steam-integration/autostart'){const r=await win.steamAutostart(config.steamDir,{enable:!!body.enable,port:Number(config.steamDebugPort)||DEFAULT_DEBUG_PORT});return send({...r,message:r.enabled?'A Steam vai iniciar com o Windows já com a integração.':'Inicialização da Steam restaurada.'});}
     // Emulador oficial baixado e configurado sozinho (opcional).
-    if(route==='/api/emulator-downloads')return send({items:downloadable().map(d=>({...d,platform:PROFILES[d.profile]?.platform||'',configured:d.profile==='psp'?isFile(config.emulator)||isFile(config.launchers?.psp?.exe):isFile(config.launchers?.[d.profile]?.exe)}))});
+    if(route==='/api/emulator-downloads'){const {hasAsset}=await import('./lib/emulator-download.mjs');return send({items:downloadable().filter(d=>hasAsset(d.profile,process.platform)).map(d=>({...d,platform:PROFILES[d.profile]?.platform||'',configured:d.profile==='psp'?isFile(config.emulator)||isFile(config.launchers?.psp?.exe):isFile(config.launchers?.[d.profile]?.exe)}))});}
     if(route==='/api/emulator-download'){const profile=String(body.profile||'');const home=process.env.USERPROFILE||os.homedir(),legacy=path.join(home,'TaigaSteam','Emuladores'),dest=fs.existsSync(legacy)?legacy:path.join(home,'Taiga Launcher','Emuladores');const r=await downloadEmulator(profile,{dest,tmpDir:path.join(dataDir,'downloads')});
      if(r.manual){if(process.platform==='win32'){try{spawn('explorer.exe',['/select,',r.manual],{stdio:'ignore',detached:true}).unref();}catch{}}return send({message:'{0} {1} baixado. Extraia o arquivo {2} nessa pasta e use Procurar emuladores.'.replace('{0}',r.name).replace('{1}',r.version).replace('{2}',path.basename(r.manual)),folder:r.folder,manual:true,settings:configView()});}const found=await inventory('emulators',[r.folder]);discoveryResult=found;const applied=applyDiscovery(config,found,{force:true});saveConfig();clearRetroArchCache();const moved=await reassignProfiles();return send({moved:moved.changed,readyGames:moved.ready,message:r.name+' '+r.version+' instalado em '+r.folder+' e configurado.',folder:r.folder,applied,settings:configView()});}
     if(route==='/api/diagnostics'){const report=await diagnostics(),file=path.join(dataDir,'diagnostico-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json');save(file,report);if(process.platform==='win32')try{spawn(explorer(),['/select,',file],{detached:true,stdio:'ignore'}).unref();}catch{}else if(process.platform==='linux')try{spawn('xdg-open',[path.dirname(file)],{detached:true,stdio:'ignore'}).unref();}catch{}return send({file,report});}

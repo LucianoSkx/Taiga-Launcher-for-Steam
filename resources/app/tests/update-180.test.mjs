@@ -102,7 +102,7 @@ test('1.8.1: first-run tour, accounts intro, new Add games dialog, emulator-only
   assert.match(app, /case 'ob2-auto':case 'ob2-retry':task\(async\(\)=>\{if\(UI\.discoverPromise\)await UI\.discoverPromise\.catch\(\(\)=>\{\}\);const res=await importGames\('discover',null,\{background:true,stores:false,quiet:true,sweep:'home'\}\)/);
   assert.match(app, /if\(UI\.view==='accounts'&&!introSeen\('accounts'\)\)accountsIntro\(\)/);
   assert.match(app, /class="sheet add3s"/);
-  assert.match(app, /case 'emu-scan':\{const profile=t\.dataset\.profile;bgSearch\(\{stores:false,profile\}\)/);
+  assert.match(app, /case 'emu-scan':\{const profile=t\.dataset\.profile;bgSearch\(\{stores:false,profile,pc:false\}\)/);
   assert.match(server, /if\(body\.profile&&REGISTRY_PROFILES\[body\.profile\]\)/);
   assert.ok(!app.includes('acc-games-n'), 'no game count on account cards');
   for (const l of LANGS) {

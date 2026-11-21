@@ -32,6 +32,7 @@ export const DOWNLOADS = {
 };
 const ALLOWED = /^https:\/\/(api\.github\.com|github\.com|objects\.githubusercontent\.com|release-assets\.githubusercontent\.com|www\.ppsspp\.org)\//;
 export function downloadable() { return Object.entries(DOWNLOADS).map(([profile, d]) => ({profile, name: d.name, repo: d.repo})); }
+export function hasAsset(profile, platform = process.platform) { const d = DOWNLOADS[profile]; return !!d && (platform !== 'linux' || !!(d.linuxAsset || d.linuxRepo)); }
 
 // Escolhe o pacote da versão mais recente (sem baixar ainda).
 export async function resolveDownload(profile, {fetchImpl = (...a) => fetch(...a), platform = process.platform} = {}) {
