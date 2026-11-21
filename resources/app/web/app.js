@@ -453,7 +453,7 @@ function settingsView(){const s=draft||state.settings,p=s.preferences||{},r=stat
  <h3>${T('friends.title')}</h3><p class="note">${T('friends.help')} ${T('friends.serverNote')}</p>
  <h3>${T("ui.bbaaa08ce23e")}</h3><div class="root-actions">${btn('background-jobs',T('jobs.title'))}${btn('repair-check',T('repair.title'))}${btn('restore-original',T("ui.b91dd391c1bb"))}${btn('redo-setup',T("ui.e400fb47953c"))}</div>${issues(UI.scanErrors||[])}
 </details>
-<details class="set-card"><summary>${T('set.removed',{count:S.hiddenGames.length})}</summary>${S.hiddenGames.length?S.hiddenGames.map(g=>row(esc(g.title),esc(gamePlat(g)),btn('collection-restore',T("ui.49ffbedc8022"),'btn-ghost',`data-id="${g.id}"`))).join(''):`<p class="note-inline">${T("ui.93eadb97904b")}</p>`}</details>
+<details class="set-card"><summary>${T('set.removed',{count:S.hiddenGames.length})}</summary>${S.hiddenGames.length?`<div class="root-actions">${btn('collection-clear-removed',T('set.clearRemoved'),'btn-primary')}</div>`+S.hiddenGames.map(g=>row(esc(g.title),esc(gamePlat(g)),btn('collection-restore',T("ui.49ffbedc8022"),'btn-ghost',`data-id="${g.id}"`))).join(''):`<p class="note-inline">${T("ui.93eadb97904b")}</p>`}</details>
 <div class="settings-save ${dirty?'on':''}"><span id="save-state">${dirty?T("ui.2dc981a4e9b1"):T("ui.3e77e9b3943a")}</span><button type="submit" class="btn btn-primary">${I.check}${T("ui.27f6e4a6c8e2")}</button></div></form></main>`;}
 // Emuladores configurados, com as plataformas que cada um abre (nomes curtos).
 function emulatorRows(){const st=state.settings,profiles=st.profiles||{},launchers={...(st.launchers||{})};if(st.emulator&&!launchers.psp?.exe)launchers.psp={exe:st.emulator};const short=name=>platformLabel(name).split(' · ')[0];return Object.entries(launchers).filter(([k,l])=>l?.exe&&profiles[k]?.files).map(([k,l])=>({profile:k,exe:l.exe,name:emuDisplay(k,l.exe),platforms:[...new Set((profiles[k].platforms||[]).map(short))].slice(0,6).join(' · ')||profiles[k].platform})).sort((a,b)=>a.name.localeCompare(b.name));}
@@ -793,6 +793,7 @@ case 'batch-steam-remove':{const ids=[...selection].filter(id=>G(id)?.inSteam);i
 case 'measure-size':task(async()=>{const r=await api('pick',{kind:'folder'});if(!r.paths[0])return;const result=await api('game-size',{id,path:r.paths[0]});await reload();openDetail(id);toast(result.message);},T("ui.1cbb9ae541ca"));break;
 case 'add-all':syncDialog(S.games.filter(g=>!g.inSteam||g.syncNeeded).map(g=>g.id));break;
 case 'collection-hide':hideCollection([id]);break;
+case 'collection-clear-removed':task(async()=>{const r=await api('collection-clear-removed',{});await reload();toast(r.message);},T('set.clearRemoved'));break;
 case 'collection-restore':task(async()=>{const r=await api('collection-restore',{id});closeModal(true);await reload();toast(r.message);},T("ui.52d4b52bfd45"));break;
 case 'add-game':case 'add-files-mode':addGameDialog();break;
 

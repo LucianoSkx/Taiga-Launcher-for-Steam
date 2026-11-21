@@ -1503,5 +1503,6 @@
   "consoles.empty": "Kein Emulator mit konfiguriertem ROM-Ordner. Richte einen Emulator ein, um seine Spiele hier zu sehen.",
   "consoles.emptyGames": "Noch keine Spiele dieses Emulators in der Sammlung.",
   "consoles.add": "Zur Sammlung hinzufügen",
-  "consoles.inCollection": "In der Sammlung"
+  "consoles.inCollection": "In der Sammlung",
+  "set.clearRemoved": "Liste leeren"
 }

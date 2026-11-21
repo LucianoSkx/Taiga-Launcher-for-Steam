@@ -1503,5 +1503,6 @@
   "consoles.empty": "Ningún emulador con carpeta de ROMs configurada. Configura un emulador para ver sus juegos aquí.",
   "consoles.emptyGames": "Aún no hay juegos de este emulador en la colección.",
   "consoles.add": "Añadir a la colección",
-  "consoles.inCollection": "En la colección"
+  "consoles.inCollection": "En la colección",
+  "set.clearRemoved": "Limpiar lista"
 }
