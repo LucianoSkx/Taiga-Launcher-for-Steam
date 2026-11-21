@@ -1504,5 +1504,8 @@
   "consoles.emptyGames": "Aún no hay juegos de este emulador en la colección.",
   "consoles.add": "Añadir a la colección",
   "consoles.inCollection": "En la colección",
-  "set.clearRemoved": "Limpiar lista"
+  "set.clearRemoved": "Limpiar lista",
+  "account.gogDesktop": "El inicio de sesión de GOG se abre en la ventana de Taiga Launcher. Si la página no carga, inténtalo de nuevo en un momento.",
+  "account.xboxDesktop": "El inicio de sesión de Xbox se abre en la ventana de Taiga Launcher. Si la página no carga, inténtalo de nuevo en un momento.",
+  "account.psnDesktop": "El inicio de sesión de PlayStation se abre en la ventana de Taiga Launcher. Si la página no carga, inténtalo de nuevo en un momento."
 }

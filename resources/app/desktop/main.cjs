@@ -10,6 +10,8 @@ const {conversionScript}=require('./image-conversion.cjs');
 const desktopLocale=require('../locales/runtime.cjs').create('pt-BR'),T=(key,params)=>desktopLocale.t(key,params);
 const BASE='http://127.0.0.1:48767';
 let mainWindow,service,tray,quitting=false;
+// O resolvedor do chromium pode falhar uma vez no arranque (ERR_NAME_NOT_RESOLVED); tenta de novo antes de desistir.
+const loadWithRetry=(win,url)=>{let tries=0;win.webContents.on('did-fail-load',(_e,_code,_desc,_confirmed,again)=>{if(!again||tries++>=2||win.isDestroyed())return;setTimeout(()=>{if(!win.isDestroyed())win.loadURL(url);},1200).unref?.();});win.loadURL(url);};
 // Abrir junto com o Windows (minimizado na bandeja). Regravado a cada abertura: vale mesmo se a pasta do programa mudar.
 function applyStartup(on){
  if(process.platform==='linux'){
@@ -77,7 +79,7 @@ if(launchIndex>=0){
   const psnLogin=()=>new Promise(resolve=>{const part=session.fromPartition('persist:psn-login');const win=new BrowserWindow({width:520,height:760,parent:mainWindow||undefined,autoHideMenuBar:true,title:'PlayStation',webPreferences:{partition:'persist:psn-login',contextIsolation:true,nodeIntegration:false,sandbox:true}});
    let done=false;const finish=v=>{if(done)return;done=true;clearInterval(timer);resolve(v);if(!win.isDestroyed())win.close();};
    const timer=setInterval(async()=>{try{const list=await part.cookies.get({name:'npsso'});const c=list.find(x=>/sony\.com$/i.test(String(x.domain||'').replace(/^\./,''))&&/^[A-Za-z0-9]{40,128}$/.test(x.value));if(c)finish(c.value);}catch{}},1000);
-   win.on('closed',()=>finish(null));win.webContents.setWindowOpenHandler(({url})=>{win.loadURL(url);return {action:'deny'};});win.loadURL('https://my.account.sony.com/');});
+   win.on('closed',()=>finish(null));win.webContents.setWindowOpenHandler(({url})=>{win.loadURL(url);return {action:'deny'};});loadWithRetry(win,'https://my.account.sony.com/');});
   // Login da GOG: página oficial; a conta é confirmada pelo endpoint de conta e os cookies da sessão ficam no perfil persistente.
   const gogLogin=()=>new Promise(resolve=>{
    const part=session.fromPartition('persist:gog-login');
@@ -99,7 +101,7 @@ if(launchIndex>=0){
     await checkWin.webContents.loadURL('https://menu.gog.com/v1/account/basic');
     setTimeout(()=>{checking=false;},6000).unref?.();
    }catch{checking=false;}},5000);
-   win.on('closed',()=>finish(null));win.webContents.setWindowOpenHandler(({url})=>{if(/^https:\/\/([a-z0-9-]+\.)*gog\.com\//i.test(url))win.loadURL(url);return {action:'deny'};});win.loadURL('https://www.gog.com/account/');
+   win.on('closed',()=>finish(null));win.webContents.setWindowOpenHandler(({url})=>{if(/^https:\/\/([a-z0-9-]+\.)*gog\.com\//i.test(url))win.loadURL(url);return {action:'deny'};});loadWithRetry(win,'https://www.gog.com/account/');
   });
   const gogLogout=async()=>{try{await session.fromPartition('persist:gog-login').clearStorageData({storages:['cookies']});}catch{}};
   const xboxLogin=async()=>{const {XBOX_LOGIN_URL,XBOX_REDIRECT_RE,tokenFromRedirect}=await import('../lib/xbox-auth.mjs');return new Promise(resolve=>{
@@ -108,7 +110,7 @@ if(launchIndex>=0){
    const check=url=>{if(XBOX_REDIRECT_RE.test(url||'')){const t=tokenFromRedirect(url);finish(t);}};
    win.webContents.on('will-redirect',(_e,url)=>check(url));win.webContents.on('did-navigate',(_e,url)=>check(url));win.webContents.on('did-redirect-navigation',(_e,url)=>check(url));
    win.webContents.setWindowOpenHandler(({url})=>{if(/^https:\/\/([a-z0-9-]+\.)*(live|microsoft|microsoftonline|xbox)\.com\//i.test(url))win.loadURL(url);return {action:'deny'};});
-   win.on('closed',()=>finish(null));win.loadURL(XBOX_LOGIN_URL);
+   win.on('closed',()=>finish(null));loadWithRetry(win,XBOX_LOGIN_URL);
   });};
   // Miniaturas para a página da Comunidade (cartões e conquistas): JPEG reduzido, nunca maior que o original.
   const imageThumb=async(bytes,{width=460}={})=>{const img=nativeImage.createFromBuffer(bytes);if(img.isEmpty())return null;const size=img.getSize();const out=size.width>width?img.resize({width,quality:'best'}):img;return width<=128?out.toPNG():out.toJPEG(85);};

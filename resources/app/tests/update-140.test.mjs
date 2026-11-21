@@ -140,7 +140,7 @@ test('Banco Redump/No-Intro: serial, tamanho e nome localizam o dump; cache evit
  const again = new DatIndex({dir, fetchText: async () => { downloads++; return ''; }});
  assert.equal((await again.lookup(ps2, {serial: 'SCUS-97472'})).title, 'Shadow of the Colossus');
  assert.equal(downloads, 1);
- assert.equal(libretroThumbnailURL('Sony - PlayStation 2', 'Named_Boxarts', 'Ratchet & Clank (USA)'), 'https://thumbnails.libretro.com/Sony%20-%20PlayStation%202/Named_Boxarts/Ratchet%20_%20Clank%20(USA).png');
+ assert.equal(libretroThumbnailURL('Sony - PlayStation 2', 'Named_Boxarts', 'Ratchet & Clank (USA)'), 'https://raw.githubusercontent.com/libretro-thumbnails/Sony_-_PlayStation_2/master/Named_Boxarts/Ratchet%20_%20Clank%20(USA).png');
 });
 
 test('Identificação local aceita dump verificado e hash RA sem conta; título interno confiável é mantido', async () => {

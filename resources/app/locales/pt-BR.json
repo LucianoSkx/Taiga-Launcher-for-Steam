@@ -1504,5 +1504,8 @@
   "consoles.emptyGames": "Nenhum jogo deste emulador na coleção ainda.",
   "consoles.add": "Adicionar à coleção",
   "consoles.inCollection": "Na coleção",
-  "set.clearRemoved": "Limpar lista"
+  "set.clearRemoved": "Limpar lista",
+  "account.gogDesktop": "O login da GOG abre na janela do Taiga Launcher. Se a página não carregar, tente de novo em instantes.",
+  "account.xboxDesktop": "O login da Xbox abre na janela do Taiga Launcher. Se a página não carregar, tente de novo em instantes.",
+  "account.psnDesktop": "O login da PlayStation abre na janela do Taiga Launcher. Se a página não carregar, tente de novo em instantes."
 }

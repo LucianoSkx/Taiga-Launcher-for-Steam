@@ -1504,5 +1504,8 @@
   "consoles.emptyGames": "No games from this emulator in the collection yet.",
   "consoles.add": "Add to collection",
   "consoles.inCollection": "In collection",
-  "set.clearRemoved": "Clear list"
+  "set.clearRemoved": "Clear list",
+  "account.gogDesktop": "GOG sign-in opens in the Taiga Launcher window. If the page does not load, try again in a moment.",
+  "account.xboxDesktop": "Xbox sign-in opens in the Taiga Launcher window. If the page does not load, try again in a moment.",
+  "account.psnDesktop": "PlayStation sign-in opens in the Taiga Launcher window. If the page does not load, try again in a moment."
 }

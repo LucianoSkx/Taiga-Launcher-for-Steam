@@ -127,6 +127,7 @@ export class DatIndex {
 }
 // Nome de arquivo das miniaturas libretro (caracteres especiais viram "_").
 export function libretroThumbnailName(name) { return String(name || '').replace(/[&*/:`<>?\\|"]/g, '_'); }
+export function libretroRepo(system) { return String(system || '').replace(/ /g, '_'); }
 export function libretroThumbnailURL(system, kind, name) {
- return 'https://thumbnails.libretro.com/' + encodeURIComponent(system) + '/' + kind + '/' + encodeURIComponent(libretroThumbnailName(name)) + '.png';
+ return 'https://raw.githubusercontent.com/libretro-thumbnails/' + encodeURIComponent(libretroRepo(system)) + '/master/' + kind + '/' + encodeURIComponent(libretroThumbnailName(name)) + '.png';
 }

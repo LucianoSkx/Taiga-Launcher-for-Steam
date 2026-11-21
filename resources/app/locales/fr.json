@@ -1504,5 +1504,8 @@
   "consoles.emptyGames": "Aucun jeu de cet émulateur dans la collection pour l’instant.",
   "consoles.add": "Ajouter à la collection",
   "consoles.inCollection": "Dans la collection",
-  "set.clearRemoved": "Vider la liste"
+  "set.clearRemoved": "Vider la liste",
+  "account.gogDesktop": "La connexion GOG s’ouvre dans la fenêtre Taiga Launcher. Si la page ne charge pas, réessayez dans un instant.",
+  "account.xboxDesktop": "La connexion Xbox s’ouvre dans la fenêtre Taiga Launcher. Si la page ne charge pas, réessayez dans un instant.",
+  "account.psnDesktop": "La connexion PlayStation s’ouvre dans la fenêtre Taiga Launcher. Si la page ne charge pas, réessayez dans un instant."
 }
