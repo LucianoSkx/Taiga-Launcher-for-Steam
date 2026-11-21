@@ -25,6 +25,12 @@ test('Consoles tab only shows emulators that have a ROM folder', async () => {
  assert.doesNotMatch(html,/PCSX2/,'emulador sem pasta de ROMs não ganha aba');
 });
 
+test('Art gallery CSP allows the libretro image host', () => {
+ const server=fs.readFileSync(new URL('../server.mjs',import.meta.url),'utf8');
+ const csp=server.match(/img-src 'self'([^;]+)/)?.[1]||'';
+ assert.match(csp,/raw\.githubusercontent\.com/,'libretro previews come from raw.githubusercontent.com');
+});
+
 test('Emulator cards render their icon without relying on a load event', () => {
  const app=fs.readFileSync(new URL('../web/app.js',import.meta.url),'utf8');
  assert.match(app,/class="emu-ic \$\{e\.found\?'has-img':''\}"/);
