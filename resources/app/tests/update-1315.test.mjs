@@ -25,6 +25,12 @@ test('Consoles tab only shows emulators that have a ROM folder', async () => {
  assert.doesNotMatch(html,/PCSX2/,'emulador sem pasta de ROMs não ganha aba');
 });
 
+test('Emulator cards render their icon without relying on a load event', () => {
+ const app=fs.readFileSync(new URL('../web/app.js',import.meta.url),'utf8');
+ assert.match(app,/class="emu-ic \$\{e\.found\?'has-img':''\}"/);
+ assert.match(app,/\$\{e\.found\?`<img src="\/emu-icon\//);
+});
+
 test('Emulator ROM folders are saved per launcher and listed back', () => {
  const app=fs.readFileSync(new URL('../web/app.js',import.meta.url),'utf8');
  assert.match(app,/api\('emulator-folders',\{profile,paths:\[folder\]\}\)/);
