@@ -62,7 +62,7 @@ if(launchIndex>=0){
   // na página de retorno da própria Epic e a janela fecha sozinha.
   const epicLogin=async()=>{const {EPIC_LOGIN_URL,EPIC_REDIRECT,authorizationCode}=await import('../lib/epic-auth.mjs');return new Promise(resolve=>{
    const win=new BrowserWindow({width:520,height:760,parent:mainWindow||undefined,modal:false,autoHideMenuBar:true,title:'Epic Games',webPreferences:{partition:'persist:epic-login',contextIsolation:true,nodeIntegration:false,sandbox:true}});
-   win.webContents.setUserAgent(win.webContents.getUserAgent().replace(/\s*(Electron|Taiga Launcher|taigasteam)\/\S+/gi,''));
+   win.webContents.setUserAgent(win.webContents.getUserAgent().replace(/\s*(Electron|Taiga Launcher|taiga[\w-]*)\/\S+/gi,''));
    let done=false;const finish=code=>{if(done)return;done=true;resolve(code);if(!win.isDestroyed())win.close();};
    const check=async()=>{try{const url=win.webContents.getURL();if(!EPIC_REDIRECT.test(url))return;const text=await win.webContents.executeJavaScript('document.body?document.body.innerText:""');const code=authorizationCode(text);if(code)finish(code);}catch{}};
    win.webContents.on('did-finish-load',check);win.webContents.on('did-navigate',check);
@@ -85,7 +85,7 @@ if(launchIndex>=0){
    const part=session.fromPartition('persist:gog-login');
    const win=new BrowserWindow({width:520,height:760,parent:mainWindow||undefined,autoHideMenuBar:true,title:'GOG',webPreferences:{partition:'persist:gog-login',contextIsolation:true,nodeIntegration:false,sandbox:true}});
    const checkWin=new BrowserWindow({show:false,webPreferences:{partition:'persist:gog-login',contextIsolation:true,nodeIntegration:false,sandbox:true}});
-   for(const w of [win,checkWin])try{w.webContents.setUserAgent(w.webContents.getUserAgent().replace(/\s*(Electron|Taiga Launcher|taigasteam)\/\S+/gi,''));}catch{}
+   for(const w of [win,checkWin])try{w.webContents.setUserAgent(w.webContents.getUserAgent().replace(/\s*(Electron|Taiga Launcher|taiga[\w-]*)\/\S+/gi,''));}catch{}
    let done=false,checking=false;
    const finish=v=>{if(done)return;done=true;clearInterval(timer);try{checkWin.destroy();}catch{}resolve(v);if(!win.isDestroyed())win.close();};
    const read=async()=>{if(done)return;let text='';try{text=await checkWin.webContents.executeJavaScript('document.body?document.body.innerText:""');}catch{return;}
