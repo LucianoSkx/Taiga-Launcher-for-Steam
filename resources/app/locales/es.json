@@ -1510,5 +1510,8 @@
   "account.psnDesktop": "El inicio de sesión de PlayStation se abre en la ventana de Taiga Launcher. Si la página no carga, inténtalo de nuevo en un momento.",
   "login.title.gog": "Iniciar sesión con GOG",
   "login.title.xbox": "Iniciar sesión con Xbox",
-  "login.title.psn": "Iniciar sesión con PlayStation"
+  "login.title.psn": "Iniciar sesión con PlayStation",
+  "emu.folderReady": "{count} juegos añadidos de la carpeta.",
+  "emu.folderRemoved": "Carpeta eliminada de este emulador.",
+  "emu.folderRemove": "Eliminar carpeta {name}"
 }

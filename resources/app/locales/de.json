@@ -1510,5 +1510,8 @@
   "account.psnDesktop": "Die PlayStation-Anmeldung öffnet sich im Taiga-Launcher-Fenster. Wenn die Seite nicht lädt, versuche es in einem Moment erneut.",
   "login.title.gog": "Mit GOG anmelden",
   "login.title.xbox": "Mit Xbox anmelden",
-  "login.title.psn": "Mit PlayStation anmelden"
+  "login.title.psn": "Mit PlayStation anmelden",
+  "emu.folderReady": "{count} Spiele aus dem Ordner hinzugefügt.",
+  "emu.folderRemoved": "Ordner von diesem Emulator entfernt.",
+  "emu.folderRemove": "Ordner {name} entfernen"
 }

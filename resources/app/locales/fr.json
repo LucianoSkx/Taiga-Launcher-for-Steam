@@ -1510,5 +1510,8 @@
   "account.psnDesktop": "La connexion PlayStation s’ouvre dans la fenêtre Taiga Launcher. Si la page ne charge pas, réessayez dans un instant.",
   "login.title.gog": "Se connecter avec GOG",
   "login.title.xbox": "Se connecter avec Xbox",
-  "login.title.psn": "Se connecter avec PlayStation"
+  "login.title.psn": "Se connecter avec PlayStation",
+  "emu.folderReady": "{count} jeux ajoutés du dossier.",
+  "emu.folderRemoved": "Dossier supprimé de cet émulateur.",
+  "emu.folderRemove": "Supprimer le dossier {name}"
 }

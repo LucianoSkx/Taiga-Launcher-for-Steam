@@ -886,13 +886,17 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
      const launchers={...(config.launchers||{})};if(config.emulator&&!launchers.psp?.exe)launchers.psp={exe:config.emulator};
      const cfgFolders=(()=>{try{return emulatorGameFolders({launchers,emulator:config.emulator});}catch{return [];}})();
      const items=Object.entries(launchers).filter(([k,l])=>l?.exe&&REGISTRY_PROFILES[k]?.files).map(([k,l])=>{const name=emulatorDisplayName(k,l.exe),n=name.toLowerCase(),games=db.games.filter(g=>!g.demo&&!g.hidden&&(g.profile||'psp')===k);
-      const fromCfg=cfgFolders.filter(f=>{const src=String(f.source||'').toLowerCase();return src&&(n.includes(src)||src.includes(n));}).map(f=>f.path);
+      const fromCfg=[...(l.gameFolders||[]),...cfgFolders.filter(f=>{const src=String(f.source||'').toLowerCase();return src&&(n.includes(src)||src.includes(n));}).map(f=>f.path)];
       const fromGames=games.map(g=>path.dirname(g.gameRoot&&isFile(g.path)?g.path:g.path)).filter(Boolean);
       let folders=[];try{folders=collapseFolders([...new Set([...fromCfg,...fromGames])].filter(d=>{try{return fs.statSync(d).isDirectory();}catch{return false;}}).map(p=>({path:p,source:''}))).map(f=>f.path);}catch{folders=[...new Set(fromCfg)];}
       let platforms=REGISTRY_PROFILES[k].platforms?.length?REGISTRY_PROFILES[k].platforms:[REGISTRY_PROFILES[k].platform].filter(p=>p&&p!=='Não informada');if(k==='retroarch'){try{platforms=retroArchPlatforms(l.exe);}catch{platforms=[];}}
       return {profile:k,name,exe:l.exe,found:isFile(l.exe),platforms,games:games.length,folders:folders.slice(0,6),removable:true};}).sort((a,b)=>b.games-a.games||a.name.localeCompare(b.name));
      return send({items});
     }
+    if(route==='/api/emulator-folders'){const profile=String(body.profile||'');if(!REGISTRY_PROFILES[profile]?.files)throw Error('Emulador não encontrado.');config.launchers||={};
+     const old=config.launchers[profile]||{};const paths=(Array.isArray(body.paths)?body.paths:[]).filter(p=>{try{return fs.statSync(p).isDirectory();}catch{return false;}});const list=[...new Set([...(old.gameFolders||[]),...paths])].slice(0,20);
+     if(body.remove){config.launchers[profile]={...old,gameFolders:list.filter(p=>p!==body.remove)};}else{config.launchers[profile]={...old,gameFolders:list};}
+     saveConfig();return send({folders:config.launchers[profile].gameFolders||[]});}
     // Adicionar emulador pelo programa, por um atalho (.lnk) ou pela pasta dele; devolve as pastas de jogos que ele usa.
     if(route==='/api/emulator-add'){
      let target=String(body.path||'');if(!target)throw Error('Escolha o emulador.');

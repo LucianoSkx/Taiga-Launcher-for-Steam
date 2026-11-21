@@ -1510,5 +1510,8 @@
   "account.psnDesktop": "PlayStation sign-in opens in the Taiga Launcher window. If the page does not load, try again in a moment.",
   "login.title.gog": "Sign in with GOG",
   "login.title.xbox": "Sign in with Xbox",
-  "login.title.psn": "Sign in with PlayStation"
+  "login.title.psn": "Sign in with PlayStation",
+  "emu.folderReady": "{count} games added from the folder.",
+  "emu.folderRemoved": "Folder removed from this emulator.",
+  "emu.folderRemove": "Remove folder {name}"
 }

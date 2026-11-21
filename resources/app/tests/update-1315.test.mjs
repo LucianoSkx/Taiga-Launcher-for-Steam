@@ -24,3 +24,13 @@ test('Consoles tab only shows emulators that have a ROM folder', async () => {
  assert.match(html,/PSP Game/);
  assert.doesNotMatch(html,/PCSX2/,'emulador sem pasta de ROMs não ganha aba');
 });
+
+test('Emulator ROM folders are saved per launcher and listed back', () => {
+ const app=fs.readFileSync(new URL('../web/app.js',import.meta.url),'utf8');
+ assert.match(app,/api\('emulator-folders',\{profile,paths:\[folder\]\}\)/);
+ assert.match(app,/data-act="emu-folder-del"/);
+ for(const l of ['pt-BR','en','es','fr','de']){const d=JSON.parse(fs.readFileSync(new URL(`../locales/${l}.json`,import.meta.url),'utf8'));for(const k of ['emu.folderReady','emu.folderRemoved','emu.folderRemove'])assert.ok(d[k],`${l}:${k}`);}
+ const server=fs.readFileSync(new URL('../server.mjs',import.meta.url),'utf8');
+ assert.match(server,/route==='\/api\/emulator-folders'/);
+ assert.match(server,/\.\.\.\(l\.gameFolders\|\|\[\]\)/);
+});
