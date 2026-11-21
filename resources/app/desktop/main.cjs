@@ -1,4 +1,6 @@
 const {app,BrowserWindow,Menu,dialog,session,shell,nativeTheme,nativeImage,Tray,Notification,safeStorage}=require('electron');
+// Cloudflare Turnstile (GOG) rejeita navegadores com navigator.webdriver; o chromium do Electron expõe isso.
+try{app.commandLine.appendSwitch('disable-blink-features','AutomationControlled');}catch{}
 // Logins e chaves do config.json protegidos pelo Windows (DPAPI): só este usuário, neste PC, consegue ler.
 const secretBox={available:()=>{try{return safeStorage.isEncryptionAvailable();}catch{return false;}},encrypt:s=>safeStorage.encryptString(s).toString('base64'),decrypt:b=>safeStorage.decryptString(Buffer.from(b,'base64'))};
 const path=require('node:path');
@@ -93,10 +95,10 @@ if(launchIndex>=0){
    checkWin.webContents.on('did-finish-load',()=>{checking=false;read().catch(()=>{});});
    checkWin.webContents.on('did-fail-load',()=>{checking=false;});
    const timer=setInterval(async()=>{if(done||checking)return;checking=true;try{
-    const cookies=await part.cookies.get({});if(!cookies.some(c=>/gog\.com$/i.test(String(c.domain||'').replace(/^\./,'')))){checking=false;return;}
+    const cookies=await part.cookies.get({});if(!cookies.some(c=>/gog\.com$/i.test(String(c.domain||'').replace(/^\./,''))&&/session|token|user|id/i.test(c.name))){checking=false;return;}
     await checkWin.webContents.loadURL('https://menu.gog.com/v1/account/basic');
-    setTimeout(()=>{checking=false;},5000).unref?.();
-   }catch{checking=false;}},2500);
+    setTimeout(()=>{checking=false;},6000).unref?.();
+   }catch{checking=false;}},5000);
    win.on('closed',()=>finish(null));win.webContents.setWindowOpenHandler(({url})=>{if(/^https:\/\/([a-z0-9-]+\.)*gog\.com\//i.test(url))win.loadURL(url);return {action:'deny'};});win.loadURL('https://www.gog.com/account/');
   });
   const gogLogout=async()=>{try{await session.fromPartition('persist:gog-login').clearStorageData({storages:['cookies']});}catch{}};
