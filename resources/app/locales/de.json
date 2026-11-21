@@ -1507,5 +1507,8 @@
   "set.clearRemoved": "Liste leeren",
   "account.gogDesktop": "Die GOG-Anmeldung öffnet sich im Taiga-Launcher-Fenster. Wenn die Seite nicht lädt, versuche es in einem Moment erneut.",
   "account.xboxDesktop": "Die Xbox-Anmeldung öffnet sich im Taiga-Launcher-Fenster. Wenn die Seite nicht lädt, versuche es in einem Moment erneut.",
-  "account.psnDesktop": "Die PlayStation-Anmeldung öffnet sich im Taiga-Launcher-Fenster. Wenn die Seite nicht lädt, versuche es in einem Moment erneut."
+  "account.psnDesktop": "Die PlayStation-Anmeldung öffnet sich im Taiga-Launcher-Fenster. Wenn die Seite nicht lädt, versuche es in einem Moment erneut.",
+  "login.title.gog": "Mit GOG anmelden",
+  "login.title.xbox": "Mit Xbox anmelden",
+  "login.title.psn": "Mit PlayStation anmelden"
 }

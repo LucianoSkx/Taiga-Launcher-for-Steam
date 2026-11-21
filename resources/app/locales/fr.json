@@ -1507,5 +1507,8 @@
   "set.clearRemoved": "Vider la liste",
   "account.gogDesktop": "La connexion GOG s’ouvre dans la fenêtre Taiga Launcher. Si la page ne charge pas, réessayez dans un instant.",
   "account.xboxDesktop": "La connexion Xbox s’ouvre dans la fenêtre Taiga Launcher. Si la page ne charge pas, réessayez dans un instant.",
-  "account.psnDesktop": "La connexion PlayStation s’ouvre dans la fenêtre Taiga Launcher. Si la page ne charge pas, réessayez dans un instant."
+  "account.psnDesktop": "La connexion PlayStation s’ouvre dans la fenêtre Taiga Launcher. Si la page ne charge pas, réessayez dans un instant.",
+  "login.title.gog": "Se connecter avec GOG",
+  "login.title.xbox": "Se connecter avec Xbox",
+  "login.title.psn": "Se connecter avec PlayStation"
 }

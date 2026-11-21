@@ -134,3 +134,18 @@ test('1.8.4: PC games step, Steam question before identifying a PC game, "Select
   assert.match(app, /T\('id\.selectTitle'\)/);
   assert.match(app, /await reload\(\);if\(!ready\(\)\)\{await api\('detect',\{\}\);await reload\(\);UI\.languagePicker=false;/);
 });
+
+test('Login operation titles name the right platform instead of reusing Epic', () => {
+ const app = fs.readFileSync(new URL('../web/app.js', import.meta.url), 'utf8');
+ const handler = app.split("case 'account-connect':")[1].split("case 'add-game':")[0];
+ const segment = kind => (handler.split("kind==='" + kind + "'")[1] || '').split('else if(kind===')[0];
+ for (const [kind, key] of [['gog','login.title.gog'],['xbox','login.title.xbox'],['psn','login.title.psn'],['epic','storeAch.login']]) {
+  assert.ok(segment(kind).includes("T('" + key + "')"), kind + ' deve usar ' + key);
+ }
+ assert.ok(!segment('gog').includes('storeAch.login'), 'GOG não deve usar o título da Epic');
+ for (const l of LANGS) {
+  const d = JSON.parse(fs.readFileSync(new URL(`../locales/${l}.json`, import.meta.url), 'utf8'));
+  for (const k of ['login.title.gog', 'login.title.xbox', 'login.title.psn']) assert.ok(d[k], `${l}:${k}`);
+  assert.match(d['login.title.gog'], /GOG/i, `${l}: título GOG`);
+ }
+});

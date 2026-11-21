@@ -1507,5 +1507,8 @@
   "set.clearRemoved": "Limpar lista",
   "account.gogDesktop": "O login da GOG abre na janela do Taiga Launcher. Se a página não carregar, tente de novo em instantes.",
   "account.xboxDesktop": "O login da Xbox abre na janela do Taiga Launcher. Se a página não carregar, tente de novo em instantes.",
-  "account.psnDesktop": "O login da PlayStation abre na janela do Taiga Launcher. Se a página não carregar, tente de novo em instantes."
+  "account.psnDesktop": "O login da PlayStation abre na janela do Taiga Launcher. Se a página não carregar, tente de novo em instantes.",
+  "login.title.gog": "Entrar com a conta GOG",
+  "login.title.xbox": "Entrar com a conta Xbox",
+  "login.title.psn": "Entrar com a conta PlayStation"
 }

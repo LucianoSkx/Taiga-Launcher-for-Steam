@@ -1507,5 +1507,8 @@
   "set.clearRemoved": "Clear list",
   "account.gogDesktop": "GOG sign-in opens in the Taiga Launcher window. If the page does not load, try again in a moment.",
   "account.xboxDesktop": "Xbox sign-in opens in the Taiga Launcher window. If the page does not load, try again in a moment.",
-  "account.psnDesktop": "PlayStation sign-in opens in the Taiga Launcher window. If the page does not load, try again in a moment."
+  "account.psnDesktop": "PlayStation sign-in opens in the Taiga Launcher window. If the page does not load, try again in a moment.",
+  "login.title.gog": "Sign in with GOG",
+  "login.title.xbox": "Sign in with Xbox",
+  "login.title.psn": "Sign in with PlayStation"
 }

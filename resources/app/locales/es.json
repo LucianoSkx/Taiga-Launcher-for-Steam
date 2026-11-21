@@ -1507,5 +1507,8 @@
   "set.clearRemoved": "Limpiar lista",
   "account.gogDesktop": "El inicio de sesión de GOG se abre en la ventana de Taiga Launcher. Si la página no carga, inténtalo de nuevo en un momento.",
   "account.xboxDesktop": "El inicio de sesión de Xbox se abre en la ventana de Taiga Launcher. Si la página no carga, inténtalo de nuevo en un momento.",
-  "account.psnDesktop": "El inicio de sesión de PlayStation se abre en la ventana de Taiga Launcher. Si la página no carga, inténtalo de nuevo en un momento."
+  "account.psnDesktop": "El inicio de sesión de PlayStation se abre en la ventana de Taiga Launcher. Si la página no carga, inténtalo de nuevo en un momento.",
+  "login.title.gog": "Iniciar sesión con GOG",
+  "login.title.xbox": "Iniciar sesión con Xbox",
+  "login.title.psn": "Iniciar sesión con PlayStation"
 }
