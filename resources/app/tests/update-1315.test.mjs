@@ -25,6 +25,15 @@ test('Consoles tab only shows emulators that have a ROM folder', async () => {
  assert.doesNotMatch(html,/PCSX2/,'emulador sem pasta de ROMs não ganha aba');
 });
 
+test('ROM imports stay in Consoles until the user adds them to Steam', () => {
+ const server=fs.readFileSync(new URL('../server.mjs',import.meta.url),'utf8');
+ assert.match(server,/body\.consoleOnly\?null:await autoAddToSteam/);
+ const app=fs.readFileSync(new URL('../web/app.js',import.meta.url),'utf8');
+ assert.match(app,/consoleOnly:!!opts\.profile/);
+ assert.match(app,/consoleOnly:!!IM\.profile/);
+ assert.match(app,/profile:force\|\|g\.profile/);
+});
+
 test('Art gallery CSP allows the libretro image host', () => {
  const server=fs.readFileSync(new URL('../server.mjs',import.meta.url),'utf8');
  const csp=server.match(/img-src 'self'([^;]+)/)?.[1]||'';

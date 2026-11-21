@@ -1200,7 +1200,7 @@ if(route==='/api/gog-login'){
       {const sidNew=steamAppIdFor(g),twin=sidNew&&db.games.find(o=>o!==g&&!o.demo&&!o.native&&['pc','store','custom'].includes(o.profile)&&steamAppIdFor(o)===sidNew);if(twin){db.games.splice(db.games.indexOf(g),1);result.addedIds=result.addedIds.filter(x=>x!==g.id);result.errors.push({file:g.path,message:duplicateMessage({reason:'steam',title:twin.title})});continue;}}
       if(warnings.length)g.lookup={at:new Date().toISOString(),warnings};
       const key=identityKey(g);if(key)identityChoices[key]={title:g.title,profile:g.profile,platformName:g.platformName};
-     }try{mergePortTwins();}catch{}persist();save(identityFile,identityChoices);for(const item of body.items)session.paths.delete(path.resolve(item.path).toLowerCase());session.items=session.items.filter(i=>session.paths.has(i.path.toLowerCase()));if(!session.paths.size)importSessions.delete(body.scanId);if(body.deferred){result.deferred=true;return send(result);}result.steam=await autoAddToSteam(result.addedIds);return send(result);
+     }try{mergePortTwins();}catch{}persist();save(identityFile,identityChoices);for(const item of body.items)session.paths.delete(path.resolve(item.path).toLowerCase());session.items=session.items.filter(i=>session.paths.has(i.path.toLowerCase()));if(!session.paths.size)importSessions.delete(body.scanId);if(body.deferred){result.deferred=true;return send(result);}result.steam=body.consoleOnly?null:await autoAddToSteam(result.addedIds);return send(result);
     }
     // Segunda parte da importação, em segundo plano: artes e dados escolhidos, AppID da Steam, tamanho da pasta e envio à Steam.
     if(route==='/api/import-finish'){const ids=(Array.isArray(body.ids)?body.ids:[]).filter(id=>db.games.some(g=>g.id===id));
