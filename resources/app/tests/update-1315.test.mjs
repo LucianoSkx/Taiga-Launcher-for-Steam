@@ -25,6 +25,15 @@ test('Consoles tab only shows emulators that have a ROM folder', async () => {
  assert.doesNotMatch(html,/PCSX2/,'emulador sem pasta de ROMs não ganha aba');
 });
 
+test('Libretro option images are proxied through the local server', () => {
+ const external=fs.readFileSync(new URL('../lib/external.mjs',import.meta.url),'utf8');
+ assert.match(external,/item\.free\?\.url\)return ''/);
+ const server=fs.readFileSync(new URL('../server.mjs',import.meta.url),'utf8');
+ assert.match(server,/option\.free\?\.url\)\{name=await providers\.image\(option\.free\.url\)/);
+ const providers=fs.readFileSync(new URL('../lib/providers.mjs',import.meta.url),'utf8');
+ assert.match(providers,/preview='\/art\/'/);
+});
+
 test('Profile reassignment never re-adds console-only ROMs to Steam', () => {
  const server=fs.readFileSync(new URL('../server.mjs',import.meta.url),'utf8');
  assert.match(server,/if\(!g\.consoleOnly&&!g\.bindings\?\.\[config\.account\]/);

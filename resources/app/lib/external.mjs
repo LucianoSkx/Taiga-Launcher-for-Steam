@@ -30,7 +30,7 @@ export function externalResults(found,{platformKey=null,query=''}={}){
 }
 // Capa da busca: IGDB em alta resolução; sem capa na IGDB, usa a capa oficial da Steam pelo ID externo.
 export function steamIdOf(igdb){const row=(igdb?.external_games||[]).find(e=>(Number(e.category)===1||Number(e.external_game_source)===1||Number(e.external_game_source?.id)===1)&&/^\d{1,9}$/.test(String(e.uid||'')));return row?Number(row.uid):null;}
-export function externalPreview(item){try{if(item.free?.url)return item.free.url;const raw=item.igdb?.cover?.url||'';if(raw){const u=new URL(raw.startsWith('//')?'https:'+raw:raw);if(u.protocol==='https:'&&u.hostname==='images.igdb.com')return u.href.replace(/\/t_[a-z0-9_]+\//,'/t_cover_big_2x/');}const steam=steamIdOf(item.igdb);return steam?'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/'+steam+'/library_600x900.jpg':'';}catch{return '';}}
+export function externalPreview(item){try{if(item.free?.url)return '';const raw=item.igdb?.cover?.url||'';if(raw){const u=new URL(raw.startsWith('//')?'https:'+raw:raw);if(u.protocol==='https:'&&u.hostname==='images.igdb.com')return u.href.replace(/\/t_[a-z0-9_]+\//,'/t_cover_big_2x/');}const steam=steamIdOf(item.igdb);return steam?'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/'+steam+'/library_600x900.jpg':'';}catch{return '';}}
 // Plataforma mais provável de um resultado para o arquivo importado.
 export function preferredPlatform(item,platformKey){const p=platformKey?platformByKey(platformKey):null;if(!p)return null;return (item.platforms||[]).find(x=>Number(x.id)===p.igdb||platformByName(x.name)?.key===p.key)||null;}
 export {PLATFORMS};
