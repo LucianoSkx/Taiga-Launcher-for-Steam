@@ -25,6 +25,13 @@ test('Consoles tab only shows emulators that have a ROM folder', async () => {
  assert.doesNotMatch(html,/PCSX2/,'emulador sem pasta de ROMs não ganha aba');
 });
 
+test('Choice art never returns a broken image when no preview exists', () => {
+ const server=fs.readFileSync(new URL('../server.mjs',import.meta.url),'utf8');
+ assert.match(server,/const placeholder=\(\)=>\{const svg=/);
+ assert.match(server,/if\(!name\)return placeholder\(\)/);
+ assert.doesNotMatch(server,/if\(!url\)return fail\(\)/);
+});
+
 test('Libretro option images are proxied through the local server', () => {
  const external=fs.readFileSync(new URL('../lib/external.mjs',import.meta.url),'utf8');
  assert.match(external,/item\.free\?\.url\)return ''/);

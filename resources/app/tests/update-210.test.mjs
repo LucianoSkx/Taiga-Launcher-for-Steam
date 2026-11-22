@@ -87,3 +87,10 @@ test('Data folder: old TaigaSteamPSP is renamed to "Taiga Launcher" on first sta
  assert.equal(defaultDataDir(),path.join(d,'Taiga Launcher'));assert.ok(fs.existsSync(path.join(d,'Taiga Launcher','games.json')));assert.ok(!fs.existsSync(path.join(d,'TaigaSteamPSP')));
  assert.equal(defaultDataDir(),path.join(d,'Taiga Launcher'),'segunda vez: só usa a nova');
 });
+
+test('Standalone launch resolves the Linux data folder without LOCALAPPDATA', async t => {
+ const {defaultDataDir}=await import('../lib/launch-engine.mjs');
+ const old={l:process.env.LOCALAPPDATA,t:process.env.TAIGA_DATA};t.after(()=>{if(old.l===undefined)delete process.env.LOCALAPPDATA;else process.env.LOCALAPPDATA=old.l;if(old.t===undefined)delete process.env.TAIGA_DATA;else process.env.TAIGA_DATA=old.t;});
+ delete process.env.TAIGA_DATA;delete process.env.LOCALAPPDATA;
+ assert.equal(defaultDataDir(),path.join(os.homedir(),'.local','share','Taiga Launcher'));
+});

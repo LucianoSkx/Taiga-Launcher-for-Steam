@@ -5,7 +5,7 @@ const exec=promisify(execFile),pause=ms=>new Promise(r=>setTimeout(r,ms));
 export const UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 // Pasta de dados: %LOCALAPPDATA%\Taiga Launcher. Instalações antigas (TaigaSteamPSP) são renomeadas sozinhas na
 // primeira abertura; se o Windows não deixar (pasta em uso), continua usando a antiga.
-export function defaultDataDir(){if(process.env.TAIGA_DATA)return process.env.TAIGA_DATA;const base=process.env.LOCALAPPDATA||os.homedir(),now=path.join(base,'Taiga Launcher'),old=path.join(base,'TaigaSteamPSP');
+export function defaultDataDir(){if(process.env.TAIGA_DATA)return process.env.TAIGA_DATA;const base=process.env.LOCALAPPDATA||(process.platform!=='win32'?path.join(os.homedir(),'.local','share'):os.homedir()),now=path.join(base,'Taiga Launcher'),old=path.join(base,'TaigaSteamPSP');
  try{if(!fs.existsSync(now)&&fs.existsSync(old))fs.renameSync(old,now);}catch{return old;}return fs.existsSync(now)||!fs.existsSync(old)?now:old;}
 export function splitArguments(text){
  if(/[\r\n\0]/.test(text))throw Error('Argumentos inválidos.');const result=[];let word='',quoted=false,started=false;
