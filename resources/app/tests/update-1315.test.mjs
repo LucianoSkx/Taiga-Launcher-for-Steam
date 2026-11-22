@@ -25,6 +25,13 @@ test('Consoles tab only shows emulators that have a ROM folder', async () => {
  assert.doesNotMatch(html,/PCSX2/,'emulador sem pasta de ROMs não ganha aba');
 });
 
+test('Deferred ROM import does not bind AppIDs or auto-add to Steam', () => {
+ const server=fs.readFileSync(new URL('../server.mjs',import.meta.url),'utf8');
+ assert.match(server,/if\(body\.consoleOnly\)g\.consoleOnly=true/);
+ assert.match(server,/job\.link!==false&&!g\.consoleOnly\)await autoSteamLink/);
+ assert.match(server,/autoAddToSteam\(ids\.filter\(id=>!db\.games\.find\(x=>x\.id===id\)\?\.consoleOnly\)\)/);
+});
+
 test('ROM imports stay in Consoles until the user adds them to Steam', () => {
  const server=fs.readFileSync(new URL('../server.mjs',import.meta.url),'utf8');
  assert.match(server,/body\.consoleOnly\?null:await autoAddToSteam/);
