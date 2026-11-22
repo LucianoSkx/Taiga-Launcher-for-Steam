@@ -738,7 +738,7 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
    if(!config.preferences?.retroarchFirst&&before==='retroarch'&&g.profileAuto==='retroarch'){const own=candidates.find(k=>k!=='retroarch');if(own){const back=preferredProfile({...g,profile:own},config,candidates);if(back!=='retroarch'&&launchReadyFor({...g,profile:back}))next=back;}}
    if(next&&next!==before){g.profile=next;if(next==='retroarch'&&config.preferences?.retroarchFirst)g.profileAuto='retroarch';else delete g.profileAuto;changed.push(g);}
    // Nunca esteve na Steam (não foi tirado de lá pelo usuário) e agora pode abrir: entra.
-   if(!g.bindings?.[config.account]&&!g.liveAdded?.[config.account]&&!g.steamRemoved?.[config.account]&&(!wasReady||next!==before||startup&&anyInSteam)&&launchReadyFor(g))ready.push(g.id);
+   if(!g.consoleOnly&&!g.bindings?.[config.account]&&!g.liveAdded?.[config.account]&&!g.steamRemoved?.[config.account]&&(!wasReady||next!==before||startup&&anyInSteam)&&launchReadyFor(g))ready.push(g.id);
   }
   if(changed.length){persist();nglNote('Emuladores: '+changed.length+' jogo(s) passaram para outro emulador pronto.');}
   let steam=null;if(addToSteam&&ready.length)try{steam=await autoAddToSteam(ready);}catch{}
