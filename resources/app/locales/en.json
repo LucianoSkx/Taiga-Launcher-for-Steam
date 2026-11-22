@@ -988,7 +988,7 @@
   "add.romFolderHint": "A folder with ROMs and ISOs; new ones join automatically.",
   "add.dropTip": "Tip: you can also drag ROMs, ISOs and .exe files onto the window.",
   "emu.platforms": "Platforms",
-  "emu.inCollection": "In collection",
+  "emu.inCollection": "Games",
   "emu.folders": "Folders",
   "emu.noFolderShort": "None yet",
   "emu.scanHint": "Searches your PC for {platforms} games only",

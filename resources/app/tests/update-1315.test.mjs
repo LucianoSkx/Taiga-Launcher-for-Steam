@@ -53,6 +53,13 @@ test('Emulator cards render their icon without relying on a load event', () => {
  assert.match(app,/\$\{e\.found\?`<img src="\/emu-icon\//);
 });
 
+test('Emulator game count is not mislabeled as the Collection', () => {
+ for(const l of ['pt-BR','en','es','fr','de']){
+  const d=JSON.parse(fs.readFileSync(new URL(`../locales/${l}.json`,import.meta.url),'utf8'));
+  assert.ok(!/cole|collection|colecci|sammlung/i.test(d['emu.inCollection']),`${l}: rótulo não deve dizer coleção`);
+ }
+});
+
 test('Ver jogos opens the Consoles tab on the clicked emulator', () => {
  const app=fs.readFileSync(new URL('../web/app.js',import.meta.url),'utf8');
  assert.match(app,/case 'emu-games':UI\.consoleTab=t\.dataset\.profile;UI\.view='consoles'/);

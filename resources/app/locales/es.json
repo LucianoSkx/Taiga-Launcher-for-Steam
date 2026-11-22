@@ -988,7 +988,7 @@
   "add.romFolderHint": "Una carpeta con ROMs e ISOs; los nuevos entran solos.",
   "add.dropTip": "Consejo: también puedes arrastrar ROMs, ISOs y .exe a la ventana.",
   "emu.platforms": "Plataformas",
-  "emu.inCollection": "En la colección",
+  "emu.inCollection": "Juegos",
   "emu.folders": "Carpetas",
   "emu.noFolderShort": "Ninguna aún",
   "emu.scanHint": "Busca en el PC solo juegos de {platforms}",
