@@ -53,6 +53,12 @@ test('Emulator cards render their icon without relying on a load event', () => {
  assert.match(app,/\$\{e\.found\?`<img src="\/emu-icon\//);
 });
 
+test('Ver jogos opens the Consoles tab on the clicked emulator', () => {
+ const app=fs.readFileSync(new URL('../web/app.js',import.meta.url),'utf8');
+ assert.match(app,/case 'emu-games':UI\.consoleTab=t\.dataset\.profile;UI\.view='consoles'/);
+ assert.doesNotMatch(app,/case 'emu-games':UI\.emu=/);
+});
+
 test('Emulator ROM folders are saved per launcher and listed back', () => {
  const app=fs.readFileSync(new URL('../web/app.js',import.meta.url),'utf8');
  assert.match(app,/api\('emulator-folders',\{profile,paths:\[folder\]\}\)/);

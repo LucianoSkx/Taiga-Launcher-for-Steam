@@ -759,7 +759,7 @@ case 'emu-add-file':UI.emuMenu=false;task(()=>addEmulator('emulator'),T('set.emu
 case 'emu-add-folder':UI.emuMenu=false;task(()=>addEmulator('folder'),T('set.emuAdd'));break;
 case 'emu-scan':task(async()=>{const profile=t.dataset.profile,r=await api('pick',{kind:'folder'});const folder=r.paths?.[0];if(!folder)return;await api('emulator-folders',{profile,paths:[folder]});const imported=await importGames('game',[folder],{profile});UI.emuList=null;await reload();loadEmulators(true);render();toast(T('emu.folderReady',{count:imported?.added?.length||0}));},T('emu.scan'));break;
 case 'emu-folder-del':task(async()=>{const {profile,path:p}=t.dataset;await api('emulator-folders',{profile,remove:p});UI.emuList=null;await reload();loadEmulators(true);render();toast(T('emu.folderRemoved'));},T('emu.applying'));break;
-case 'emu-games':UI.emu=t.dataset.profile;UI.view='library';UI.libTab='all';UI.q='';UI.plats=[];UI.onlyAux=false;window.scrollTo(0,0);render();break;
+case 'emu-games':UI.consoleTab=t.dataset.profile;UI.view='consoles';window.scrollTo(0,0);render();break;
 case 'emu-clear':UI.emu=null;render();break;
 case 'lib-tab':UI.libTab=t.dataset.t;render();break;
 case 'store-tab':UI.storeTab=t.dataset.t;render();break;
