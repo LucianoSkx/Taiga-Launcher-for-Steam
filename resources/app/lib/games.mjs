@@ -167,7 +167,7 @@ function finalizeCandidates(out){
 // aborta por pasta grande, só para quando o orçamento acaba. A prova de que é jogo vem depois, do cabeçalho.
 const SWEEP_SKIP=/^(?:windows|windows\.old|program files|program files \(x86\)|programdata|\$recycle\.bin|\$windows\.~bt|\$windows\.~ws|system volume information|recovery|perflogs|msocache|config\.msi|intel|amd|nvidia|drivers|appdata|application data|local settings|steamapps|node_modules|\.git|\.svn|\.cache|\.vscode|venv|site-packages|__pycache__|temp|tmp|cache|caches|shadercache|logs|winsxs|onedrivetemp|dropbox\.cache|xboxgames|windowsapps|ea app|ea games|epic games|origin games|ubisoft game launcher|battle\.net|riot games|gog galaxy)$/i;
 export function sweepGames(roots,{maxDirs=60000,maxMs=45000,maxDepth=7,errors=[],skipPaths=[]}={}){
- const out=[],started=Date.now(),skip=new Set(skipPaths.map(p=>path.resolve(p).toLowerCase()));let dirs=0,stopped=false;
+ const out=[],started=Date.now(),skip=new Set(skipPaths.map(p=>path.resolve(p).toLowerCase())),seen=new Set();let dirs=0,stopped=false;
  const consider=(p,ext,size)=>{
   if(ext==='exe'||ext==='pkg')return;
   if(size<16*1024&&!/^(cue|gdi|m3u|a26|a78|lnx|ws|wsc|ngp|col|int|fds)$/.test(ext))return;
@@ -180,14 +180,15 @@ export function sweepGames(roots,{maxDirs=60000,maxMs=45000,maxDepth=7,errors=[]
  };
  const walk=(dir,depth)=>{
   if(stopped||depth>maxDepth)return;if(++dirs>maxDirs||Date.now()-started>maxMs){stopped=true;errors.push({file:dir,message:'Busca automática interrompida pelo limite de tempo; pastas restantes não foram lidas.'});return;}
+  let real=null;try{real=fs.realpathSync(dir);}catch{}if(real&&seen.has(real))return;if(real)seen.add(real);
   if(skip.has(path.resolve(dir).toLowerCase())&&depth>0)return;
   let entries;try{entries=fs.readdirSync(dir,{withFileTypes:true});}catch{return;}
   if(entries.some(e=>e.isDirectory()&&e.name==='PS3_GAME')){const boot=path.join(dir,'PS3_GAME','USRDIR','EBOOT.BIN');if(fs.existsSync(boot)){out.push(boot);return;}}
   if(entries.some(e=>e.isDirectory()&&e.name.toLowerCase()==='sce_sys')&&fs.existsSync(path.join(dir,'sce_sys','param.sfo'))){const eboot=entries.find(e=>e.isFile()&&e.name.toLowerCase()==='eboot.bin');if(eboot){out.push(path.join(dir,eboot.name));return;}}
   for(const e of entries){if(stopped)return;const p=path.join(dir,e.name);
-   if(e.isSymbolicLink())continue;
-   if(e.isDirectory()){if(SWEEP_SKIP.test(e.name)||AUX_DIR.test(e.name)||e.name.startsWith('.'))continue;walk(p,depth+1);continue;}
-   if(!e.isFile())continue;const ext=path.extname(e.name).slice(1).toLowerCase();if(!ext)continue;
+   let entry=e;if(e.isSymbolicLink()){try{const st=fs.statSync(p);entry={name:e.name,isDirectory:()=>st.isDirectory(),isFile:()=>st.isFile()};}catch{continue;}}
+   if(entry.isDirectory()){if(SWEEP_SKIP.test(e.name)||AUX_DIR.test(e.name)||e.name.startsWith('.'))continue;walk(p,depth+1);continue;}
+   if(!entry.isFile())continue;const ext=path.extname(e.name).slice(1).toLowerCase();if(!ext)continue;
    if(!EXTENSIONS.includes(ext)&&!ARCHIVE_EXT.includes(ext))continue;
    let size=0;try{size=fs.statSync(p).size;}catch{continue;}consider(p,ext,size);
   }

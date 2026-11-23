@@ -63,7 +63,7 @@ export function retroArchCores(exe, {env = process.env, ttl = 15000} = {}) {
  const home = env.HOME || '', xdg = env.XDG_CONFIG_HOME || (home && path.join(home, '.config'));
  const local = path.join(base, 'retroarch.cfg'), roaming = env.APPDATA ? path.join(env.APPDATA, 'RetroArch', 'retroarch.cfg') : '', userCfg = xdg ? path.join(xdg, 'retroarch', 'retroarch.cfg') : '';
  const cfgFile = [local, roaming, userCfg].find(f => f && isFile(f)) || '';
- const cfgDirs = [path.dirname(cfgFile), base, xdg && path.join(xdg, 'retroarch'), home && path.join(home, '.var/app/org.libretro.RetroArch/config/retroarch')];
+ const cfgDirs = [cfgFile && path.dirname(cfgFile), base, xdg && path.join(xdg, 'retroarch'), home && path.join(home, '.var/app/org.libretro.RetroArch/config/retroarch')];
  const dirs = [...new Set([cfgDir(readCfg(cfgFile).libretro_directory, base), ...cfgDirs.map(d => d && path.join(d, 'cores'))].filter(d => d && isDir(d)))];
  const sig = [cfgFile, mtime(cfgFile), ...dirs.map(d => d + ':' + mtime(d))].join('|');
  if (hit && hit.sig === sig) { hit.checked = Date.now(); return hit.value; }

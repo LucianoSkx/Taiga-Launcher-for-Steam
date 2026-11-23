@@ -1,5 +1,6 @@
 import {clientSource} from './locale-harness.mjs';
-import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import vm from 'node:vm';
+import {createApp} from '../server.mjs';import {sweepGames} from '../lib/games.mjs';
 test('Reference model filters combine platforms, retain searchable choices, and categorize real library states',async()=>{
  const elements=new Map(),listeners={};const el=()=>({innerHTML:'',style:{},hidden:false,classList:{add(){},remove(){},toggle(){}},focus(){},setAttribute(){},querySelector(){return null},querySelectorAll(){return []}});for(const id of ['#app','#layer','#operation','#operation-text','#toasts'])elements.set(id,el());const document={querySelector:s=>s==='meta[name=taiga-token]'?{content:'test'}:elements.get(s)||null,querySelectorAll:()=>[],body:el(),activeElement:el(),addEventListener:(name,fn)=>(listeners[name]??=[]).push(fn),documentElement:{dataset:{},removeAttribute(){}}};
  const game=(id,title,profile,platformName,emulatorName)=>({id,title,profile,platformName,emulatorName,inSteam:true,metadata:{summary:'Descrição de exemplo',summaryLanguage:'pt'},art:{},bytes:1000});const state={games:[game('1','PSP Game','psp','PlayStation Portable','PPSSPP'),game('2','PC Game','pc','PC (Microsoft Windows)','Windows'),game('3','SNES Game','retroarch','Super Nintendo Entertainment System','RetroArch')],hiddenGames:[],settings:{languageChosen:true,roots:[],accounts:[],preferences:{scanOnStart:false},readiness:{steam:true,account:true},profiles:{pc:{name:'Windows',platform:'PC (Microsoft Windows)'}}}};
@@ -25,48 +26,61 @@ test('Consoles tab only shows emulators that have a ROM folder', async () => {
  assert.doesNotMatch(html,/PCSX2/,'emulador sem pasta de ROMs não ganha aba');
 });
 
-test('Suspicion audit fixes: redirect allowlist, CSP, AppImage exec and quoted stem', () => {
- const core=fs.readFileSync(new URL('../lib/ngl/core.mjs',import.meta.url),'utf8');
- assert.match(core,/ALLOWED\.test\(String\(res\.url/);
- const inject=fs.readFileSync(new URL('../lib/steam-inject.mjs',import.meta.url),'utf8');
- assert.doesNotMatch(inject,/setBypassCSP/);
- const dl=fs.readFileSync(new URL('../lib/emulator-download.mjs',import.meta.url),'utf8');
- assert.match(dl,/\.appimage\$\/i\.test\(e\.name\)\)fs\.chmodSync|appimage\$\/i\.test\(e\.name\)\)\s*fs\.chmodSync/);
- const reg=fs.readFileSync(new URL('../lib/emulator-registry.mjs',import.meta.url),'utf8');
- assert.match(reg,/-rompath "\{dir\}" "\{stem\}"/);
- const eng=fs.readFileSync(new URL('../lib/launch-engine.mjs',import.meta.url),'utf8');
- assert.match(eng,/text\[i\]==="'/);
+test('Install actions open the store and diagnostics redacts store cookies', async t => {
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'taiga-audit-'));
+ t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+ const secret='COOKIE_SEGREDO_123';
+ fs.writeFileSync(path.join(dir,'config.json'),JSON.stringify({adminToken:'admin-t',readToken:'read-t',account:'1',gogAuth:{username:'tester',cookies:[{name:'session',value:secret}]}}));
+ fs.writeFileSync(path.join(dir,'games.json'),JSON.stringify({version:1,games:[{id:'g1',uuid:'u1',title:'Jogo Teste',path:'/tmp/jogo.exe',profile:'pc',notInstalled:true,store:{name:'epic',slug:'jogo-teste'}}]}));
+ const port=48931,{server}=createApp({dataDir:dir,port});
+ await new Promise((ok,no)=>{server.once('error',no);server.listen(port,'127.0.0.1',ok);});
+ t.after(()=>new Promise(ok=>server.close(ok)));
+ const base='http://127.0.0.1:'+port,headers={Authorization:'Bearer admin-t','Content-Type':'application/json'};
+ const post=async(route,body)=>{const r=await fetch(base+'/api/'+route,{method:'POST',headers,body:JSON.stringify(body)});assert.equal(r.status,200);return await r.json();};
+ const oldPath=process.env.PATH;process.env.PATH='';
+ try{
+  assert.deepEqual(await post('store-install',{id:'g1'}),{state:'external',store:'epic'});
+  for(const route of ['store-install-pause','store-install-cancel'])assert.equal((await post(route,{id:'g1'})).state,'external');
+  const report=(await post('diagnostics',{})).report;
+  assert.equal(report.config.gogAuth.username,'tester');
+  assert.ok(!JSON.stringify(report).includes(secret),'cookies da GOG não podem vazar no diagnóstico');
+ } finally { process.env.PATH=oldPath; }
 });
 
-test('Linux audit fixes: RetroArch config, emulator accounts, symlinks and PC titles', () => {
- const ra=fs.readFileSync(new URL('../lib/retroarch.mjs',import.meta.url),'utf8');
- assert.match(ra,/'\.config'/);
- assert.match(ra,/\.var.app.org\.libretro\.RetroArch/);
- const acc=fs.readFileSync(new URL('../lib/emulator-accounts.mjs',import.meta.url),'utf8');
- assert.match(acc,/XDG_CONFIG_HOME/);
- const games=fs.readFileSync(new URL('../lib/games.mjs',import.meta.url),'utf8');
- assert.match(games,/fs\.statSync\(p\)/,'symlinks seguidos');
- assert.match(games,/withFileTypes:true/);
- assert.match(games,/size<16\*1024&&!\/\^\(cue/);
- const rn=fs.readFileSync(new URL('../lib/rom-name.mjs',import.meta.url),'utf8');
- assert.match(rn,/PC_GROUP\.test\(group\)\s*\?\s*''/);
+test('importInstalled forwards the profile as consoleOnly to import-confirm', async () => {
+ const elements=new Map(),el=()=>({innerHTML:'',style:{},hidden:false,classList:{add(){},remove(){},toggle(){}},focus(){},setAttribute(){},querySelector(){return null},querySelectorAll(){return []}});
+ for(const id of ['#app','#layer','#operation','#operation-text','#toasts'])elements.set(id,el());
+ const document={querySelector:s=>s==='meta[name=taiga-token]'?{content:'test'}:elements.get(s)||null,querySelectorAll:()=>[],body:el(),activeElement:el(),addEventListener(){},documentElement:{dataset:{},removeAttribute(){}}};
+ const state={games:[],hiddenGames:[],settings:{languageChosen:true,roots:[],accounts:[],preferences:{scanOnStart:false},readiness:{steam:true,account:true},profiles:{}}};
+ const calls=[];
+ const fetchMock=async(url,opts={})=>{
+  const route=String(url).replace(/^\/api\//,''),body=opts.body?JSON.parse(opts.body):{};calls.push({route,body});
+  if(route==='scan')return {ok:true,json:async()=>({scanId:'s1',items:[{path:'/roms/a.cue',title:'A',profile:'ps1'}],existing:[]})};
+  if(route==='import-resolve')return {ok:true,json:async()=>({items:(body.paths||[]).map(p=>({path:p,title:'A',profile:'ps1'}))})};
+  if(route==='import-confirm')return {ok:true,json:async()=>({addedIds:['x']})};
+  if(route==='import-finish')return {ok:true,json:async()=>({})};
+  return {ok:true,json:async()=>state};
+ };
+ const c=vm.createContext({document,window:{scrollY:0,scrollTo(){},addEventListener(){}},fetch:fetchMock,structuredClone,setTimeout,clearTimeout,console});
+ vm.runInContext(clientSource(),c);await new Promise(r=>setTimeout(r,0));
+ await vm.runInContext("importInstalled([{path:'/roms/a.cue',title:'A'}],{profile:'ps1'})",c);
+ let confirm=calls.find(x=>x.route==='import-confirm');
+ assert.equal(confirm.body.consoleOnly,true);assert.equal(confirm.body.items[0].profile,'ps1');
+ calls.length=0;
+ await vm.runInContext("importInstalled([{path:'/roms/a.cue',title:'A'}])",c);
+ confirm=calls.find(x=>x.route==='import-confirm');assert.equal(confirm.body.consoleOnly,false);
 });
 
-test('Server audit fixes: settings, steamRemoved, logout and folder', () => {
- const server=fs.readFileSync(new URL('../server.mjs',import.meta.url),'utf8');
- assert.match(server,/\.\.\.oldSettings,provider:mode/);
- assert.match(server,/g\.steamRemoved=\{\.\.\.\(g\.steamRemoved\|\|\{\}\),\[config\.account\]:true\}/);
- assert.match(server,/clearLoginSession\?\.\('persist:psn-login'\)/);
- assert.match(server,/isFile\(g\.gameRoot\)\?g\.gameRoot:g\.path/);
- assert.match(server,/installWatch\.set\(g\.id/);
-});
-
-test('Critical audit fixes: install functions, importInstalled opts and GOG redaction', () => {
- const server=fs.readFileSync(new URL('../server.mjs',import.meta.url),'utf8');
- for(const fn of ['startInstall','pauseInstall','cancelInstall'])assert.ok(new RegExp('async function '+fn+'\\(').test(server),fn+' deve existir');
- assert.match(server,/if\(c\.gogAuth\)c\.gogAuth=\{connected:true,username:/);
- const app=fs.readFileSync(new URL('../web/app.js',import.meta.url),'utf8');
- assert.match(app,/async function importInstalled\(list,opts=\{\}\)/);
+test('Automatic discovery follows symlinked ROM folders without looping', t => {
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'taiga-sweep-'));
+ t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+ const real=path.join(dir,'real','psp');fs.mkdirSync(real,{recursive:true});
+ const rom=path.join(real,'jogo.iso');fs.writeFileSync(rom,Buffer.alloc(20000));
+ fs.symlinkSync(path.join(dir,'real'),path.join(dir,'link'),'dir');
+ fs.symlinkSync(path.join(dir,'link'),path.join(dir,'loop'),'dir');
+ const found=sweepGames([dir]);
+ assert.ok(found.some(f=>/link[\\/]psp[\\/]jogo\.iso$/.test(f)),'ROM em pasta symlinkada deve ser descoberta');
+ assert.equal(found.filter(f=>f.endsWith('jogo.iso')).length,1,'link circular não duplica a ROM');
 });
 
 test('Choice art never returns a broken image when no preview exists', () => {

@@ -209,10 +209,10 @@ function installBox(g,st){st=st||{state:'none'};const store=g.storeLabel||'';
  if(st.state==='external')return `${I.info||I.check}<span>${T(st.store==='xbox'?'sinst.externalXbox':'sinst.externalEpic')}</span><button class="btn btn-white btn-sm" data-act="store-install-cancel" data-id="${g.id}">${T('sinst.stopWatching')}</button>`;
  if(st.state==='error')return `${I.warn}<span>${T('sinst.error')} ${errText(st)}</span><button class="btn btn-white btn-sm" data-act="store-install" data-id="${g.id}">${T('sinst.retry')}</button>`;
  return `${I.info||I.check}<span>${T(st.store==='xbox'?'sinst.notInstalledXbox':'sinst.notInstalledLauncher',{store:esc(store)})}</span>`;}
-let installPoll=null;
-function watchInstall(id){if(installPoll)return;installPoll=setInterval(async()=>{const box=id?document.querySelector('#inst-box[data-id="'+id+'"]'):$('#inst-box');if(!box){clearInterval(installPoll);installPoll=null;return;}let st;try{st=await api('store-install-state',{id});}catch{return;}
- if(st.state==='installed'){clearInterval(installPoll);installPoll=null;toast(T('sinst.done'));await reload();if($('#inst-box'))openDetail(id);return;}
- const g=G(id);if(g){g.install=st;box.innerHTML=installBox(g,st);}if(!['installing','external'].includes(st.state)){clearInterval(installPoll);installPoll=null;}},1500);}
+const installPolls=new Map();
+function watchInstall(id){if(installPolls.has(id))return;const poll=setInterval(async()=>{const box=id?document.querySelector('#inst-box[data-id="'+id+'"]'):$('#inst-box');if(!box){clearInterval(poll);installPolls.delete(id);return;}let st;try{st=await api('store-install-state',{id});}catch{return;}
+ if(st.state==='installed'){clearInterval(poll);installPolls.delete(id);toast(T('sinst.done'));await reload();if($('#inst-box'))openDetail(id);return;}
+ const g=G(id);if(g){g.install=st;box.innerHTML=installBox(g,st);}if(!['installing','external'].includes(st.state)){clearInterval(poll);installPolls.delete(id);}},1500);installPolls.set(id,poll);}
 function cardIssue(g){const list=(g.problems||[]).filter(p=>['FILE_MISSING','EMULATOR_MISSING','NEEDS_REVIEW','NOT_INSTALLED'].includes(p)).map(p=>T('status.'+p));if(g.accountNeed)list.push(T('card.needAccount',{name:ACC_NAMES?.[g.accountNeed]||g.accountNeed}));return list;}
 function card(g,opts=null){const on=g.inSteam&&!g.syncNeeded,issues=cardIssue(g),steamAction=!!opts?.steamAction;
   return `<div class="card ${UI.selectMode?'selectable':''} ${selection.has(g.id)?'selected':''}" role="button" tabindex="0" data-act="open" data-id="${g.id}" aria-label="${esc(g.title)}">

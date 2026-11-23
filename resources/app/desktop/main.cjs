@@ -19,7 +19,8 @@ function applyStartup(on){
   try{
    if(!on){try{fs.unlinkSync(file);}catch{}return;}
    fs.mkdirSync(dir,{recursive:true});
-   const entry='[Desktop Entry]\nType=Application\nName=Taiga Launcher\nComment=Taiga Launcher (Linux)\nExec="'+process.execPath+'" "'+app.getAppPath()+'" --hidden\nPath='+app.getAppPath()+'\nIcon='+path.join(app.getAppPath(),'desktop','icon.png')+'\nTerminal=false\nCategories=Game;\nX-GNOME-Autostart-enabled=true\n';
+   const q=s=>'"'+String(s).replace(/([\\"])/g,'\\$1')+'"';
+   const entry='[Desktop Entry]\nType=Application\nName=Taiga Launcher\nComment=Taiga Launcher (Linux)\nExec='+q(process.execPath)+' '+q(app.getAppPath())+' --hidden\nPath='+q(app.getAppPath())+'\nIcon='+q(path.join(app.getAppPath(),'desktop','icon.png'))+'\nTerminal=false\nCategories=Game;\nX-GNOME-Autostart-enabled=true\n';
    fs.writeFileSync(file,entry);
   }catch{}
   return;
@@ -72,14 +73,14 @@ if(launchIndex>=0){
   });};
   // Login da Microsoft/Xbox (como o Playnite): página oficial; o token volta no endereço de retorno.
   // Página pública carregada numa janela invisível (sites que recusam pedidos fora de um navegador, ex.: Exophase).
-  const pageFetch=(url,expect='trophies')=>new Promise((resolve,reject)=>{if(!/^https:\/\/(www|api)\.exophase\.com\//.test(String(url)))return reject(Error('Endereço não permitido.'));const w=new BrowserWindow({show:false,width:1200,height:900,webPreferences:{offscreen:true,javascript:true,images:false,backgroundThrottling:false,partition:'persist:taiga-pages'}});try{w.webContents.setUserAgent(w.webContents.getUserAgent().replace(/\s*(Electron|taiga[\w-]*|TaigaLauncher)\/\S+/gi,''));}catch{}let done=false;const finish=(v,e)=>{if(done)return;done=true;clearTimeout(t);try{w.destroy();}catch{}e?reject(e):resolve(v);};const t=setTimeout(()=>finish(null,Error('Tempo esgotado.')),60000);
+  const pageFetch=(url,expect='trophies')=>new Promise((resolve,reject)=>{if(!/^https:\/\/(www|api)\.exophase\.com\//.test(String(url)))return reject(Error('Endereço não permitido.'));const w=new BrowserWindow({show:false,width:1200,height:900,webPreferences:{offscreen:true,javascript:true,images:false,backgroundThrottling:false,partition:'persist:taiga-pages',nodeIntegration:false,contextIsolation:true,sandbox:true}});try{w.webContents.setUserAgent(w.webContents.getUserAgent().replace(/\s*(Electron|taiga[\w-]*|TaigaLauncher)\/\S+/gi,''));}catch{}let done=false;const finish=(v,e)=>{if(done)return;done=true;clearTimeout(t);try{w.destroy();}catch{}e?reject(e):resolve(v);};const t=setTimeout(()=>finish(null,Error('Tempo esgotado.')),60000);
    let grabbing=false;const grab=async()=>{if(grabbing)return;grabbing=true;for(let i=0;i<50&&!done;i++){try{if(expect==='json'){const text=await w.webContents.executeJavaScript('document.body?document.body.innerText:""');if(/^\s*\{/.test(text))return finish(text);}else{const html=await w.webContents.executeJavaScript('document.documentElement.outerHTML');if(/<li\b[^>]*\bdata-average=|<ul\b[^>]*class="[^"]*\b(trophy|achievement)\b/i.test(html))return finish(html);}}catch{}await new Promise(r=>setTimeout(r,1000));}finish('');};
    w.webContents.on('did-finish-load',grab);w.webContents.setWindowOpenHandler(()=>({action:'deny'}));w.loadURL(url).catch(e=>finish(null,e));});
   // Conta PlayStation: login na página oficial da Sony; o cookie "npsso" da sessão é o que o programa precisa.
   const psnLogin=()=>new Promise(resolve=>{const part=session.fromPartition('persist:psn-login');const win=new BrowserWindow({width:520,height:760,parent:mainWindow||undefined,autoHideMenuBar:true,title:'PlayStation',webPreferences:{partition:'persist:psn-login',contextIsolation:true,nodeIntegration:false,sandbox:true}});
    let done=false;const finish=v=>{if(done)return;done=true;clearInterval(timer);resolve(v);if(!win.isDestroyed())win.close();};
    const timer=setInterval(async()=>{try{const list=await part.cookies.get({name:'npsso'});const c=list.find(x=>/sony\.com$/i.test(String(x.domain||'').replace(/^\./,''))&&/^[A-Za-z0-9]{40,128}$/.test(x.value));if(c)finish(c.value);}catch{}},1000);
-   win.on('closed',()=>finish(null));win.webContents.setWindowOpenHandler(({url})=>{win.loadURL(url);return {action:'deny'};});loadWithRetry(win,'https://my.account.sony.com/');});
+   win.on('closed',()=>finish(null));win.webContents.setWindowOpenHandler(({url})=>{if(/^https:\/\/([a-z0-9-]+\.)*(sony|playstation|microsoft|microsoftonline|live)\.com\//i.test(url))win.loadURL(url);return {action:'deny'};});loadWithRetry(win,'https://my.account.sony.com/');});
   // Login da GOG: página oficial; a conta é confirmada pelo endpoint de conta e os cookies da sessão ficam no perfil persistente.
   const gogLogin=()=>new Promise(resolve=>{
    const part=session.fromPartition('persist:gog-login');
