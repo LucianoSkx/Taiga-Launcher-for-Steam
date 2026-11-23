@@ -83,7 +83,7 @@ test('Pastas de plataforma identificam CHD/ZIP/BIN de cartucho; arquivos genéri
  assert.equal(g.platformKey, 'ps2'); assert.equal(g.profile, 'ps2'); assert.equal(g.platformSource, 'folder'); assert.equal(g.title, 'Shadow of the Colossus'); assert.deepEqual(g.region, ['USA']);
  assert.equal(inspectGame(gen).platformKey, 'genesis');
  const a = inspectGame(zip); assert.equal(a.platformKey, 'arcade'); assert.equal(a.profile, 'mame');
- assert.deepEqual(launchFor({...a, launch: {exe: process.execPath}}, {}, ''), {exe: process.execPath, args: '-rompath "' + path.dirname(zip) + '" sf2'});
+ assert.deepEqual(launchFor({...a, launch: {exe: process.execPath}}, {}, ''), {exe: process.execPath, args: '-rompath \"' + path.dirname(zip) + '\" \"sf2\"'});
 });
 
 test('Discos múltiplos sem .m3u entram uma vez; cabeçalhos de cartucho definem a plataforma', t => {

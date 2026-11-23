@@ -75,6 +75,7 @@ export async function downloadEmulator(profile, {dest, tmpDir, fetchImpl = (...a
  fs.mkdirSync(target, {recursive: true});
  if (isAppImage) { const file = path.join(target, path.basename(info.file)); fs.copyFileSync(zip, file); fs.chmodSync(file, 0o755); fs.rmSync(zip, {force: true}); return {...info, folder: target}; }
  try { await extract(zip, target); } catch (e) { if (!is7z) throw e; const keep = path.join(target, path.basename(zip)); fs.renameSync(zip, keep); return {...info, folder: target, manual: keep}; }
+ if (process.platform !== 'win32') { try { for (const e of fs.readdirSync(target, {withFileTypes: true})) if (e.isFile() && /\.appimage$/i.test(e.name)) fs.chmodSync(path.join(target, e.name), 0o755); } catch {} }
  fs.rmSync(zip, {force: true});
  // PPSSPP portátil: o arquivo installed.txt faria ele usar Documentos; sem ele, tudo fica na pasta (memstick).
  return {...info, folder: target};

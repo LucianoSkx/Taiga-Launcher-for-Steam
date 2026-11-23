@@ -13,6 +13,7 @@ export async function httpGet(url, {headers = {}, timeout = 15, binary = false, 
  if (process.env.TAIGA_OFFLINE === '1' || !ALLOWED.test(String(url))) return null;
  try {
   const res = await fetch(url, {headers: {'User-Agent': USER_AGENT, ...headers}, signal: AbortSignal.timeout(timeout * 1000), redirect: 'follow'});
+  if (!ALLOWED.test(String(res.url || url))) { try { await res.body?.cancel(); } catch {} return null; }
   const declared = Number(res.headers.get('content-length') || 0);
   if (declared > maxBytes) { try { await res.body?.cancel(); } catch {} return {status: 413, body: binary ? Buffer.alloc(0) : '', headers: {}}; }
   const buf = Buffer.from(await res.arrayBuffer());

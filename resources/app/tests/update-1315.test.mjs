@@ -25,6 +25,19 @@ test('Consoles tab only shows emulators that have a ROM folder', async () => {
  assert.doesNotMatch(html,/PCSX2/,'emulador sem pasta de ROMs não ganha aba');
 });
 
+test('Suspicion audit fixes: redirect allowlist, CSP, AppImage exec and quoted stem', () => {
+ const core=fs.readFileSync(new URL('../lib/ngl/core.mjs',import.meta.url),'utf8');
+ assert.match(core,/ALLOWED\.test\(String\(res\.url/);
+ const inject=fs.readFileSync(new URL('../lib/steam-inject.mjs',import.meta.url),'utf8');
+ assert.doesNotMatch(inject,/setBypassCSP/);
+ const dl=fs.readFileSync(new URL('../lib/emulator-download.mjs',import.meta.url),'utf8');
+ assert.match(dl,/\.appimage\$\/i\.test\(e\.name\)\)fs\.chmodSync|appimage\$\/i\.test\(e\.name\)\)\s*fs\.chmodSync/);
+ const reg=fs.readFileSync(new URL('../lib/emulator-registry.mjs',import.meta.url),'utf8');
+ assert.match(reg,/-rompath "\{dir\}" "\{stem\}"/);
+ const eng=fs.readFileSync(new URL('../lib/launch-engine.mjs',import.meta.url),'utf8');
+ assert.match(eng,/text\[i\]==="'/);
+});
+
 test('Linux audit fixes: RetroArch config, emulator accounts, symlinks and PC titles', () => {
  const ra=fs.readFileSync(new URL('../lib/retroarch.mjs',import.meta.url),'utf8');
  assert.match(ra,/'\.config'/);

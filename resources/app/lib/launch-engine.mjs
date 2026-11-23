@@ -9,7 +9,7 @@ export function defaultDataDir(){if(process.env.TAIGA_DATA)return process.env.TA
  try{if(!fs.existsSync(now)&&fs.existsSync(old))fs.renameSync(old,now);}catch{return old;}return fs.existsSync(now)||!fs.existsSync(old)?now:old;}
 export function splitArguments(text){
  if(/[\r\n\0]/.test(text))throw Error('Argumentos inválidos.');const result=[];let word='',quoted=false,started=false;
- for(let i=0;i<text.length;){if(text[i]==='\\'){let n=0;while(text[i+n]==='\\')n++;if(text[i+n]==='"'){word+='\\'.repeat(Math.floor(n/2));i+=n;if(n%2){word+='"';i++;}else{quoted=!quoted;i++;}started=true;}else{word+='\\'.repeat(n);i+=n;started=true;}continue;}if(text[i]==='"'){if(quoted&&text[i+1]==='"'){word+='"';i+=2;}else{quoted=!quoted;i++;}started=true;continue;}if(/\s/.test(text[i])&&!quoted){if(started){result.push(word);word='';started=false;}i++;continue;}word+=text[i++];started=true;}
+ for(let i=0;i<text.length;){if(text[i]==='\\'){let n=0;while(text[i+n]==='\\')n++;const q=text[i+n];if(q==='"'||q==="'"){word+='\\'.repeat(Math.floor(n/2));i+=n;if(n%2){word+=q;i++;}else{if(quoted){if(quoted!==q){word+=q;}else{quoted=false;}}else{quoted=q;}i++;}started=true;}else{word+='\\'.repeat(n);i+=n;started=true;}continue;}if(text[i]==='"'||text[i]==="'"){const q=text[i];if(quoted===q&&text[i+1]===q){word+=q;i+=2;}else if(!quoted){quoted=q;i++;}else if(quoted===q){quoted=false;i++;}else{word+=q;i++;}started=true;continue;}if(/\s/.test(text[i])&&!quoted){if(started){result.push(word);word='';started=false;}i++;continue;}word+=text[i++];started=true;}
  if(quoted)throw Error('Aspas não fechadas nos argumentos.');if(started)result.push(word);return result;
 }
 // Registro das aberturas (pasta logs): o que foi aberto, como e quanto tempo ficou aberto, para achar a causa

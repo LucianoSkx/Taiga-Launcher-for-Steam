@@ -126,7 +126,6 @@ export class SteamInjector {
    if ((kind === 'shared' || kind === 'community' || kind === 'web') && this.onCall) await this.send('Runtime.addBinding', {name: '__taiga_ffi__'}, sessionId).catch(() => {});
    // Comunidade: imagens dos jogos do Taiga Launcher chegam como data: (sem depender da política de conteúdo do site).
    if (kind === 'community' || kind === 'web') {
-    await this.send('Page.setBypassCSP', {enabled: true}, sessionId).catch(() => {});
     // Também no começo de cada página nova da Comunidade (antes de a Steam desenhar), para os números e cartões
     // aparecerem sem atraso; o script espera a página ficar pronta sozinho.
     try { const src = (await this.scripts())?.community; if (src) await this.send('Page.addScriptToEvaluateOnNewDocument', {source: `${COMMUNITY_GUARD}${src}\n;window.${MARKER}=${JSON.stringify('community' + (this.version ? ':' + (typeof this.version === 'function' ? this.version() : this.version) : ''))};}`}, sessionId); } catch {}
