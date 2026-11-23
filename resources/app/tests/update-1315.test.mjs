@@ -25,6 +25,14 @@ test('Consoles tab only shows emulators that have a ROM folder', async () => {
  assert.doesNotMatch(html,/PCSX2/,'emulador sem pasta de ROMs não ganha aba');
 });
 
+test('Critical audit fixes: install functions, importInstalled opts and GOG redaction', () => {
+ const server=fs.readFileSync(new URL('../server.mjs',import.meta.url),'utf8');
+ for(const fn of ['startInstall','pauseInstall','cancelInstall'])assert.ok(new RegExp('async function '+fn+'\\(').test(server),fn+' deve existir');
+ assert.match(server,/if\(c\.gogAuth\)c\.gogAuth=\{connected:true,username:/);
+ const app=fs.readFileSync(new URL('../web/app.js',import.meta.url),'utf8');
+ assert.match(app,/async function importInstalled\(list,opts=\{\}\)/);
+});
+
 test('Choice art never returns a broken image when no preview exists', () => {
  const server=fs.readFileSync(new URL('../server.mjs',import.meta.url),'utf8');
  assert.match(server,/const placeholder=\(\)=>\{const svg=/);

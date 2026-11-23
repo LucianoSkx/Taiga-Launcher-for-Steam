@@ -219,6 +219,24 @@ export function createApp({dataDir=defaultDataDir(),port=48767,picker=win.pick,l
   for(const g of notInstalledGames()){const s=byKey.get(gameStoreKey(g));if(s&&!db.games.some(o=>o!==g&&!o.notInstalled&&o.path.toLowerCase()===s.path.toLowerCase())){convertInstalled(g,s);n++;}}
   if(n){persist();injector?.reload().catch(()=>{});refreshSteamLive?.().catch?.(()=>{});}return n;}
  // ── Janela "Instalar" (igual à da Steam): tamanho do jogo, discos e atalhos ──
+ async function startInstall(g){
+  if(!g?.notInstalled)return installState(g);
+  const store=g.store?.name||'',s=g.store||{};
+  let url=String(g.launch?.args||s.url||'');
+  if(!/^https?:\/\//i.test(url)){
+   const slug=String(s.slug||'').replace(/[^a-z0-9-]+/gi,'-');
+   if(store==='epic'&&slug)url='https://store.epicgames.com/p/'+slug;
+   else if(store==='gog'&&slug)url='https://www.gog.com/game/'+slug;
+   else if(store==='epic')url='https://store.epicgames.com/';
+   else if(store==='gog')url='https://www.gog.com/';
+   else if(store==='xbox')url='https://www.xbox.com/';
+  }
+  if(!/^https?:\/\//i.test(url))return {state:'error',store,error:'Abra a loja para instalar este jogo.'};
+  try{const child=spawn(urlLauncher(),[url],{detached:true,stdio:'ignore',windowsHide:true});child.on('error',()=>{});child.unref();}catch{}
+  return {state:'external',store};
+ }
+ async function pauseInstall(g){return installState(g);}
+ async function cancelInstall(g){return installState(g);}
  async function installInfo(g){
   if(!g?.notInstalled)return {state:'installed'};const st=installState(g);
   let header='';const art=g.art?.wide||g.art?.hero||g.art?.cover,name=path.basename(String(art||''));if(/^[a-f0-9]+\.(png|jpe?g|ico)$/.test(name)&&isFile(path.join(dataDir,'art',name)))header=artUrl(name);
@@ -1324,7 +1342,7 @@ if(route==='/api/gog-login'){
   }finally{integration.checking=false;}}
  const integrationTimer=setInterval(()=>{checkIntegration().catch(()=>{});},5000);integrationTimer.unref?.();
  // Diagnóstico para suporte: estado da integração, registros e configuração sem senhas/chaves.
- async function diagnostics(){const redact=v=>v?'(definido)':'';const c={...config};if(c.xboxAuth)c.xboxAuth={connected:true,gamertag:c.xboxAuth.gamertag};for(const k of ['ps4TrophyKey','sgdbKey','igdbSecret','igdbId','own_sgdbKey','own_igdbSecret','own_igdbId','raKey','steamKey','adminToken','readToken','raToken','raPassword','profileKey'])if(k in c)c[k]=redact(c[k]);if(c.epicAuth)c.epicAuth={connected:true,accountId:c.epicAuth.accountId};if(c.psnAuth)c.psnAuth={connected:true};if(c.commentsAuth)c.commentsAuth={connected:true,steamid:c.commentsAuth.steamid};
+ async function diagnostics(){const redact=v=>v?'(definido)':'';const c={...config};if(c.xboxAuth)c.xboxAuth={connected:true,gamertag:c.xboxAuth.gamertag};for(const k of ['ps4TrophyKey','sgdbKey','igdbSecret','igdbId','own_sgdbKey','own_igdbSecret','own_igdbId','raKey','steamKey','adminToken','readToken','raToken','raPassword','profileKey'])if(k in c)c[k]=redact(c[k]);if(c.epicAuth)c.epicAuth={connected:true,accountId:c.epicAuth.accountId};if(c.gogAuth)c.gogAuth={connected:true,username:c.gogAuth.username};if(c.psnAuth)c.psnAuth={connected:true};if(c.commentsAuth)c.commentsAuth={connected:true,steamid:c.commentsAuth.steamid};
   const up=await win.running().catch(()=>null),cmd=up?await win.steamCommandLine().catch(()=>null):null;let shared=null;try{shared=await injector?.evaluateShared('JSON.stringify({ngl:window.__TAIGA_NGL_STATE__||null,error:window.__TAIGA_NGL_ERROR__||null,host:!!window.__TAIGA_NGL_HOST__,missing:window.__TAIGA_NGL_MISSING__||null,globals:{react:typeof window.SP_REACT,reactDom:typeof window.SP_REACTDOM,webpack:Object.keys(window).filter(k=>/^webpackChunk/.test(k)),appStore:typeof window.appStore,popup:typeof window.g_PopupManager,client:typeof window.SteamClient},ui:typeof window.SteamUIStore,popups:(()=>{try{return Array.from(window.g_PopupManager.GetPopups()).map(p=>p.m_strName||p.name||"").slice(0,20)}catch(e){return null}})()})');}catch{}
   return {generated:new Date().toISOString(),version:VERSION,platform:process.platform+' '+os.release(),node:process.version,config:c,steam:{running:up,commandLine:cmd,marker:cefMarker()?fs.existsSync(cefMarker()):false,debugPortReachable:injector?.status().connected||false},injector:injector?.status()||null,integration:{...integration},shared:(()=>{try{return JSON.parse(shared||'null');}catch{return shared;}})(),games:{total:db.games.filter(g=>!g.demo).length,bound:db.games.filter(g=>g.bindings?.[config.account]).length},nglMappings:Object.keys(nglBackend.allMappings()).length,log:nglLog.slice(-300)};}
  // Conquistas da Epic: a conta é capturada sozinha quando a Epic abre um jogo (-epicuserid) e o progresso é relido
