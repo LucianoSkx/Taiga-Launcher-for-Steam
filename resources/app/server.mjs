@@ -6,7 +6,8 @@ import crypto from 'node:crypto';
 import {spawn,execFile} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {atomic,json,save,normalize,digest} from './lib/files.mjs';
-import {inspectGame,scanGames as scan,launchFor,steamGameId,PROFILES,auxiliaryExecutable} from './lib/games.mjs';
+import {parseRomName} from './lib/rom-name.mjs';
+import {inspectGame,scanGames as scan,launchFor,steamGameId,PROFILES,auxiliaryExecutable,siblingDiscs} from './lib/games.mjs';
 import {parseVDF,encodeVDF,shortcuts,upsert,value,shortcutInfo,windowsPath} from './lib/vdf.mjs';
 import {iconBytes,imageType} from './lib/images.mjs';
 import {legacyPSP} from './lib/legacy.mjs';
@@ -1207,6 +1208,22 @@ if(route==='/api/gog-login'){
     if(route==='/api/import-confirm'){
      const session=importSessions.get(body.scanId);if(!session||Date.now()-session.at>3600000)throw Error('A revisão expirou. Selecione os arquivos novamente.');
      if(!Array.isArray(body.items)||!body.items.length||body.items.length>500)throw Error('Selecione entre 1 e 500 jogos.');
+     // Discos irmãos viram uma playlist .m3u ao lado das ROMs: um jogo, com troca de disco no emulador.
+     for(const item of body.items){
+      if(typeof item.path!=='string')continue;
+      const source=path.resolve(item.path),discs=siblingDiscs(source);
+      if(discs.length<2)continue;
+      const dir=path.dirname(source),name=parseRomName(source),base=String(name.title||path.basename(source,path.extname(source))).replace(/[\\/:*?"<>|]/g,'').trim();
+      const region=name.regions.length?' ('+name.regions.join(' ')+')':'';
+      const m3u=path.join(dir,base+region+'.m3u');
+      if(!isFile(m3u))atomic(m3u,Buffer.from(discs.map(f=>path.basename(f)).join('\n')+'\n','utf8'));
+      const stat=fs.statSync(m3u),original=session.items.find(g=>g.path.toLowerCase()===source.toLowerCase());
+      if(!original)continue;
+      session.items.push({...original,path:m3u,bytes:stat.size,mtime:stat.mtimeMs});
+      session.paths.add(m3u.toLowerCase());
+      if(session.resolved)session.resolved.set(m3u.toLowerCase(),session.resolved.get(source.toLowerCase()));
+      item.playlistSource=source;item.path=m3u;
+     }
      for(const item of body.items){if(typeof item.path!=='string'||!session.paths.has(path.resolve(item.path).toLowerCase()))throw Error('Revise os arquivos encontrados antes de adicionar.');if(!PROFILES[item.profile])throw Error('Escolha um perfil válido.');const scanned=session.items.find(g=>g.path.toLowerCase()===path.resolve(item.path).toLowerCase()),stat=(()=>{try{return fs.statSync(item.path);}catch(e){if(scanned&&/\.exe$/i.test(item.path)&&/^(EPERM|EACCES)$/.test(String(e?.code||'')))return {size:scanned.bytes,mtimeMs:scanned.mtime};throw e;}})();if(!scanned||scanned.bytes!==stat.size||scanned.mtime!==stat.mtimeMs)throw Error('O arquivo mudou durante a identificação. Selecione-o novamente.');if(item.choice){const choice=externalChoices.get(item.choice);if(!choice||Date.now()-choice.at>3600000)throw Error('A identificação expirou. Pesquise novamente.');}}
      const result=await addFiles(body.items.map(i=>i.path));
      for(const id of result.addedIds){const g=getGame(id),item=body.items.find(i=>path.resolve(i.path).toLowerCase()===g.path.toLowerCase());if(!item)continue;
@@ -1223,7 +1240,7 @@ if(route==='/api/gog-login'){
       {const sidNew=steamAppIdFor(g),twin=sidNew&&db.games.find(o=>o!==g&&!o.demo&&!o.native&&['pc','store','custom'].includes(o.profile)&&steamAppIdFor(o)===sidNew);if(twin){db.games.splice(db.games.indexOf(g),1);result.addedIds=result.addedIds.filter(x=>x!==g.id);result.errors.push({file:g.path,message:duplicateMessage({reason:'steam',title:twin.title})});continue;}}
       if(warnings.length)g.lookup={at:new Date().toISOString(),warnings};
       const key=identityKey(g);if(key)identityChoices[key]={title:g.title,profile:g.profile,platformName:g.platformName};
-     }try{mergePortTwins();}catch{}persist();save(identityFile,identityChoices);for(const item of body.items)session.paths.delete(path.resolve(item.path).toLowerCase());session.items=session.items.filter(i=>session.paths.has(i.path.toLowerCase()));if(!session.paths.size)importSessions.delete(body.scanId);if(body.deferred){result.deferred=true;return send(result);}result.steam=body.consoleOnly?null:await autoAddToSteam(result.addedIds);return send(result);
+     }try{mergePortTwins();}catch{}persist();save(identityFile,identityChoices);for(const item of body.items){session.paths.delete(path.resolve(item.path).toLowerCase());if(item.playlistSource)session.paths.delete(item.playlistSource.toLowerCase());}session.items=session.items.filter(i=>session.paths.has(i.path.toLowerCase()));if(!session.paths.size)importSessions.delete(body.scanId);if(body.deferred){result.deferred=true;return send(result);}result.steam=body.consoleOnly?null:await autoAddToSteam(result.addedIds);return send(result);
     }
     // Segunda parte da importação, em segundo plano: artes e dados escolhidos, AppID da Steam, tamanho da pasta e envio à Steam.
     if(route==='/api/import-finish'){const ids=(Array.isArray(body.ids)?body.ids:[]).filter(id=>db.games.some(g=>g.id===id));

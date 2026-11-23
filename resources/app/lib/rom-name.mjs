@@ -58,6 +58,7 @@ export function parseRomName(input) {
   return ' ';
  });
  title = title.replace(/\s+/g, ' ').trim();
+ if (disc === null) { const bare = title.match(/\s+(?:disc|disk|cd)\s+(\d{1,2})\s*$/i); if (bare) { disc = Number(bare[1]); title = title.slice(0, bare.index).trim(); } }
  // Nomes sem espaços: "Ape_Escape", "God.of.War" (mas mantém siglas como "F.E.A.R.").
  if (!/\s/.test(title) && /[._]/.test(title) && !/^(?:[A-Z]\.){2,}/.test(title)) title = title.replace(/[._]+/g, ' ');
  title = title.replace(/_/g, ' ').replace(/\s+-\s*$/, '').replace(/\s{2,}/g, ' ').trim();

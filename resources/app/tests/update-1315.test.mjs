@@ -83,6 +83,29 @@ test('Automatic discovery follows symlinked ROM folders without looping', t => {
  assert.equal(found.filter(f=>f.endsWith('jogo.iso')).length,1,'link circular não duplica a ROM');
 });
 
+test('Multi-disc ROMs are imported as one game with an .m3u playlist', async t => {
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'taiga-multidisc-'));
+ t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+ const roms=path.join(dir,'roms','psx');fs.mkdirSync(roms,{recursive:true});
+ const names=['Jogo (USA) (Disc 1).chd','Jogo (USA) (Disc 2).chd','Chrono Cross Disc 1.chd','Chrono Cross Disc 2.chd'];
+ names.forEach((name,i)=>fs.writeFileSync(path.join(roms,name),Buffer.alloc(20000,i+1)));
+ const data=path.join(dir,'data'),port=48951,{server}=createApp({dataDir:data,port});
+ await new Promise((ok,no)=>{server.once('error',no);server.listen(port,'127.0.0.1',ok);});
+ t.after(()=>new Promise(ok=>server.close(ok)));
+ const base='http://127.0.0.1:'+port,headers={Authorization:'Bearer '+JSON.parse(fs.readFileSync(path.join(data,'config.json'))).adminToken,'Content-Type':'application/json'};
+ const post=async(route,body)=>{const r=await fetch(base+'/api/'+route,{method:'POST',headers,body:JSON.stringify(body)});const out=await r.json();assert.equal(r.status,200,JSON.stringify(out));return out;};
+ const scan=await post('scan',{paths:[roms]});
+ assert.deepEqual(scan.items.map(i=>path.basename(i.path)).sort(),['Chrono Cross Disc 1.chd','Jogo (USA) (Disc 1).chd']);
+ const added=await post('import-confirm',{scanId:scan.scanId,items:scan.items.map(i=>({path:i.path,profile:i.profile,platformName:i.platformName,title:i.title}))});
+ assert.equal(added.added,2);
+ const playlists=fs.readdirSync(roms).filter(f=>f.endsWith('.m3u'));
+ assert.deepEqual(playlists.sort(),['Chrono Cross.m3u','Jogo (USA).m3u']);
+ for(const f of playlists)assert.equal(fs.readFileSync(path.join(roms,f),'utf8').trim().split('\n').length,2);
+ const games=JSON.parse(fs.readFileSync(path.join(data,'games.json'))).games;
+ assert.equal(games.length,2);
+ assert.ok(games.every(g=>g.path.endsWith('.m3u')&&g.profile==='ps1'));
+});
+
 test('Choice art never returns a broken image when no preview exists', () => {
  const server=fs.readFileSync(new URL('../server.mjs',import.meta.url),'utf8');
  assert.match(server,/const placeholder=\(\)=>\{const svg=/);
