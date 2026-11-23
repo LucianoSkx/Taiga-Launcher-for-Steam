@@ -25,6 +25,29 @@ test('Consoles tab only shows emulators that have a ROM folder', async () => {
  assert.doesNotMatch(html,/PCSX2/,'emulador sem pasta de ROMs não ganha aba');
 });
 
+test('Linux audit fixes: RetroArch config, emulator accounts, symlinks and PC titles', () => {
+ const ra=fs.readFileSync(new URL('../lib/retroarch.mjs',import.meta.url),'utf8');
+ assert.match(ra,/'\.config'/);
+ assert.match(ra,/\.var.app.org\.libretro\.RetroArch/);
+ const acc=fs.readFileSync(new URL('../lib/emulator-accounts.mjs',import.meta.url),'utf8');
+ assert.match(acc,/XDG_CONFIG_HOME/);
+ const games=fs.readFileSync(new URL('../lib/games.mjs',import.meta.url),'utf8');
+ assert.match(games,/fs\.statSync\(p\)/,'symlinks seguidos');
+ assert.match(games,/withFileTypes:true/);
+ assert.match(games,/size<16\*1024&&!\/\^\(cue/);
+ const rn=fs.readFileSync(new URL('../lib/rom-name.mjs',import.meta.url),'utf8');
+ assert.match(rn,/PC_GROUP\.test\(group\)\s*\?\s*''/);
+});
+
+test('Server audit fixes: settings, steamRemoved, logout and folder', () => {
+ const server=fs.readFileSync(new URL('../server.mjs',import.meta.url),'utf8');
+ assert.match(server,/\.\.\.oldSettings,provider:mode/);
+ assert.match(server,/g\.steamRemoved=\{\.\.\.\(g\.steamRemoved\|\|\{\}\),\[config\.account\]:true\}/);
+ assert.match(server,/clearLoginSession\?\.\('persist:psn-login'\)/);
+ assert.match(server,/isFile\(g\.gameRoot\)\?g\.gameRoot:g\.path/);
+ assert.match(server,/installWatch\.set\(g\.id/);
+});
+
 test('Critical audit fixes: install functions, importInstalled opts and GOG redaction', () => {
  const server=fs.readFileSync(new URL('../server.mjs',import.meta.url),'utf8');
  for(const fn of ['startInstall','pauseInstall','cancelInstall'])assert.ok(new RegExp('async function '+fn+'\\(').test(server),fn+' deve existir');

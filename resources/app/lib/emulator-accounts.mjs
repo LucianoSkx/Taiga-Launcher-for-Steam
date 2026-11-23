@@ -54,7 +54,7 @@ export function accountSources(config = {}, env = process.env) {
  add('Flycast', 'flycast', fly && path.join(fly, 'emu.cfg'));
  add('Flycast', 'flycast', appdata && path.join(appdata, 'flycast', 'emu.cfg'));
  // Linux: emuladores guardam config em ~/.config (APPDATA), ~/.local/share (LOCALAPPDATA) e flatpak em ~/.var/app.
- const cfg = env.APPDATA || '', localDir = env.LOCALAPPDATA || '', homeDir = env.HOME || '';
+ const homeDir = env.HOME || '', linux = process.platform !== 'win32', cfg = env.APPDATA || (linux ? (env.XDG_CONFIG_HOME || (homeDir && path.join(homeDir, '.config'))) : ''), localDir = env.LOCALAPPDATA || (linux ? (homeDir && path.join(homeDir, '.local/share')) : '');
  add('RetroArch', 'retroarch', cfg && path.join(cfg, 'retroarch', 'retroarch.cfg'));
  add('RetroArch', 'retroarch', homeDir && path.join(homeDir, '.var/app/org.libretro.RetroArch/config/retroarch/retroarch.cfg'));
  add('PCSX2', 'pcsx2', cfg && path.join(cfg, 'PCSX2', 'inis', 'PCSX2.ini'));

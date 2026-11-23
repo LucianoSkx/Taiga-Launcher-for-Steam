@@ -76,7 +76,7 @@ export function cleanPCTitle(value) {
  text = text.replace(/\(([^)]*)\)/g, (all, inner) => /\b(?:19[89]\d|20[0-4]\d)\b|remake|remaster|edition|goty|cut|part|chapter|episode/i.test(inner) ? ' ' + inner + ' ' : ' ');
  // Versões antes de trocar pontos por espaços: "Game.v1.2.3-GRUPO", "Game Build 123".
  text = text.replace(/[ ._-]v\d+(?:[._]\d+)*[a-z]?\b/gi, ' ').replace(/[ ._-]build[ ._-]?\d+/gi, ' ');
- text = text.replace(/-([A-Za-z0-9]+)$/, (m, group) => PC_GROUP.test(group) || /^[A-Z0-9]{3,}$/.test(group) && !/\d{4}/.test(group) ? '' : m);
+ text = text.replace(/-([A-Za-z0-9]+)$/, (m, group) => PC_GROUP.test(group) ? '' : m);
  if (!/\s/.test(text.trim()) && /[._]/.test(text)) text = text.replace(/[._]+/g, ' ');
  text = text.replace(PC_NOISE, ' ').replace(/[_]+/g, ' ').replace(/\s+-\s+$/, '').replace(/\s{2,}/g, ' ').trim();
  return text.replace(/^[-–\s]+|[-–\s]+$/g, '');

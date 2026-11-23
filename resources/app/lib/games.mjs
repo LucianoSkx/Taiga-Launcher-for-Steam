@@ -137,12 +137,12 @@ export function chdPlatform(file){let fd;try{fd=fs.openSync(file,'r');const h=Bu
 export function zipPlatform(file){try{const e=mainZipEntry(file);if(!e)return null;const ext=path.extname(e.name).slice(1).toLowerCase();if(!ext||AMBIGUOUS_EXT.has(ext))return null;const list=platformsForExtension(ext);return list.length===1?list[0]:null;}catch{return null;}}
 export function scanGames(root,errors=[]){
  const out=[];let visited=0;
- const walk=(p,depth)=>{if(depth>12||++visited>30000)throw Error('Pasta muito grande. Escolha uma pasta mais específica.');let s;try{s=fs.lstatSync(p);}catch(e){if(/\.exe$/i.test(p)&&/^(EPERM|EACCES)$/.test(String(e?.code||''))){out.push(p);return;}throw e;}if(s.isSymbolicLink())return;
+ const walk=(p,depth)=>{if(depth>12||++visited>30000)throw Error('Pasta muito grande. Escolha uma pasta mais específica.');let s;try{s=fs.statSync(p);}catch(e){if(/\.exe$/i.test(p)&&/^(EPERM|EACCES)$/.test(String(e?.code||''))){out.push(p);return;}throw e;}
   if(s.isDirectory()){
    const boot=path.join(p,'PS3_GAME','USRDIR','EBOOT.BIN');if(fs.existsSync(boot)){out.push(boot);return;}
    // Jogos instalados de PS Vita/PS4 (Vita3K, shadPS4): eboot.bin ao lado de sce_sys/param.sfo.
    const sce=path.join(p,'sce_sys','param.sfo');if(fs.existsSync(sce)){const eboot=fs.readdirSync(p).find(n=>n.toLowerCase()==='eboot.bin');if(eboot){out.push(path.join(p,eboot));return;}}
-   for(const name of fs.readdirSync(p)){if(AUX_DIR.test(name))continue;if(visited>=30000){errors.push({file:p,message:'Limite de leitura atingido. Escolha uma pasta menor para ver os demais candidatos.'});break;}try{walk(path.join(p,name),depth+1);}catch(e){if(errors.length<100)errors.push({file:path.join(p,name),message:e.message});}}}
+   for(const name of fs.readdirSync(p,{withFileTypes:true})){if(AUX_DIR.test(name.name))continue;if(name.isSymbolicLink()){try{walk(path.join(p,name.name),depth+1);}catch(e){if(errors.length<100)errors.push({file:path.join(p,name.name),message:e.message});}continue;}if(visited>=30000){errors.push({file:p,message:'Limite de leitura atingido. Escolha uma pasta menor para ver os demais candidatos.'});break;}try{walk(path.join(p,name.name),depth+1);}catch(e){if(errors.length<100)errors.push({file:path.join(p,name.name),message:e.message});}}}
   else{const ext=path.extname(p).slice(1).toLowerCase();if(ext==='pkg'){if(errors.length<100)errors.push({file:p,message:'Pacote de instalação: instale no emulador e importe a pasta instalada. PKG não é um executável do jogo.'});return;}
    if(ARCHIVE_EXT.includes(ext)){const folder=ext==='zip'?platformFromPath(p)?.platform||zipPlatform(p):null;if(folder&&(folder.key==='arcade'||folder.hash&&!['psp','ps1','ps2','segacd','saturn'].includes(folder.hash)))out.push(p);return;}
    if(!EXTENSIONS.includes(ext))return;
@@ -155,7 +155,7 @@ export function scanGames(root,errors=[]){
 }
 // Remove trilhas referenciadas por .cue/.gdi/.m3u e discos extras do mesmo jogo.
 function finalizeCandidates(out){
- const referenced=new Set();for(const f of out.filter(f=>/\.(cue|m3u|gdi)$/i.test(f))){if(fs.statSync(f).size>1024*1024)continue;const content=fs.readFileSync(f,'utf8');const names=/\.cue$/i.test(f)?[...content.matchAll(/FILE\s+(?:"([^"]+)"|(\S+))\s+/gi)].map(m=>m[1]||m[2]):/\.gdi$/i.test(f)?content.split(/\r?\n/).slice(1).map(l=>l.match(/^\s*\d+\s+\d+\s+\d+\s+\d+\s+(?:"([^"]+)"|(\S+))/)).filter(Boolean).map(m=>m[1]||m[2]):content.split(/\r?\n/).filter(l=>l.trim()&&!l.startsWith('#'));for(const n of names)referenced.add(path.resolve(path.dirname(f),n.trim()).toLowerCase());}
+ const referenced=new Set();for(const f of out.filter(f=>/\.(cue|m3u|gdi)$/i.test(f))){let size,content;try{size=fs.statSync(f).size;if(size>1024*1024)continue;content=fs.readFileSync(f,'utf8');}catch{continue;}const names=/\.cue$/i.test(f)?[...content.matchAll(/FILE\s+(?:"([^"]+)"|(\S+))\s+/gi)].map(m=>m[1]||m[2]):/\.gdi$/i.test(f)?content.split(/\r?\n/).slice(1).map(l=>l.match(/^\s*\d+\s+\d+\s+\d+\s+\d+\s+(?:"([^"]+)"|(\S+))/)).filter(Boolean).map(m=>m[1]||m[2]):content.split(/\r?\n/).filter(l=>l.trim()&&!l.startsWith('#'));for(const n of names)referenced.add(path.resolve(path.dirname(f),n.trim()).toLowerCase());}
  const files=out.filter(f=>!referenced.has(path.resolve(f).toLowerCase()));
  // Jogos de vários discos sem .m3u: mantém o Disco 1 e registra os demais como discos extras.
  const groups=new Map();for(const f of files){const n=parseRomName(f);if(n.disc===null||!/^(?:cue|chd|iso|bin|img|pbp|cso|gdi)$/i.test(n.ext))continue;const key=path.dirname(f).toLowerCase()+'|'+n.title.toLowerCase()+'|'+n.regions.join(',');if(!groups.has(key))groups.set(key,[]);groups.get(key).push({f,disc:n.disc});}
@@ -169,7 +169,8 @@ const SWEEP_SKIP=/^(?:windows|windows\.old|program files|program files \(x86\)|p
 export function sweepGames(roots,{maxDirs=60000,maxMs=45000,maxDepth=7,errors=[],skipPaths=[]}={}){
  const out=[],started=Date.now(),skip=new Set(skipPaths.map(p=>path.resolve(p).toLowerCase()));let dirs=0,stopped=false;
  const consider=(p,ext,size)=>{
-  if(ext==='exe'||ext==='pkg'||size<16*1024)return;
+  if(ext==='exe'||ext==='pkg')return;
+  if(size<16*1024&&!/^(cue|gdi|m3u|a26|a78|lnx|ws|wsc|ngp|col|int|fds)$/.test(ext))return;
   if(switchExtra(p))return;
   if(ARCHIVE_EXT.includes(ext)){const folder=platformFromPath(p)?.platform;if(folder&&(folder.key==='arcade'||folder.hash&&!['psp','ps1','ps2','segacd','saturn'].includes(folder.hash)))out.push(p);return;}
   if(!EXTENSIONS.includes(ext))return;
