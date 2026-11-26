@@ -1476,6 +1476,9 @@ if(startInjector){setTimeout(()=>coverSweep().catch(()=>{}),15000).unref?.();con
  return {server,dataDir,injector,statusToken,nglLog,nglBackend,getLanguage:()=>config.language||sysLang,startWithWindows:()=>config.preferences?.startWithWindows!==false,findPorts:()=>findPortsNearConsoleGames()};
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const app=createApp();app.server.on('error',e=>{if(e.code==='EADDRINUSE'){console.error('Porta 48767 ocupada. Verifique se o Taiga PSP já está aberto.');}else console.error(e.message);process.exitCode=1;});
- app.server.listen(48767,'127.0.0.1',()=>{console.log('Taiga Launcher: http://127.0.0.1:48767, deixe esta janela aberta para os painéis da Steam.');if(process.argv.includes('--open')&&process.platform==='win32'){const child=spawn('explorer.exe',['http://127.0.0.1:48767'],{stdio:'ignore'});child.on('error',()=>{});}});
+ const headless=process.argv.includes('--headless'),app=createApp({startInjector:headless,launcherExecutable:headless?process.execPath:null});
+ let attempt=0;const listen=()=>app.server.once('error',e=>{if(headless&&e.code==='EADDRINUSE'&&attempt++<40)return setTimeout(listen,500);if(!headless&&e.code==='EADDRINUSE')console.error('Porta 48767 ocupada. Verifique se o Taiga PSP já está aberto.');else console.error(e.message);process.exitCode=1;}).listen(48767,'127.0.0.1',()=>{
+  if(headless){const f=path.join(app.dataDir,'taiga-headless.pid');fs.writeFileSync(f,String(process.pid));process.on('exit',()=>{try{fs.unlinkSync(f);}catch{}});return;}
+  console.log('Taiga Launcher: http://127.0.0.1:48767, deixe esta janela aberta para os painéis da Steam.');if(process.argv.includes('--open')&&process.platform==='win32'){const child=spawn('explorer.exe',['http://127.0.0.1:48767'],{stdio:'ignore'});child.on('error',()=>{});}
+ });listen();
 }

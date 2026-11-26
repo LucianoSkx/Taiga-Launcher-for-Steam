@@ -1513,5 +1513,6 @@
   "login.title.psn": "Entrar com a conta PlayStation",
   "emu.folderReady": "{count} jogos adicionados da pasta.",
   "emu.folderRemoved": "Pasta removida deste emulador.",
-  "emu.folderRemove": "Remover pasta {name}"
+  "emu.folderRemove": "Remover pasta {name}",
+  "tray.quitBackground": "Encerrar tudo (sem integração)"
 }

@@ -1513,5 +1513,6 @@
   "login.title.psn": "Iniciar sesión con PlayStation",
   "emu.folderReady": "{count} juegos añadidos de la carpeta.",
   "emu.folderRemoved": "Carpeta eliminada de este emulador.",
-  "emu.folderRemove": "Eliminar carpeta {name}"
+  "emu.folderRemove": "Eliminar carpeta {name}",
+  "tray.quitBackground": "Salir por completo (sin integración)"
 }

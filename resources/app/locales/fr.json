@@ -1513,5 +1513,6 @@
   "login.title.psn": "Se connecter avec PlayStation",
   "emu.folderReady": "{count} jeux ajoutés du dossier.",
   "emu.folderRemoved": "Dossier supprimé de cet émulateur.",
-  "emu.folderRemove": "Supprimer le dossier {name}"
+  "emu.folderRemove": "Supprimer le dossier {name}",
+  "tray.quitBackground": "Quitter complètement (sans intégration)"
 }

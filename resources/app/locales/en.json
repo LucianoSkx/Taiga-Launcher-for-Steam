@@ -1513,5 +1513,6 @@
   "login.title.psn": "Sign in with PlayStation",
   "emu.folderReady": "{count} games added from the folder.",
   "emu.folderRemoved": "Folder removed from this emulator.",
-  "emu.folderRemove": "Remove folder {name}"
+  "emu.folderRemove": "Remove folder {name}",
+  "tray.quitBackground": "Quit completely (no integration)"
 }

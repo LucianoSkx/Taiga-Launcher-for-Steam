@@ -9,9 +9,13 @@ const os=require('node:os');
 const {conversionScript}=require('./image-conversion.cjs');
 const desktopLocale=require('../locales/runtime.cjs').create('pt-BR'),T=(key,params)=>desktopLocale.t(key,params);
 const BASE='http://127.0.0.1:48767';
-let mainWindow,service,tray,quitting=false;
+let mainWindow,service,tray,quitting=false,backgroundOff=false;
 // O resolvedor do chromium pode falhar uma vez no arranque (ERR_NAME_NOT_RESOLVED); tenta de novo antes de desistir.
 const loadWithRetry=(win,url)=>{let tries=0;win.webContents.on('did-fail-load',(_e,_code,_desc,_confirmed,again)=>{if(!again||tries++>=2||win.isDestroyed())return;setTimeout(()=>{if(!win.isDestroyed())win.loadURL(url);},1200).unref?.();});win.loadURL(url);};
+// Processo headless que mantém a integração com a Steam quando a interface é fechada.
+const headlessPidFile=()=>path.join(process.platform==='win32'?(process.env.APPDATA||path.join(os.homedir(),'AppData','Roaming')):path.join(os.homedir(),'.local','share'),'Taiga Launcher','taiga-headless.pid');
+function stopHeadless(){try{const f=headlessPidFile(),pid=Number(fs.readFileSync(f,'utf8'));if(pid&&pid!==process.pid){try{process.kill(pid,0);process.kill(pid);}catch{}}fs.unlinkSync(f);}catch{}}
+function startHeadless(){if(backgroundOff)return;try{const child=require('node:child_process').spawn(process.execPath,[path.join(__dirname,'..','server.mjs'),'--headless'],{env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},detached:true,stdio:'ignore'});child.on('error',()=>{});child.unref();}catch{}}
 // Abrir junto com o Windows (minimizado na bandeja). Regravado a cada abertura: vale mesmo se a pasta do programa mudar.
 function applyStartup(on){
  if(process.platform==='linux'){
@@ -40,6 +44,7 @@ if(launchIndex>=0){
  // Uma segunda abertura vinda do autostart (--hidden) nao deve acordar a janela de quem ja esta usando o app.
  app.on('second-instance',(_event,args)=>{if(args.includes('--hidden'))return;pendingDemo=demoArg(args)||pendingDemo;if(mainWindow){if(mainWindow.isMinimized())mainWindow.restore();mainWindow.show();mainWindow.focus();showDemo();}});
  app.whenReady().then(async()=>{
+  stopHeadless();await new Promise(r=>setTimeout(r,300));
   // Ícone novo do programa: o Windows guarda o antigo em cache; depois de uma atualização, pede para ele recarregar.
   try{const fsx=require('fs'),px=require('path'),mark=px.join(app.getPath('userData'),'icon-version.txt'),ver=app.getVersion()+':'+fsx.statSync(px.join(__dirname,'icon.ico')).size;if(process.platform==='win32'&&(()=>{try{return fsx.readFileSync(mark,'utf8')!==ver;}catch{return true;}})()){require('child_process').spawn('ie4uinit.exe',['-show'],{detached:true,stdio:'ignore',windowsHide:true}).on('error',()=>{}).unref();fsx.writeFileSync(mark,ver);}}catch{}
   nativeTheme.themeSource='system';
@@ -138,7 +143,7 @@ if(launchIndex>=0){
   const atLogin=process.argv.includes('--hidden')||(()=>{try{return app.getLoginItemSettings().wasOpenedAtLogin;}catch{return false;}})();
   applyStartup(service.startWithWindows());
   mainWindow.once('ready-to-show',()=>{if(!atLogin)mainWindow.show();});
-  tray=new Tray(process.platform==='win32'?path.join(__dirname,'icon.ico'):path.join(__dirname,'icon.png'));tray.setToolTip('Taiga Launcher · '+T('tray.active'));const show=()=>{if(mainWindow){mainWindow.show();mainWindow.focus();}};tray.on('double-click',show);tray.setContextMenu(Menu.buildFromTemplate([{label:T("ui.f6c1d76ee2f7"),click:show},{type:'separator'},{label:T("ui.8c80cf084687"),click:()=>app.quit()}]));
+  tray=new Tray(process.platform==='win32'?path.join(__dirname,'icon.ico'):path.join(__dirname,'icon.png'));tray.setToolTip('Taiga Launcher · '+T('tray.active'));const show=()=>{if(mainWindow){mainWindow.show();mainWindow.focus();}};tray.on('double-click',show);tray.setContextMenu(Menu.buildFromTemplate([{label:T("ui.f6c1d76ee2f7"),click:show},{type:'separator'},{label:T("ui.8c80cf084687"),click:()=>app.quit()},{label:'Encerrar tudo (sem integração)',click:()=>{backgroundOff=true;app.quit();}}]));
   mainWindow.on('close',event=>{if(!quitting){event.preventDefault();mainWindow.hide();}});
   mainWindow.on('closed',()=>{mainWindow=null;});
   // Janela fechada (programa só na bandeja): depois de 1 minuto a tela é descarregada e a memória dela volta para o
@@ -153,5 +158,5 @@ if(launchIndex>=0){
  }).catch(error=>{dialog.showErrorBox(T('start.failed'),error.code==='EADDRINUSE'?T('start.portInUse'):error.message);app.quit();});
  app.on('before-quit',()=>{quitting=true;});
  app.on('window-all-closed',()=>app.quit());
- app.on('will-quit',()=>{try{if(service)fs.unlinkSync(path.join(service.dataDir,'taiga.pid'));}catch{}service?.server.close();service?.server.closeAllConnections();});
+ app.on('will-quit',()=>{try{if(service)fs.unlinkSync(path.join(service.dataDir,'taiga.pid'));}catch{}service?.server.close();service?.server.closeAllConnections();startHeadless();});
 }
